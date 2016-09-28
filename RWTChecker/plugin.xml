@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+
+   <extension point="org.eclipse.ui.popupMenus">	  
+	  <objectContribution
+	         objectClass="org.eclipse.jdt.core.IPackageFragment"
+	         id="RWTChecker.subMenuForPackage">
+	      <menu
+	            label="Propagation"
+	            path="additions"
+	            id="ProjectManager.propagationPackage">
+	         <separator
+	               name="propagationPackage">
+	         </separator>
+	      </menu>
+	      <action
+	            label="Type propagation a package"
+	            class="cmtypechecker.popup.actions.TypePropagationPackageInNavigator"
+	            menubarPath="ProjectManager.propagationPackage/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.TypePropagationPackage">
+	      </action>
+	  </objectContribution>
+	  <objectContribution
+	         objectClass="org.eclipse.core.resources.IProject"
+	         id="RWTChecker.subMenuForProjectLocation">
+
+	      <menu
+	            label="Real-World Type facilities"
+	            path="additions"
+	            id="ProjectManager.submenu">
+	         <separator
+	               name="propagationGroup">
+	         </separator>
+	      </menu>
+	      <action
+	            label="Type Inference from Parameters to Arguments"
+	            class="cmtypechecker.popup.actions.ConfigActionInNavigator"
+	            menubarPath="ProjectManager.submenu/propagationGroup"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.inference.TypeInferenceParameterToArguments">
+	      </action>
+	      <action
+	            label="Type Inference for Assignment"
+	            class="cmtypechecker.popup.actions.ConfigActionInNavigator"
+	            menubarPath="ProjectManager.submenu/propagationGroup"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.inference.TypeInferenceAssignments">
+	      </action>
+	      <action
+	            label="Type Inference from Return types to Method Signiture"
+	            class="cmtypechecker.popup.actions.ConfigActionInNavigator"
+	            menubarPath="ProjectManager.submenu/propagationGroup"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.inference.TypeInferenceReturnValueToMethod">
+	      </action>
+	      <action
+	            label="Type Inference based on rules in files"
+	            class="cmtypechecker.popup.actions.ConfigActionInNavigator"
+	            menubarPath="ProjectManager.submenu/propagationGroup"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.inference.TypeInferenceOnRules">
+	      </action>
+	      <menu
+	            label="Real-World Type Setup"
+	            path="additions"
+	            id="ProjectManager.submenu">
+	         <separator
+	               name="group1">
+	         </separator>
+	      </menu>
+	      <action
+	            label="Config Correspondence Model Location"
+	            class="cmtypechecker.popup.actions.ConfigActionInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.ConfigActionInNavigator">
+	      </action>
+	      <action
+	            label="Show the statistic of the project"
+	            class="cmtypechecker.popup.actions.GetStatisticActionInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.GetStatisticActionInNavigator">
+	      </action>
+	      <action
+	            label="Show Current Correspondence Model Location"
+	            class="cmtypechecker.popup.actions.ShowConfigActionInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.ShowConfigActionInNavigator">
+	      </action>
+	      <action
+	            label="Extract CM types patterns "
+	            class="cmtypechecker.popup.actions.ExtractPatternsActionInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.ExtractPatternsActionInNavigator">
+	      </action>
+	      <action
+	            label="Type checking all files"
+	            class="cmtypechecker.popup.actions.TypeCheckingMultiplyFilesInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.TypeCheckingMultiplyFilesInNavigator">
+	      </action>
+	      <action
+	            label="Units checking all files"
+	            class="cmtypechecker.popup.actions.UnitsCheckingAllFilesInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.UnitsCheckingAllFilesInNavigator">
+	      </action>
+	      <action
+	            label="Interval analysis all files"
+	            class="cmtypechecker.popup.actions.IntervalAnalysislAllFilesInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.IntervalAnalysislAllFilesInNavigator">
+	      </action>
+	      <action
+	            label="Extract terms as candidate real-world types"
+	            class="cmtypechecker.popup.actions.ExtractTerms"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.ExtractTerms">
+	      </action>
+	      <action
+	            label="Type propagation the project"
+	            class="cmtypechecker.popup.actions.TypePropagationProjectInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.TypePropagation">
+	      </action>
+	      <action
+	            label="Annotation pattern miner"
+	            class="cmtypechecker.popup.actions.AnnotationMinerInNavigator"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.AnnotationMinerInNavigator">
+	      </action>
+	      <action
+	            label="Extract itemset with methods contents involved"
+	            class="cmtypechecker.popup.actions.ExtractItemsInMethods"
+	            menubarPath="ProjectManager.submenu/group1"
+	            enablesFor="1"
+	            id="cmtypechecker.popup.actions.ExtractItemsInMethods">
+	      </action>
+	  </objectContribution>
+
+
+      <viewerContribution
+            id="RWTChecker.ViewerContribution1"
+            targetID="#CompilationUnitEditorContext">
+          <menu
+               id="CMTypeChecker.subMenuInJavaEditor"
+               label="CM type checker" 
+               path="additions"> 
+            <separator
+                  name="group2">
+            </separator>
+	      </menu> 
+         <action
+              class="cmtypechecker.popup.actions.UnitsCheckingActionInJavaEditor"
+               id="CMTypeChecker.UnitsCheckingActionInJavaEditor"
+               label="Units Checking"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.TypeCheckerJavaDocActionInJavaEditor"
+               id="CMTypeChecker.TypeCheckerPhaseOneActionInJavaEditor"
+               label="Real-World Constraint Checking"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.IntervalAnalysisActionInJavaEditor"
+               id="CMTypeChecker.IntervalAnalysisActionInJavaEditor"
+               label="Interval Analysis"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.DisplayAnnotationActionInJavaEditor"
+               id="CMTypeChecker.DisplayAnnotationActionInJavaEditor"
+               label="Turn On/Off All Annotations"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.InspectionModeActionInJavaEditor"
+               id="CMTypeChecker.InspectionModeActionInJavaEditor"
+               label="Inspection Mode on/off"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.AnnotationGuideActionInJavaEditor"
+               id="CMTypeChecker.AnnotationGuideActionInJavaEditor"
+               label="Annotation Guide"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.TypePropagationActionInJavaEditor"
+               id="CMTypeChecker.TypePropagationActionInJavaEditor"
+               label="Type Propagation"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.AnnotationPatternActionInJavaEditor"
+               id="CMTypeChecker.AnnotationPatternActionInJavaEditor"
+               label="Mining annotation patterns"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	      <action
+              class="cmtypechecker.popup.actions.DisplayRWTCountActionInJavaEditor"
+               id="CMTypeChecker.DisplayRWTCountActionInJavaEditor"
+               label="Number of annotations in this file"
+               menubarPath="CMTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	   </viewerContribution>
+   </extension>
+   
+   <extension point="org.eclipse.ui.perspectives">
+	   <perspective
+	         name="RWT System Perspective"
+	         class="rwtchecker.perspective.RWTCheckerPerspective"     
+	         id="RWTChecker.PerspectiveID">
+	   </perspective>
+	</extension>
+   <extension
+         point="org.eclipse.ui.perspectiveExtensions">
+          <perspectiveExtension targetID="RWTChecker.PerspectiveID">
+               <actionSet id="org.eclipse.jdt.ui.JavaActionSet"/>
+               <viewShortcut id="org.eclipse.jdt.ui.PackageExplorer"/>
+               <newWizardShortcut
+                    id="org.eclipse.jdt.ui.wizards.NewProjectCreationWizard"/>
+               <perspectiveShortcut id="org.eclipse.jdt.ui.JavaPerspective"/>
+          </perspectiveExtension>         
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <category
+            id="RWT System"
+            name="RWT System Views">
+      </category>
+      <view
+            category="RWT System"
+            class="rwtchecker.views.DiagnoseView"
+            icon="icons/sample.gif"
+            id="RWTChecker.views.DiagnoseView"
+            name="Diagnose View">
+      </view>
+      <view
+            category="RWT System"
+            class="rwtchecker.views.ConceptDetailView"
+            icon="icons/sample.gif"
+            id="cmtypechecker.views.ConceptDetailView"
+            name="Concept Explication">
+      </view>
+      <view
+            category="RWT System"
+            class="rwtchecker.views.RWTView"
+            icon="icons/sample.gif"
+            id="cmtypechecker.views.CMTypeView"
+            name="RWT View">
+      </view>
+      <view
+            category="RWT System"
+            class="rwtchecker.views.RWTRulesView"
+            icon="icons/sample.gif"
+            id="cmtypechecker.views.CMTypeRulesView"
+            name="Real-World Type Rules View">
+      </view>
+   </extension>
+   
+   <extension
+         point="org.eclipse.ui.newWizards">
+      <category
+            id="CMTypeSystem"
+            name="Correspondence Types Wizards">
+      </category>
+      <!--wizard
+            category="CMTypeSystem"
+            class="cmtypechecker.wizards.NewConceptWizard"
+            icon="icons/sample.gif"
+            id="cmtypechecker.wizards.NewConceptWizard"
+            name="New Concept Wizard">
+      </wizard-->
+	</extension>
+</plugin>
