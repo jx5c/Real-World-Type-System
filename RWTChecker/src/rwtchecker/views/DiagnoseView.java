@@ -20,8 +20,8 @@ import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Image;
 import org.eclipse.swt.SWT;
 
-import cmtypechecker.Activator;
-import cmtypechecker.util.DiagnosticMessage;
+import rwtchecker.Activator;
+import rwtchecker.util.DiagnosticMessage;
 
 
 public class DiagnoseView extends ViewPart {

@@ -29,12 +29,12 @@ import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.SWT;
 
-import cmtypechecker.util.CMModelUtil;
-import cmtypechecker.realworldmodel.ConceptDetail;
-import cmtypechecker.views.provider.ConceptDetailContentProvider;
-import cmtypechecker.views.provider.ConceptDetailLabelProvider;
-import cmtypechecker.wizards.ManageConceptWizard;
-import cmtypechecker.wizards.NewConceptWizard;
+import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.util.CMModelUtil;
+import rwtchecker.views.provider.ConceptDetailContentProvider;
+import rwtchecker.views.provider.ConceptDetailLabelProvider;
+import rwtchecker.wizards.ManageConceptWizard;
+import rwtchecker.wizards.NewConceptWizard;
 
 public class ConceptDetailView extends ViewPart {
 

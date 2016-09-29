@@ -3,7 +3,7 @@ package rwtchecker.views;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 
-import cmtypechecker.util.DiagnosticMessage;
+import rwtchecker.util.DiagnosticMessage;
 
 public class SorterInDiagnosticView extends ViewerSorter {
     private static final int ErrorNode = 1;

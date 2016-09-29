@@ -18,13 +18,13 @@ import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.SWT;
 
-import cmtypechecker.CMRules.CMTypeRule;
-import cmtypechecker.CMRules.CMTypeRulesManager;
-import cmtypechecker.dialogs.TypeRuleDisplayDialog;
-import cmtypechecker.util.ActivePart;
-import cmtypechecker.util.CMModelUtil;
-import cmtypechecker.wizards.ManageCMTypeOperationWizard;
-import cmtypechecker.wizards.NewCMTypeOperationWizard;
+import rwtchecker.CMRules.CMTypeRule;
+import rwtchecker.CMRules.CMTypeRulesManager;
+import rwtchecker.dialogs.TypeRuleDisplayDialog;
+import rwtchecker.util.ActivePart;
+import rwtchecker.util.CMModelUtil;
+import rwtchecker.wizards.ManageCMTypeOperationWizard;
+import rwtchecker.wizards.NewCMTypeOperationWizard;
 
 public class RWTRulesView extends ViewPart {
 

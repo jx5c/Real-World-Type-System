@@ -6,7 +6,7 @@ import java.util.Locale;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 
-import cmtypechecker.CMRules.CMTypeRule;
+import rwtchecker.CMRules.CMTypeRule;
 
 public class SorterInOperationView extends ViewerSorter {
     private static final int Operation_Name = 1;
