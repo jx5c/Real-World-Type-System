@@ -100,19 +100,22 @@ public class RWTSystemUtil {
 			Properties prop = new Properties();
 			prop.load(new FileInputStream(configFile));
 			if(!prop.containsKey(key)){
+				final IWorkbench workbench = PlatformUI.getWorkbench();
+				IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 				while(true){
-					final IWorkbench workbench = PlatformUI.getWorkbench();
-					IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 					NoRWTFoundErrorDialog errordialog = new NoRWTFoundErrorDialog(window.getShell(),key);
 					errordialog.open();
 					if(errordialog.getReturnCode()==Window.OK){
-						MessageBox messageBox = new MessageBox(window.getShell(), SWT.OK | SWT.ICON_INFORMATION);
-				        messageBox.setText("Real-world type system has been set");
-				        messageBox.setMessage("The location of real-world type system is set to: "+prop.get(key));
-						break;
+						prop.put(key, errordialog.getRwtLocation());
+				        break;
 					}
 					//System.out.println(errordialog.getReturnCode());
-				}	
+				}
+				MessageBox messageBox = new MessageBox(window.getShell(), SWT.OK | SWT.ICON_INFORMATION);
+		        messageBox.setText("Real-world type system has been set");
+		        messageBox.setMessage("The location of real-world type system is set to: "+prop.get(key) +";\n" +
+		        	"the location can be modified by accessing the right-click pop menu of the project");
+		        messageBox.open();
 			}
 			return prop.get(key);
 		} catch (IOException e){

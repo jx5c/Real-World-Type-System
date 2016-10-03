@@ -1,7 +1,5 @@
 package rwtchecker.dialogs;
 
-import java.awt.Checkbox;
-import java.awt.Container;
 import java.io.File;
 
 import org.eclipse.core.resources.IFile;
@@ -167,9 +165,15 @@ public class NoRWTFoundErrorDialog extends TitleAreaDialog {
 	    		new File(annotationDir).mkdir();
 	    	}	
 	    	this.setReturnCode(OK);
+	    	super.okPressed();
 		}else{
 			this.setReturnCode(CANCEL);	
+			super.cancelPressed();
 		}
-		super.okPressed();
+		
+	}
+
+	public String getRwtLocation() {
+		return rwtLocation;
 	}
 }
