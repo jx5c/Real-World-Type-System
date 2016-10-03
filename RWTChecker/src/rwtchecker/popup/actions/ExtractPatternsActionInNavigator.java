@@ -26,10 +26,10 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.fpclose.FPTree;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.ExtractPatternVisitor;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.TreeObject;
 
 public class ExtractPatternsActionInNavigator  implements IObjectActionDelegate{
@@ -69,7 +69,7 @@ public class ExtractPatternsActionInNavigator  implements IObjectActionDelegate{
 	          	       // now check if compilationUnit.exits
 	            		ASTParser parser = ASTParser.newParser(AST.JLS3);
 	            		parser.setKind(ASTParser.K_COMPILATION_UNIT);
-	            		CMTypeRulesManager manager = CMTypeRulesManager.getManagerForCurrentProject();
+	            		RWTypeRulesManager manager = RWTypeRulesManager.getManagerForCurrentProject();
 	            		
 	            		if(compilationUnit.exists()){
 	            			parser.setSource(compilationUnit); // set source

@@ -19,8 +19,8 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.realworldmodel.ConceptAttribute;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.concept.ConceptAttribute;
+import rwtchecker.concept.ConceptDetail;
 
 public class ConceptAttributeEditingDialog extends TitleAreaDialog {
 

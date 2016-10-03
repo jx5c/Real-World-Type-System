@@ -29,8 +29,8 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.ConceptDetailContentProvider;
 import rwtchecker.views.provider.ConceptDetailLabelProvider;
 
@@ -290,7 +290,7 @@ public class NewConceptWizardPage1 extends WizardPage {
 			return;
 		}
 		
-		File file = CMModelUtil.getConceptDetailFile(currentProject, conceptName);		
+		File file = RWTSystemUtil.getConceptDetailFile(currentProject, conceptName);		
 		if(file.exists()){
 			updateStatus("Concept already exists");
 			return;

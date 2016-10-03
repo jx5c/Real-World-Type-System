@@ -15,9 +15,6 @@ public class CMViewTreeViewLabelProvider extends LabelProvider {
 		if (((TreeObject)obj).hasChildren()){
 			imageKey = ISharedImages.IMG_OBJ_FOLDER;
 		}
-		if(((TreeObject)obj).isPrimaryType()){
-			 imageKey = ISharedImages.IMG_OBJ_ADD;
-		}
 		return PlatformUI.getWorkbench().getSharedImages().getImage(imageKey);
 	}
 }

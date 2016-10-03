@@ -13,10 +13,10 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.dom.*;
 
-import rwtchecker.CM.CMType;
 import rwtchecker.annotation.AnnotationLearner;
 import rwtchecker.annotation.FileAnnotations;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.util.RWTSystemUtil;
 
 public class AnnotationPatternMinerVisitor extends ASTVisitor {
 	
@@ -43,7 +43,7 @@ public class AnnotationPatternMinerVisitor extends ASTVisitor {
 		this.compilationUnit = compilationUnit;
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){
@@ -100,7 +100,7 @@ public class AnnotationPatternMinerVisitor extends ASTVisitor {
 				IBinding binding= ((SimpleName)node).resolveBinding();
 				if (binding.getKind() == IBinding.VARIABLE) {
 					String rwtype = getRWTypeForVarLikeExp((SimpleName)node);
-					if(rwtype.length()>0&& !rwtype.equals(CMType.GenericMethod)){
+					if(rwtype.length()>0&& !rwtype.equals(RWType.GenericMethod)){
 						current_itemset.add(rwtype);
 						hasRWType = true;
 					}else{
@@ -186,7 +186,7 @@ public class AnnotationPatternMinerVisitor extends ASTVisitor {
 						}
 					}else{
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotation == null){

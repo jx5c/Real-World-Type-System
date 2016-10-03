@@ -22,24 +22,24 @@ import org.eclipse.ui.*;
 import rwtchecker.views.RWTRulesView;
 import rwtchecker.views.RWTView;
 import rwtchecker.views.provider.TreeObject;
-import rwtchecker.realworldmodel.ConceptAttribute;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.concept.ConceptAttribute;
+import rwtchecker.concept.ConceptDetail;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.ConceptDetailView;
 
 
-public class NewCMTypeOperationWizard extends Wizard implements INewWizard {
-	private NewCMTypeOperationPage page1;
+public class NewRWTRuleWizard extends Wizard implements INewWizard {
+	private NewRWTRulePage page1;
 	private IFile editingFile ;
 
-	public NewCMTypeOperationWizard() {
+	public NewRWTRuleWizard() {
 		super();
 		setNeedsProgressMonitor(true);
 	}
 	
 	public void addPages() {
-		page1 = new NewCMTypeOperationPage();
+		page1 = new NewRWTRulePage();
 		addPage(page1);
 	}
 

@@ -18,12 +18,12 @@ import org.eclipse.jdt.core.IJavaProject;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 
-import rwtchecker.CM.CMType;
 import rwtchecker.annotation.AnnotationLearner;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
 import rwtchecker.popup.actions.TypePropagationProjectInNavigator;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.RWTView;
 
 public class TypePropagationVisitor extends ASTVisitor {
@@ -63,7 +63,7 @@ public class TypePropagationVisitor extends ASTVisitor {
 		this.compilationUnit = compilationUnit;
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){
@@ -99,7 +99,7 @@ public class TypePropagationVisitor extends ASTVisitor {
 		if(node instanceof CompilationUnit){
 			//end of the visitor; do the method propagation
 			IJavaProject javaProject = JavaCore.create(currentFile.getProject());
-			ArrayList<IResource> javaSourceFiles = CMModelUtil.getAllJavaSourceFiles(javaProject);
+			ArrayList<IResource> javaSourceFiles = RWTSystemUtil.getAllJavaSourceFiles(javaProject);
         	for(IResource javaSource : javaSourceFiles){
         		ASTParser parser = ASTParser.newParser(AST.JLS3);
         		parser.setKind(ASTParser.K_COMPILATION_UNIT);
@@ -190,7 +190,7 @@ public class TypePropagationVisitor extends ASTVisitor {
 				if(binding !=null){
 					if (binding.getKind() == IBinding.VARIABLE) {
 						String rwtype = getRWTypeForSimpleExp((SimpleName)node);
-						if(rwtype.length()>0 && !rwtype.equals(CMType.GenericMethod)){
+						if(rwtype.length()>0 && !rwtype.equals(RWType.GenericMethod)){
 							current_itemset.add(rwtype);
 							hasRWType = true;
 						}else{
@@ -305,7 +305,7 @@ public class TypePropagationVisitor extends ASTVisitor {
 						}
 					}else{
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotation == null){
@@ -387,8 +387,8 @@ public class TypePropagationVisitor extends ASTVisitor {
 	}
 	*/
 	
-	public static void propagateTypeForVars(Expression exp, String RWType, CompilationUnit compilationUnit){
-		if (RWType.equals(CMType.NonType)|| RWType.length()==0){
+	public static void propagateTypeForVars(Expression exp, String rwtype, CompilationUnit compilationUnit){
+		if (rwtype.equals(RWType.NonType)|| rwtype.length()==0){
 			return;
 		}
 		//propagating types for local variables
@@ -405,17 +405,17 @@ public class TypePropagationVisitor extends ASTVisitor {
 		 	if (binding.getKind() == IBinding.VARIABLE) {
 				IVariableBinding bindingDecl= ((IVariableBinding) ((SimpleName)exp).resolveBinding()).getVariableDeclaration();
 				String formalElementName = bindingDecl.getName();
-    			System.out.println("Propagation: variables need propagation here: "+RWType);
+    			System.out.println("Propagation: variables need propagation here: "+rwtype);
 				if(bindingDecl.isField()){
 					ASTNode declaringClassNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringClass());
 					if(declaringClassNode!= null && declaringClassNode instanceof TypeDeclaration){
 		    			TypeDeclaration parentTD = (TypeDeclaration)declaringClassNode;
-		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, RWType, true);
+		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
 					}
 				}else{
 					ASTNode declaringMethodNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringMethod());
 					MethodDeclaration methodDeclaration = (MethodDeclaration)declaringMethodNode;
-	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, RWType, true);
+	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
 				}
 			}
 		}

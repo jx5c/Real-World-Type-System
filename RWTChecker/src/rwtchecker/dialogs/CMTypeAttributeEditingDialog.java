@@ -36,11 +36,11 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.CM.CMAttribute;
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWT_Attribute;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwt.RWT_Semantic;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.CMApproTableContentProvider;
 import rwtchecker.views.provider.CMApproTablelLabelProvider;
 import rwtchecker.views.provider.CMAttributeTableContentProvider;
@@ -56,19 +56,19 @@ public class CMTypeAttributeEditingDialog extends TitleAreaDialog {
 	private Text selectedAttributeText;
 	private Text semanticTypeText;
 	private Text specificTypeText;
-	private CMType selectedNewCMType;
+	private RWType selectedNewCMType;
 	private Label CMtypeDetailLabel;
 	private TableViewer typeAttributeViewer;
 	private Text associatedExplicationText;
 	private TableViewer approxAttributeViewer;
-	private CM_SemanticType selectedSemanticType;
+	private RWT_Semantic selectedSemanticType;
 	private TableViewer orginialViewer;
-	private CMAttribute modifyAtt;
+	private RWT_Attribute modifyAtt;
 	private TreeViewer cmTypesTreeViewer;
 	private Action clickActionOnTreeViewer;
 	protected TreeObject cmtypeTreeSelectedObject;
 	
-	public CMTypeAttributeEditingDialog(Shell parentShell, TableViewer viewer, CM_SemanticType selectedSemanticType, IProject currentProject) {
+	public CMTypeAttributeEditingDialog(Shell parentShell, TableViewer viewer, RWT_Semantic selectedSemanticType, IProject currentProject) {
 		super(parentShell);
 		orginialViewer = viewer;
 		this.currentProject = currentProject;
@@ -241,10 +241,10 @@ public class CMTypeAttributeEditingDialog extends TitleAreaDialog {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				if(obj != null){
 					cmtypeTreeSelectedObject = (TreeObject)obj;
-					selectedNewCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+					selectedNewCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
 					if(selectedNewCMType != null){
 						CMtypeDetailLabel.setText("Type Detail: "+selectedNewCMType.getTypeName());
-						CM_SemanticType thisType = selectedNewCMType.getSemanticType();
+						RWT_Semantic thisType = selectedNewCMType.getSemanticType();
 						ConceptDetail explication = ConceptDetail.readInByLink(thisType.getExplicationLink());
 						associatedExplicationText.setText(explication.getConceptName());
 						typeAttributeViewer.setInput(selectedNewCMType.getSemanticType());
@@ -365,7 +365,7 @@ public class CMTypeAttributeEditingDialog extends TitleAreaDialog {
 		existingTypeButton.addListener(SWT.Selection, radioGroup);
 		
 		TableItem selectedItem = orginialViewer.getTable().getSelection()[0];
-		modifyAtt = new CMAttribute(selectedItem.getText(0), selectedItem.getText(1));
+		modifyAtt = new RWT_Attribute(selectedItem.getText(0), selectedItem.getText(1));
 		this.selectedAttributeText.setText(selectedItem.getText(0));
 		this.semanticTypeText.setText(selectedItem.getText(1));
 		this.specificTypeText.setText(selectedItem.getText(1));
@@ -409,7 +409,7 @@ public class CMTypeAttributeEditingDialog extends TitleAreaDialog {
 	}
 
 	private void loadCMTypes(){
-		TreeObject cmtypeTreeObject = CMModelUtil.readInAllCMTypesToTreeObject(this.currentProject);
+		TreeObject cmtypeTreeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(this.currentProject);
 		cmTypesTreeViewer.setInput(cmtypeTreeObject);
 	}
 
@@ -424,7 +424,7 @@ public class CMTypeAttributeEditingDialog extends TitleAreaDialog {
 		String attributeName = selectedAttributeText.getText();
 		String attributeType = semanticTypeText.getText();
 		if(attributeName.length()>0){
-			CMAttribute newAtt = new CMAttribute(attributeName, attributeType);
+			RWT_Attribute newAtt = new RWT_Attribute(attributeName, attributeType);
 			if(selectedSemanticType.getSemanticTypeAttributes().contains(modifyAtt)){
 				  int index = selectedSemanticType.getSemanticTypeAttributes().indexOf(modifyAtt);
 				  selectedSemanticType.getSemanticTypeAttributes().set(index, newAtt);

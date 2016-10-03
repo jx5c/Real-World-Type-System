@@ -1,4 +1,4 @@
-package rwtchecker.CM;
+package rwtchecker.rwt;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -17,10 +17,10 @@ import org.dom4j.io.XMLWriter;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.interval.RealInterval;
 
-public class CMType {
+public class RWType {
 
 	private String typeName = "";
 	
@@ -56,14 +56,14 @@ public class CMType {
 
 	
 	
-	private CM_SemanticType semanticType = new CM_SemanticType();
-	private CM_ApproxType approximationType = new CM_ApproxType();
+	RWT_Semantic semanticType = new RWT_Semantic();
+	RWT_Approx approximationType = new RWT_Approx();
 	
-	public CMType() {
+	public RWType() {
 		super();
 	}
 	
-	public CMType(CMType cmTypeFromTreeObject, String newTypeName) {
+	public RWType(RWType cmTypeFromTreeObject, String newTypeName) {
 		super();
 		if(cmTypeFromTreeObject!=null){
 			semanticType = cmTypeFromTreeObject.getSemanticType();	
@@ -71,19 +71,19 @@ public class CMType {
 		this.typeName = newTypeName;
 	}
 
-	public CM_SemanticType getSemanticType() {
+	public RWT_Semantic getSemanticType() {
 		return semanticType;
 	}
 
-	public void setSemanticType(CM_SemanticType semanticType) {
+	public void setSemanticType(RWT_Semantic semanticType) {
 		this.semanticType = semanticType;
 	}
 
-	public CM_ApproxType getApproximationType() {
+	public RWT_Approx getApproximationType() {
 		return approximationType;
 	}
 
-	public void setApproximationType(CM_ApproxType approximationType) {
+	public void setApproximationType(RWT_Approx approximationType) {
 		this.approximationType = approximationType;
 	}
 
@@ -102,43 +102,43 @@ public class CMType {
 	
 	@Override
 	public boolean equals(Object object){
-		if(object instanceof CMType){
-			if(((CMType)object).getTypeName().equals(this.getTypeName())){
+		if(object instanceof RWType){
+			if(((RWType)object).getTypeName().equals(this.getTypeName())){
 				return true;
 			}
 		}
 		return false;
 	}
 	
-	public static CMType readInCMType(String correspondenceTypeFile){
+	public static RWType readInCMType(String correspondenceTypeFile){
 		return readInCorrespondenceType(new File(correspondenceTypeFile));
 	}
 	
-	public static CMType readInCorrespondenceType(File correspondenceTypeDir){
-		CMType cmType = new CMType();
-		File correspondenceTypeFile  = new File(correspondenceTypeDir+CMModelUtil.PathSeparator+CMModelUtil.typeDefinition);
+	public static RWType readInCorrespondenceType(File correspondenceTypeDir){
+		RWType cmType = new RWType();
+		File correspondenceTypeFile  = new File(correspondenceTypeDir+RWTSystemUtil.PathSeparator+RWTSystemUtil.typeDefinition);
 		if(correspondenceTypeFile.exists()){
 	        SAXReader reader = new SAXReader();
 	        try {
 				Document document = reader.read(correspondenceTypeFile);
 				Element root = document.getRootElement();
-				String typename = root.element(CMType.XMLTag_type_name).getText();
-				Element semantic_type_element = root.element(CMType.XMLTag_semantic_type);
-				String explicationLink = semantic_type_element.element(CMType.XMLTag_explication).getText();
+				String typename = root.element(RWType.XMLTag_type_name).getText();
+				Element semantic_type_element = root.element(RWType.XMLTag_semantic_type);
+				String explicationLink = semantic_type_element.element(RWType.XMLTag_explication).getText();
 		        
 		        cmType.setTypeName(typename);
-		        CM_SemanticType cm_semantic_type = new CM_SemanticType();
+		        RWT_Semantic cm_semantic_type = new RWT_Semantic();
 		        cm_semantic_type.setExplicationLink(explicationLink);
 
-		        for ( Iterator i = semantic_type_element.elementIterator(CMType.XMLTag_semantic_att); i.hasNext(); ) {
+		        for ( Iterator i = semantic_type_element.elementIterator(RWType.XMLTag_semantic_att); i.hasNext(); ) {
 		            Element element = (Element) i.next();
-		            String attributeName = element.attribute(CMType.XMLTag_name).getValue();
+		            String attributeName = element.attribute(RWType.XMLTag_name).getValue();
 //		            if(attributeName.equals(feasiable_range)){
 //		            	continue;
 //		            }
 		            String attributeValue = element.getText();
-		            String attributeStatus = element.attribute(CMType.XMLTag_enable_status).getValue();
-		            CMAttribute newatt = new CMAttribute(attributeName, attributeValue);
+		            String attributeStatus = element.attribute(RWType.XMLTag_enable_status).getValue();
+		            RWT_Attribute newatt = new RWT_Attribute(attributeName, attributeValue);
 		            newatt.setEnableStatus(attributeStatus);
 		            cm_semantic_type.addSemanticTypeAtt(newatt);
 		        }
@@ -156,15 +156,15 @@ public class CMType {
 		return cmType; 
 	}
 
-	public static void writeOutCMType(CMType correspondenceType, String correspondenceTypeFileDir){
+	public static void writeOutCMType(RWType correspondenceType, String correspondenceTypeFileDir){
 		writeOutCMType(correspondenceType, new File(correspondenceTypeFileDir));
 	}
 	
-	public static void writeOutCMType(CMType correspondenceType, File correspondenceTypeFileDir){
+	public static void writeOutCMType(RWType correspondenceType, File correspondenceTypeFileDir){
 		if(!correspondenceTypeFileDir.exists()){
 			correspondenceTypeFileDir.mkdir();
 		}
-		File correspondenceTypeFile  = new File(correspondenceTypeFileDir+CMModelUtil.PathSeparator+CMModelUtil.typeDefinition);
+		File correspondenceTypeFile  = new File(correspondenceTypeFileDir+RWTSystemUtil.PathSeparator+RWTSystemUtil.typeDefinition);
 		if(!correspondenceTypeFile.exists()){
 			try {
 				correspondenceTypeFile.createNewFile();
@@ -174,23 +174,23 @@ public class CMType {
 		}
 		
 		Document document = DocumentHelper.createDocument();
-        Element root = document.addElement( CMType.XMLTag_root );
-        root.addElement( CMType.XMLTag_type_name )
+        Element root = document.addElement( RWType.XMLTag_root );
+        root.addElement( RWType.XMLTag_type_name )
             .addText(correspondenceType.typeName);
         
-        Element semanticTypeElement = root.addElement( CMType.XMLTag_semantic_type );
-        semanticTypeElement.addElement(CMType.XMLTag_explication).addText(correspondenceType.semanticType.getExplicationLink());
-        for (CMAttribute semanticAtt :  correspondenceType.semanticType.getSemanticTypeAttributes()){
-        	semanticTypeElement.addElement(CMType.XMLTag_semantic_att)
-        					.addAttribute(CMType.XMLTag_name, semanticAtt.getAttributeName())
-        					.addAttribute(CMType.XMLTag_enable_status, semanticAtt.getEnableStatus())
+        Element semanticTypeElement = root.addElement( RWType.XMLTag_semantic_type );
+        semanticTypeElement.addElement(RWType.XMLTag_explication).addText(correspondenceType.semanticType.getExplicationLink());
+        for (RWT_Attribute semanticAtt :  correspondenceType.semanticType.getSemanticTypeAttributes()){
+        	semanticTypeElement.addElement(RWType.XMLTag_semantic_att)
+        					.addAttribute(RWType.XMLTag_name, semanticAtt.getAttributeName())
+        					.addAttribute(RWType.XMLTag_enable_status, semanticAtt.getEnableStatus())
         					.addText(semanticAtt.getAttributeValue());
         }
-        Element machineTypeElement = root.addElement( CMType.XMLTag_machine_type );
+        Element machineTypeElement = root.addElement( RWType.XMLTag_machine_type );
         /* 
          * do something about machine type 
          */
-        Element approxTypeElement = root.addElement( CMType.XMLTag_approx_type );
+        Element approxTypeElement = root.addElement( RWType.XMLTag_approx_type );
         /* 
          * do something about approximation type 
          */
@@ -206,15 +206,15 @@ public class CMType {
 		}
 	}
 	
-	public static CMType[] readInAllCMTypes(IFile fileInput){
+	public static RWType[] readInAllCMTypes(IFile fileInput){
 		return readInAllCMTypes(fileInput.getProject());
 	}
 	
-	public static CMType[] readInAllCMTypes(IProject iproject){
-		Object location = CMModelUtil.readPropertyFromConfigFile(iproject.getName());
-		ArrayList<CMType> results = new ArrayList<CMType>();
+	public static RWType[] readInAllCMTypes(IProject iproject){
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iproject.getName());
+		ArrayList<RWType> results = new ArrayList<RWType>();
 		if(location !=null){
-			File dir = new File(location.toString()+CMModelUtil.PathSeparator+CMModelUtil.CMTypesFolder);
+			File dir = new File(location.toString()+RWTSystemUtil.PathSeparator+RWTSystemUtil.CMTypesFolder);
 			if((dir.exists())&& (dir.isDirectory())){
 				File[] cmtypeFiles = dir.listFiles(new FilenameFilter() {
 					@Override
@@ -223,11 +223,11 @@ public class CMType {
 					}
 				});
 				for(int i=0;i<cmtypeFiles.length;i++){
-					results.add(CMType.readInCorrespondenceType(cmtypeFiles[i]));
+					results.add(RWType.readInCorrespondenceType(cmtypeFiles[i]));
 				}
 			}	
 		}
-		return results.toArray(new CMType[results.size()]);
+		return results.toArray(new RWType[results.size()]);
 	}
 	
 	public String getAttributeValue(String attName){
@@ -235,8 +235,8 @@ public class CMType {
 	}
 	
 	public String getUnitsAttribute(){
-		for(CMAttribute att : this.semanticType.getSemanticTypeAttributes()){
-			if(att.getAttributeName().equals(CMType.units)){
+		for(RWT_Attribute att : this.semanticType.getSemanticTypeAttributes()){
+			if(att.getAttributeName().equals(RWType.units)){
 				return att.getAttributeName() + "=" + att.getAttributeValue();
 			}
 		}
@@ -246,9 +246,9 @@ public class CMType {
 	public String getEnabledAttributeSet(){
 		String result = "";
 		ArrayList<String> enabledAtts = new ArrayList<String>();
-		for(CMAttribute att : this.semanticType.getSemanticTypeAttributes()){
+		for(RWT_Attribute att : this.semanticType.getSemanticTypeAttributes()){
 			//include only enabled attributes
-			if(att.getEnableStatus().equals("y") && !att.getAttributeName().equals(CMType.feasiable_range)){
+			if(att.getEnableStatus().equals("y") && !att.getAttributeName().equals(RWType.feasiable_range)){
 				enabledAtts.add(att.getAttributeName() + "=" + att.getAttributeValue());
 			}
 		}
@@ -265,8 +265,8 @@ public class CMType {
 	}
 	
 	public RealInterval getInterval(){
-		for(CMAttribute att : semanticType.getSemanticTypeAttributes()){
-			if(att.getAttributeName().equals(CMType.feasiable_range)){
+		for(RWT_Attribute att : semanticType.getSemanticTypeAttributes()){
+			if(att.getAttributeName().equals(RWType.feasiable_range)){
 				String range = att.getAttributeValue();
 				if(range.indexOf(",")==-1 || range.split(",").length!=2){
 					return null;
@@ -286,10 +286,10 @@ public class CMType {
 			if((dir.exists())&& (dir.isDirectory())){
 				for(File cmFolder : dir.listFiles()){
 					if(cmFolder.isDirectory()){
-						CMType cmtype = CMType.readInCorrespondenceType(cmFolder);
-						CM_SemanticType st = cmtype.getSemanticType();
-						st.addSemanticTypeAtt(new CMAttribute(attName,attVal));
-						CMType.writeOutCMType(cmtype, cmFolder);
+						RWType cmtype = RWType.readInCorrespondenceType(cmFolder);
+						RWT_Semantic st = cmtype.getSemanticType();
+						st.addSemanticTypeAtt(new RWT_Attribute(attName,attVal));
+						RWType.writeOutCMType(cmtype, cmFolder);
 					}
 				}
 			}	
@@ -302,16 +302,16 @@ public class CMType {
 			if((dir.exists())&& (dir.isDirectory())){
 				for(File cmFolder : dir.listFiles()){
 					if(cmFolder.isDirectory()){
-						CMType cmtype = CMType.readInCorrespondenceType(cmFolder);
-						CM_SemanticType st = cmtype.getSemanticType();
-						for(CMAttribute cmAtt : st.getSemanticTypeAttributes()){
+						RWType cmtype = RWType.readInCorrespondenceType(cmFolder);
+						RWT_Semantic st = cmtype.getSemanticType();
+						for(RWT_Attribute cmAtt : st.getSemanticTypeAttributes()){
 							if(cmAtt.getAttributeName().equals(attName)){
-								cmAtt.setEnableStatus(CMAttribute.enableMark);
+								cmAtt.setEnableStatus(RWT_Attribute.enableMark);
 							}else{
-								cmAtt.setEnableStatus(CMAttribute.disEnableMark);
+								cmAtt.setEnableStatus(RWT_Attribute.disEnableMark);
 							}
 						}
-						CMType.writeOutCMType(cmtype, cmFolder);
+						RWType.writeOutCMType(cmtype, cmFolder);
 					}
 				}
 			}	
@@ -324,12 +324,12 @@ public class CMType {
 			if((dir.exists())&& (dir.isDirectory())){
 				for(File cmFolder : dir.listFiles()){
 					if(cmFolder.isDirectory()){
-						CMType cmtype = CMType.readInCorrespondenceType(cmFolder);
-						CM_SemanticType st = cmtype.getSemanticType();
-						for(CMAttribute cmAtt : st.getSemanticTypeAttributes()){
-							cmAtt.setEnableStatus(CMAttribute.enableMark);
+						RWType cmtype = RWType.readInCorrespondenceType(cmFolder);
+						RWT_Semantic st = cmtype.getSemanticType();
+						for(RWT_Attribute cmAtt : st.getSemanticTypeAttributes()){
+							cmAtt.setEnableStatus(RWT_Attribute.enableMark);
 						}
-						CMType.writeOutCMType(cmtype, cmFolder);
+						RWType.writeOutCMType(cmtype, cmFolder);
 					}
 				}
 			}	
@@ -364,7 +364,7 @@ public class CMType {
 		System.out.println(cmtypenew.getEnabledAttributeSet());
 		*/
 		String cmfolder = "C:\\develop\\projects\\case-studies\\case-study\\EvaluationCMs\\KelpieFlightPlanner\\CMTYPES";
-		CMType.addUniversalAttribute(cmfolder, CMType.feasiable_range, "");
+		RWType.addUniversalAttribute(cmfolder, RWType.feasiable_range, "");
 		
 		
 		//String cmfolder = "E:\\Develop\\EvaluationCMs\\KelpieFlightPlanner\\CMTYPES";

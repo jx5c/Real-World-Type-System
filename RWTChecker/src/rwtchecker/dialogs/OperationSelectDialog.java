@@ -18,7 +18,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 
-import rwtchecker.CMRules.CMTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
 
 public class OperationSelectDialog extends TitleAreaDialog {
 
@@ -62,7 +62,7 @@ public class OperationSelectDialog extends TitleAreaDialog {
 			public void widgetSelected(SelectionEvent e) {
 				TreeItem selectedItem = operationListTree.getSelection()[0];
 				if(selectedItem.getData() !=null){
-					CMTypeRuleCategory thisOperationType = (CMTypeRuleCategory)(selectedItem.getData());
+					RWTypeRuleCategory thisOperationType = (RWTypeRuleCategory)(selectedItem.getData());
 					operationDescriptionText.setText(thisOperationType.getDescription());
 				}
 			} 
@@ -88,7 +88,7 @@ public class OperationSelectDialog extends TitleAreaDialog {
 	}
 
 	private void LoadOperationsInTree() {
-		ArrayList<CMTypeRuleCategory> operationList = CMTypeRuleCategory.getDefaultOperationList();
+		ArrayList<RWTypeRuleCategory> operationList = RWTypeRuleCategory.getDefaultOperationList();
 		operationListTree.removeAll();
 		TreeItem rootItemForOperations = new TreeItem(operationListTree, 0);
 		rootItemForOperations.setText("Operations");
@@ -112,7 +112,7 @@ public class OperationSelectDialog extends TitleAreaDialog {
 		TreeItem selectedItem = operationListTree.getSelection()[0];
 		if(selectedItem!=null){
 			targetText.setText(selectedItem.getText());
-			CMTypeRuleCategory thisOperationType = (CMTypeRuleCategory)(selectedItem.getData());
+			RWTypeRuleCategory thisOperationType = (RWTypeRuleCategory)(selectedItem.getData());
 			if(thisOperationType.getParameterCourt() > 1){
 				operandTwoTypeText.setEditable(true);	
 				operandTwoTypeText.setEnabled(true);

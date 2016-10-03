@@ -32,7 +32,7 @@ import rwtchecker.annotation.visitor.TypeInferenceReturnValueToMethodVisitor;
 import rwtchecker.annotation.visitor.TypeInferenceVisitor;
 import rwtchecker.typechecker.ExtractorVisitor;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 
 public class TypeInferenceReturnValueToMethod implements IObjectActionDelegate {
@@ -52,7 +52,7 @@ public class TypeInferenceReturnValueToMethod implements IObjectActionDelegate {
 			return;
 		}else{
 			IJavaProject javaProject = JavaCore.create(iProject);
-			ArrayList<IResource> javaSourceFiles = CMModelUtil.getAllJavaSourceFiles(javaProject);
+			ArrayList<IResource> javaSourceFiles = RWTSystemUtil.getAllJavaSourceFiles(javaProject);
 			for(IResource javaSource:javaSourceFiles){
         		ASTParser parser = ASTParser.newParser(AST.JLS3);
         		parser.setKind(ASTParser.K_COMPILATION_UNIT);

@@ -19,8 +19,8 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.CM.CM_ApproxType;
-import rwtchecker.CM.CorrespondenceApproTypeProperty;
+import rwtchecker.rwt.RWT_Approx;
+import rwtchecker.rwt.RWT_ApproximationProperty;
 
 public class CMTypeApproxPropertyDialog extends TitleAreaDialog {
 
@@ -28,12 +28,12 @@ public class CMTypeApproxPropertyDialog extends TitleAreaDialog {
 	private Text propertyExplanation;
 	private Text propertyValueText;
 	
-	private CM_ApproxType correspondence_ApproxType;
+	private RWT_Approx correspondence_ApproxType;
 	private TableViewer propertiesTableViewer;
 	
-	private CorrespondenceApproTypeProperty modifyAtt ;
+	private RWT_ApproximationProperty modifyAtt ;
 
-	public CMTypeApproxPropertyDialog(Shell parentShell, CM_ApproxType approxType, TableViewer propertiesTableViewer) {
+	public CMTypeApproxPropertyDialog(Shell parentShell, RWT_Approx approxType, TableViewer propertiesTableViewer) {
 		super(parentShell);
 		this.correspondence_ApproxType = approxType;
 		this.propertiesTableViewer = propertiesTableViewer;
@@ -93,7 +93,7 @@ public class CMTypeApproxPropertyDialog extends TitleAreaDialog {
 		propertyValueText.setLayoutData(gridData);
 		
 		TableItem selectedItem = propertiesTableViewer.getTable().getSelection()[0];
-		modifyAtt = new CorrespondenceApproTypeProperty(selectedItem.getText(0), selectedItem.getText(2));
+		modifyAtt = new RWT_ApproximationProperty(selectedItem.getText(0), selectedItem.getText(2));
 		modifyAtt.setPossibleValue(selectedItem.getText(1));
 		
 		return parent;
@@ -168,7 +168,7 @@ public class CMTypeApproxPropertyDialog extends TitleAreaDialog {
 	
 	@Override
 	protected void okPressed() {
-		CorrespondenceApproTypeProperty newApproximateProperty = new CorrespondenceApproTypeProperty();
+		RWT_ApproximationProperty newApproximateProperty = new RWT_ApproximationProperty();
 		newApproximateProperty.setProperty_name(propertyNameText.getText());
 		newApproximateProperty.setDescription(propertyExplanation.getText());
 		newApproximateProperty.setPossibleValue(propertyValueText.getText());

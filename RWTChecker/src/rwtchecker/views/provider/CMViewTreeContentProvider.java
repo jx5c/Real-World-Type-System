@@ -1,13 +1,8 @@
 package rwtchecker.views.provider;
 
-import java.util.ArrayList;
-
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.ITreeContentProvider;
 import org.eclipse.jface.viewers.Viewer;
-import org.eclipse.ui.part.ViewPart;
-
-import rwtchecker.CM.CMType;
 
 
 public class CMViewTreeContentProvider implements IStructuredContentProvider, 
@@ -28,6 +23,7 @@ public class CMViewTreeContentProvider implements IStructuredContentProvider,
 		 }
 		return invisibleRoot.getChildren();
 	}
+	
 	public Object getParent(Object child) {
 		if (child instanceof TreeObject) {
 			return ((TreeObject)child).getParent();

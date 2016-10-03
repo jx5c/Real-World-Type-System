@@ -10,8 +10,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRulesManager;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 
 public class TypePatternTest {
 	

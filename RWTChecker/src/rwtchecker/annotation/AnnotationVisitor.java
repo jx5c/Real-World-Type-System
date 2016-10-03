@@ -2,8 +2,8 @@ package rwtchecker.annotation;
 
 import org.eclipse.jdt.core.dom.*;
 
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.annotation.FileAnnotations;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 
 public class AnnotationVisitor extends ASTVisitor {
 		

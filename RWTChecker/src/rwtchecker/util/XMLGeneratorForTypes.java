@@ -9,8 +9,8 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.io.XMLWriter;
 
-import rwtchecker.CM.CMAttribute;
-import rwtchecker.CM.CMType;
+import rwtchecker.rwt.RWT_Attribute;
+import rwtchecker.rwt.RWType;
 
 public class XMLGeneratorForTypes {
 	
@@ -22,7 +22,7 @@ public class XMLGeneratorForTypes {
 	public static String XMLTag_explication_attribute = "explication";
 	public static String XMLTag_potential_values = "possible_values";
 	
-	public static void persistTypeToFile(File file, CMType type){
+	public static void persistTypeToFile(File file, RWType type){
 		if(type==null && !file.exists()){
 			return;
 		}
@@ -33,7 +33,7 @@ public class XMLGeneratorForTypes {
         Element explicationElement = root.addElement( XMLGeneratorForTypes.XMLTag_explication_type );
         explicationElement.addText(type.getSemanticType().getExplicationLink());
         Element attrisElement = root.addElement( XMLGeneratorForTypes.XMLTag_attributes );
-        for(CMAttribute att : type.getSemanticType().getSemanticTypeAttributes()){
+        for(RWT_Attribute att : type.getSemanticType().getSemanticTypeAttributes()){
         	Element attElement = attrisElement.addElement( att.getAttributeName());
         	attElement.addElement(XMLTag_rwv).addText(att.getAttributeValue());
         	attElement.addElement(XMLTag_explication_attribute);

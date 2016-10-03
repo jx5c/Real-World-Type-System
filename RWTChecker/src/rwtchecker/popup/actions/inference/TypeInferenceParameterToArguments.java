@@ -30,7 +30,7 @@ import org.eclipse.ui.IWorkbenchPart;
 
 import rwtchecker.typechecker.ExtractorVisitor;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 
 public class TypeInferenceParameterToArguments implements IObjectActionDelegate {
@@ -104,7 +104,7 @@ public class TypeInferenceParameterToArguments implements IObjectActionDelegate 
 	 */
 	public static TypeInferenceParameterToArguments getManagerForCurrentProject(){
 		if(ActivePart.getFileOfActiveEditror() != null){
-			File file = CMModelUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
+			File file = RWTSystemUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
 			return new TypeInferenceParameterToArguments(file);
 		}
 		return null;
@@ -152,7 +152,7 @@ public class TypeInferenceParameterToArguments implements IObjectActionDelegate 
 				return;
 			}else{
 				IJavaProject javaProject = JavaCore.create(iProject);
-				ArrayList<IResource> javaSourceFiles = CMModelUtil.getAllJavaSourceFiles(javaProject);
+				ArrayList<IResource> javaSourceFiles = RWTSystemUtil.getAllJavaSourceFiles(javaProject);
 				for(IResource javaSource:javaSourceFiles){
 	        		ASTParser parser = ASTParser.newParser(AST.JLS3);
 	        		parser.setKind(ASTParser.K_COMPILATION_UNIT);

@@ -191,12 +191,6 @@
                menubarPath="RWTypeChecker.subMenuInJavaEditor/group2">
 	      </action>
 	      <action
-              class="rwtchecker.popup.actions.AnnotationGuideActionInJavaEditor"
-               id="rwtchecker.AnnotationGuideActionInJavaEditor"
-               label="Annotation Guide"
-               menubarPath="RWTypeChecker.subMenuInJavaEditor/group2">
-	      </action>
-	      <action
               class="rwtchecker.popup.actions.TypePropagationActionInJavaEditor"
                id="rwtchecker.TypePropagationActionInJavaEditor"
                label="Type Propagation"
@@ -237,35 +231,35 @@
    <extension
          point="org.eclipse.ui.views">
       <category
-            id="rwt system"
-            name="RWT System Views">
+            id="rwt.views.id"
+            name="RWT System">
       </category>
       <view
-            category="RWT System"
+            category="rwt.views.id"
             class="rwtchecker.views.DiagnoseView"
             icon="icons/sample.gif"
             id="rwtchecker.views.DiagnoseView"
             name="Diagnose View">
       </view>
       <view
-            category="RWT System"
+            category="rwt.views.id"
             class="rwtchecker.views.ConceptDetailView"
             icon="icons/sample.gif"
             id="rwtchecker.views.ConceptDetailView"
             name="Concept Explication">
       </view>
       <view
-            category="RWT System"
+            category="rwt.views.id"
             class="rwtchecker.views.RWTView"
             icon="icons/sample.gif"
-            id="rwtchecker.views.CMTypeView"
+            id="rwtchecker.views.rwtView"
             name="RWT View">
       </view>
       <view
-            category="RWT System"
+            category="rwt.views.id"
             class="rwtchecker.views.RWTRulesView"
             icon="icons/sample.gif"
-            id="rwtchecker.views.CMTypeRulesView"
+            id="rwtchecker.views.RWTRulesView"
             name="Real-World Type Rules View">
       </view>
    </extension>
@@ -273,9 +267,25 @@
    <extension
          point="org.eclipse.ui.newWizards">
       <category
-            id="RWTWizard"
-            name="Real World Type Wizards">
+            id="RWTProjectWizard"
+            name="Real World Type System Project">
       </category>
+	  <wizard
+         category="RWTProjectWizard"
+         class="rwtchecker.wizards.NewRWTJavaProjectWizard"
+         icon="icons/R.Symbol.jpg"
+         id="rwtchecker.wizards.NewRWTProjectWizard"
+         name="New RWT System Project for Java"
+         project="true">
+      </wizard>
+      	  <wizard
+               category="RWTProjectWizard"
+               class="rwtchecker.wizards.NewRWTCProjectWizard"
+               icon="icons/R.Symbol.jpg"
+               id="rwtchecker.wizards.NewRWTCProjectWizard"
+               name="New RWT System Project for C"
+               project="true">
+      </wizard>
       <!--wizard
             category="CMTypeSystem"
             class="cmtypechecker.wizards.NewConceptWizard"
@@ -283,5 +293,39 @@
             id="cmtypechecker.wizards.NewConceptWizard"
             name="New Concept Wizard">
       </wizard-->
-	</extension>
+   </extension>
+   
+   <extension
+         point="org.eclipse.jdt.ui.javaEditorTextHovers">
+      <hover
+            activate="true"
+            class="rwtchecker.util.RWTHover"
+            id="rwtchecker.util.RWTHover">
+      </hover>
+   </extension>
+   <extension
+         point="org.eclipse.ui.startup">
+      <startup class="rwtchecker.util.StartupControl"/>
+   </extension>
+   <extension
+         point="org.eclipse.ui.statusHandlers">
+      <statusHandler
+            class="rwtchecker.handler.NoRWTSystemErrorHandler"
+            id="rwtchecker.handler.NoRWTSystemErrorHandler"
+            plugin="RWTChecker">
+      </statusHandler>
+   </extension>
+   <!--extension
+         id="id1"
+         point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="singleton-global"
+            icon="icons/R.Symbol.jpg"
+            thread="main"
+            visible="true">
+            <run
+               class="rwtchecker.MyApplication">
+         	</run>
+      </application>
+   </extension-->
 </plugin>

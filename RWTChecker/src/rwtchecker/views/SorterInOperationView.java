@@ -6,7 +6,7 @@ import java.util.Locale;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.jface.viewers.ViewerSorter;
 
-import rwtchecker.CMRules.CMTypeRule;
+import rwtchecker.rwtrules.RWTypeRule;
 
 public class SorterInOperationView extends ViewerSorter {
     private static final int Operation_Name = 1;
@@ -29,8 +29,8 @@ public class SorterInOperationView extends ViewerSorter {
     }
     public int compare(Viewer viewer, Object obj1, Object obj2) {
     	Collator collator = Collator.getInstance(Locale.getDefault());
-    	CMTypeRule operation1 = (CMTypeRule)obj1;
-    	CMTypeRule operation2 = (CMTypeRule)obj2;
+    	RWTypeRule operation1 = (RWTypeRule)obj1;
+    	RWTypeRule operation2 = (RWTypeRule)obj2;
         switch(sortType){
             case Operation_Name:{
                 String l1 = operation1.getOperationName();

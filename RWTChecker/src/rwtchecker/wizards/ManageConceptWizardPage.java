@@ -51,10 +51,10 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 
+import rwtchecker.concept.ConceptAttribute;
+import rwtchecker.concept.ConceptDetail;
 import rwtchecker.dialogs.ConceptAttributeEditingDialog;
-import rwtchecker.realworldmodel.ConceptAttribute;
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.ConceptDetailView;
 import rwtchecker.views.provider.ConceptDetailContentProvider;
 import rwtchecker.views.provider.ConceptDetailLabelProvider;
@@ -314,7 +314,7 @@ public class ManageConceptWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
 					selectedConceptDetail.setDefinition(definitonContentText.getText());
-					File newConceptFile = CMModelUtil.getConceptDetailFile(currentProject, selectedConceptDetail.getConceptName());
+					File newConceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, selectedConceptDetail.getConceptName());
 					ConceptDetail.writeOutConceptDetails(selectedConceptDetail, newConceptFile);
 				}
 			}
@@ -341,7 +341,7 @@ public class ManageConceptWizardPage extends WizardPage {
 				conceptDetail.setConceptName("new Concept");
 				newConceptTreeItem.setText(conceptDetail.getConceptName());
 				newConceptTreeItem.setData(conceptDetail);
-				File conceptFile = CMModelUtil.getConceptDetailFile(currentProject, conceptDetail.getConceptName());
+				File conceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, conceptDetail.getConceptName());
 				ConceptDetail.writeOutConceptDetails(conceptDetail, conceptFile);
 				selectedConceptDetail = conceptDetail;
 				editingConceptNameInTree(newConceptTreeItem);  
@@ -470,8 +470,8 @@ public class ManageConceptWizardPage extends WizardPage {
 	}
 	
 	private void renameConceptEvent(String newConceptName){
-		File oldConceptFile = CMModelUtil.getConceptDetailFile(currentProject, selectedConceptDetail.getConceptName());
-		File newConceptFile = CMModelUtil.getConceptDetailFile(currentProject, newConceptName);
+		File oldConceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, selectedConceptDetail.getConceptName());
+		File newConceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, newConceptName);
 		selectedConceptDetail.setConceptName(newConceptName);
 		oldConceptFile.renameTo(newConceptFile);
 		ConceptDetail.writeOutConceptDetails(selectedConceptDetail, newConceptFile);

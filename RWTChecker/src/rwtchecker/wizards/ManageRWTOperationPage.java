@@ -46,13 +46,13 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
+import rwtchecker.concept.ConceptDetail;
 import rwtchecker.dialogs.OperationSelectDialog;
 import rwtchecker.dialogs.SelectConceptExplicationDialog;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwt.RWT_Semantic;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.CMApproTableContentProvider;
 import rwtchecker.views.provider.CMApproTablelLabelProvider;
 import rwtchecker.views.provider.CMAttributeTableContentProvider;
@@ -63,7 +63,7 @@ import rwtchecker.views.provider.TreeObject;
 
 
 
-public class ManageCMTypeOperationPage extends WizardPage {
+public class ManageRWTOperationPage extends WizardPage {
 
 	public static final String PAGE_NAME = "ManageCMTypeOperationPage";
 	private Text containerText;
@@ -79,7 +79,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 	private String ruleContentsFilePath;
 
 	private Label CMtypeDetailLabel;
-	private CMType selectedNewCMType;
+	private RWType selectedNewCMType;
 	private Text associatedExplicationText;
 	private TableViewer typeAttributeViewer;
 	private TableViewer approxAttributeViewer;
@@ -89,7 +89,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 	protected TreeObject cmtypeTreeSelectedObject;
 	
 	
-	public ManageCMTypeOperationPage() {
+	public ManageRWTOperationPage() {
 		super(PAGE_NAME);
 		setTitle("New operation for Correspondence Type");
 		setDescription("This wizard creates a new operation based on correspondence types.");
@@ -290,10 +290,10 @@ public class ManageCMTypeOperationPage extends WizardPage {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				if(obj != null){
 					cmtypeTreeSelectedObject = (TreeObject)obj;
-					selectedNewCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+					selectedNewCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
 					if(selectedNewCMType != null){
 						CMtypeDetailLabel.setText("Type Detail: "+selectedNewCMType.getTypeName());
-						CM_SemanticType thisType = selectedNewCMType.getSemanticType();
+						RWT_Semantic thisType = selectedNewCMType.getSemanticType();
 						ConceptDetail explication = ConceptDetail.readInByLink(thisType.getExplicationLink());
 						associatedExplicationText.setText(explication.getConceptName());
 						typeAttributeViewer.setInput(selectedNewCMType.getSemanticType());
@@ -382,7 +382,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 		if( currentFile != null){
 	        currentProject = currentFile.getProject();	
 	        this.containerText.setText(currentProject.getName());
-			TreeObject cmtypeTreeObject = CMModelUtil.readInAllCMTypesToTreeObject(this.currentProject);
+			TreeObject cmtypeTreeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(this.currentProject);
 			cmTypesTreeViewer.setInput(cmtypeTreeObject);
 		}
 	}
@@ -439,7 +439,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 				IResource container = ResourcesPlugin.getWorkspace().getRoot()
 				.findMember(new Path(getContainerName()));
 				this.currentProject =  container.getProject();
-				TreeObject cmtypeTreeObject = CMModelUtil.readInAllCMTypesToTreeObject(this.currentProject);
+				TreeObject cmtypeTreeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(this.currentProject);
 				cmTypesTreeViewer.setInput(cmtypeTreeObject);
 			}
 		}
@@ -522,7 +522,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 	          return;
 	        }
 	        String text = (String) event.data;
-	        CMType dragedType = CMModelUtil.getCMTypeFromTypeName(currentProject, text);
+	        RWType dragedType = RWTSystemUtil.getCMTypeFromTypeName(currentProject, text);
 	        if(dragedType != null){
 	        	operandOneTypeText.setText(dragedType.getEnabledAttributeSet());	
 	        }
@@ -542,7 +542,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 	          return;
 	        }
 	        String text = (String) event.data;
-	        CMType dragedType = CMModelUtil.getCMTypeFromTypeName(currentProject, text);
+	        RWType dragedType = RWTSystemUtil.getCMTypeFromTypeName(currentProject, text);
 	        if(dragedType != null){
 	        	operandTwoTypeText.setText(dragedType.getEnabledAttributeSet());	
 	        }
@@ -562,7 +562,7 @@ public class ManageCMTypeOperationPage extends WizardPage {
 	          return;
 	        }
 	        String text = (String) event.data;
-	        CMType dragedType = CMModelUtil.getCMTypeFromTypeName(currentProject, text);
+	        RWType dragedType = RWTSystemUtil.getCMTypeFromTypeName(currentProject, text);
 	        if(dragedType != null){
 	        	returnTypeText.setText(dragedType.getEnabledAttributeSet());	
 	        }

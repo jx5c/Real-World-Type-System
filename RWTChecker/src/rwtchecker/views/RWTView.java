@@ -10,16 +10,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.annotation.AnnotationVisitor;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
 import rwtchecker.typechecker.RevisionVisitor;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
 import rwtchecker.util.XMLGeneratorForTypes;
 import rwtchecker.views.provider.CMAttributeTableContentProvider;
@@ -27,7 +27,7 @@ import rwtchecker.views.provider.CMAttributeTablelLabelProvider;
 import rwtchecker.views.provider.CMViewTreeContentProvider;
 import rwtchecker.views.provider.CMViewTreeViewLabelProvider;
 import rwtchecker.views.provider.TreeObject;
-import rwtchecker.wizards.ManageCMTypeWizard;
+import rwtchecker.wizards.ManageRWTypeWizard;
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
@@ -100,7 +100,7 @@ import org.eclipse.text.edits.TextEdit;
 
 public class RWTView extends ViewPart {
 
-	public static final String ID = "cmtypechecker.views.CMTypeView";
+	public static final String ID = "rwtchecker.views.rwtView";
 
 	private TableViewer typeAttributeViewer;
 
@@ -113,7 +113,7 @@ public class RWTView extends ViewPart {
 	private Action showAnnotationsActionInTreeViewer;
 	private Action markAllVariablesActionInTreeViewer;
 	private Action generateAssertionsActionInTreeViewer;
-	private Action markPrimaryActionInTreeViewer;
+//	private Action markPrimaryActionInTreeViewer;
 	private Action manageCorrespondenceTypeInTreeViewer;
 	
 	private Action saveTypesToXMLFileInTreeViewer;
@@ -137,7 +137,7 @@ public class RWTView extends ViewPart {
 	private TreeObject thisSelectedTreeObject;
 	private TreeObject cmtypeTreeRootObject;
 	
-	private CMType selectedNewCMType;
+	private RWType selectedNewCMType;
 	
 	private IProject currentProject;
 	
@@ -237,7 +237,6 @@ public class RWTView extends ViewPart {
 				manager.add(new Separator(IWorkbenchActionConstants.MB_ADDITIONS));
 				manager.add(markAllVariablesActionInTreeViewer);
 				manager.add(generateAssertionsActionInTreeViewer);
-				manager.add(markPrimaryActionInTreeViewer);
 				// Other plug-ins can contribute there actions here
 			}
 		});
@@ -278,7 +277,7 @@ public class RWTView extends ViewPart {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				if(obj != null){
 					thisSelectedTreeObject = (TreeObject)obj;
-					selectedNewCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, thisSelectedTreeObject);
+					selectedNewCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, thisSelectedTreeObject);
 					if(selectedNewCMType!=null){
 						typeAttributeViewer.setInput(selectedNewCMType.getSemanticType());
 						if(conceptDetailView!= null){
@@ -295,7 +294,7 @@ public class RWTView extends ViewPart {
 			public void run() {
 				IFile currentFile =  ActivePart.getFileOfActiveEditror();
 				if( currentFile != null){
-					cmtypeTreeRootObject = CMModelUtil.readInAllCMTypesToTreeObject(currentFile);
+					cmtypeTreeRootObject = RWTSystemUtil.readInAllCMTypesToTreeObject(currentFile);
 					if(cmtypeTreeRootObject!= null){
 						existingTypesTreeViewer.setInput(cmtypeTreeRootObject);		
 				        currentProject = currentFile.getProject();	
@@ -310,7 +309,7 @@ public class RWTView extends ViewPart {
 				
 		manageCorrespondenceTypeInTreeViewer = new Action(){
 			public void run() {
-				ManageCMTypeWizard wizard = new ManageCMTypeWizard();
+				ManageRWTypeWizard wizard = new ManageRWTypeWizard();
 				wizard.init(RWTView.this.getSite().getWorkbenchWindow().getWorkbench(),
 			            null);
 			    WizardDialog dialog = new WizardDialog(RWTView.this.getSite().getShell(), wizard);
@@ -381,21 +380,15 @@ public class RWTView extends ViewPart {
 			public void run() {
 				generateAssertions();
 			}
+
+			private void generateAssertions() {
+			}
 		};
 		generateAssertionsActionInTreeViewer.setText("Generate all assertions in annotation");
 		generateAssertionsActionInTreeViewer.setToolTipText("Generate all assertions in annotation");
 		generateAssertionsActionInTreeViewer.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
 			getImageDescriptor(ISharedImages.IMG_TOOL_FORWARD));
 		
-		markPrimaryActionInTreeViewer = new Action() {
-			public void run() {
-				markPrimaryType();
-			}
-		};
-		markPrimaryActionInTreeViewer.setText("Mark this type as primary type for all subtypes");
-		markPrimaryActionInTreeViewer.setToolTipText("Mark this type as primary type for all subtypes");
-		markPrimaryActionInTreeViewer.setImageDescriptor(PlatformUI.getWorkbench().getSharedImages().
-			getImageDescriptor(ISharedImages.IMG_TOOL_FORWARD));
 	}
 
 
@@ -439,7 +432,7 @@ public class RWTView extends ViewPart {
 	}
 	
 	public static boolean getAnnotationStatus(){
-		CompilationUnit compilationResult = CMModelUtil.getCurrentCompliationUnit();
+		CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
 		List comments = compilationResult.getCommentList();
 		if(comments.size() == 0){
 			return false;
@@ -463,12 +456,12 @@ public class RWTView extends ViewPart {
 	}
 	
 	private void persistAnnotationsToFile(){	
-		CompilationUnit compilationResult = CMModelUtil.getCurrentCompliationUnit();
+		CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
 		AnnotationVisitor annotationVisitor = new AnnotationVisitor();
 		compilationResult.accept(annotationVisitor);
 		FileAnnotations fileAnnotations = annotationVisitor.getFileAnnotations();
 		IFile currentFile = ActivePart.getFileOfActiveEditror();		
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		FileAnnotations.saveToFile(fileAnnotations, annotationFile);
 		
 		BufferedReader infile = null;
@@ -496,7 +489,7 @@ public class RWTView extends ViewPart {
 	
 	private void saveTypesInXMLFiles(){	
 		if(selectedNewCMType!=null){
-			File xmlFile = CMModelUtil.generateXMLFile(currentProject, selectedNewCMType.getTypeName());
+			File xmlFile = RWTSystemUtil.generateXMLFile(currentProject, selectedNewCMType.getTypeName());
 			XMLGeneratorForTypes.persistTypeToFile(xmlFile, selectedNewCMType);
 		}
 	}
@@ -507,7 +500,7 @@ public class RWTView extends ViewPart {
 		if(currentJavaEditor!= null){
 			/*
 			CMTypeRulesManager operationManager = CMTypeRulesManager.getManagerForCurrentProject(); 
-			CompilationUnit compilationResult = CMModelUtil.getCurrentCompliationUnit();
+			CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
 			NewTypeCheckerVisitor visitor = new NewTypeCheckerVisitor(operationManager, compilationResult, typeName);
 			compilationResult.accept(visitor);
 			CMTypeCheckingResults = visitor.getErrorReports();
@@ -533,20 +526,6 @@ public class RWTView extends ViewPart {
 		}
 	}
 	
-	private void generateAssertions(){
-		
-	}
-	
-	private void markPrimaryType(){
-		if(thisSelectedTreeObject!= null){
-			this.thisSelectedTreeObject.setPrimaryType(!thisSelectedTreeObject.isPrimaryType());
-			TreeObject.updateTreeObjectToFile(currentProject, thisSelectedTreeObject);
-			File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, thisSelectedTreeObject);
-			CMType.writeOutCMType(selectedNewCMType, cmtypeFile);
-			existingTypesTreeViewer.refresh();
-		}
-	}
-	
 	private void bindingType(String typeName){
 		if(selectedNewCMType!=null){
 			typeAttributeViewer.setInput(selectedNewCMType.getSemanticType());
@@ -566,7 +545,7 @@ public class RWTView extends ViewPart {
 		if(iselection != null){
 			if(iselection instanceof ITextSelection){
 				ITextSelection textSelection = (ITextSelection)iselection;
-				CompilationUnit compilationResult = CMModelUtil.getCurrentCompliationUnit();
+				CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
 				if(compilationResult!=null){
 					ASTNode node = NodeFinder.perform(compilationResult.getRoot(),textSelection.getOffset(), textSelection.getLength());
 					if(node !=null){
@@ -582,7 +561,6 @@ public class RWTView extends ViewPart {
 				            	addJAVADocElement((BodyDeclaration)parentNode, compilationResult, RWTAnnotation.Define, newAddedVariableName, typeName);	
 				            }
 			    			saveJAVADocElementToFile((BodyDeclaration)parentNode, RWTAnnotation.Define, newAddedVariableName, typeName, false);
-				            
 						}
 						if(node instanceof SimpleName){							
 							IBinding binding= ((SimpleName)node).resolveBinding();
@@ -617,7 +595,7 @@ public class RWTView extends ViewPart {
 									}else{
 										String declarationBodykey = bindingDecl.getDeclaringClass().getKey();
 										IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(bindingDecl.getJavaElement().getPath());
-										File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+										File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 										FileAnnotations fileAnnotations = new FileAnnotations ();
 										if(!otherSourceFileAnnotationFile.exists()){
 											try {
@@ -689,7 +667,7 @@ public class RWTView extends ViewPart {
 			ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(((MethodDeclaration)parentTD).resolveBinding().getJavaElement().getPath());
 		}
 		if(ifile!=null){
-			File annotationFile = CMModelUtil.getAnnotationFile(ifile);
+			File annotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 			if(annotationFile == null){
 				//not java files
 				return ;
@@ -709,7 +687,7 @@ public class RWTView extends ViewPart {
 			}
 			if((declarationBodykey!= null) && declarationBodykey.length() > 0){
 				if(propagation){
-					if(cmtype_name.equals(CMType.GenericMethod)){
+					if(cmtype_name.equals(RWType.GenericMethod)){
 						return;
 					}
 					ArrayList<RWTAnnotation> thisAnnotations =fileAnnotations.getAnnotations().get(declarationBodykey);
@@ -963,7 +941,7 @@ public class RWTView extends ViewPart {
 	}
 	
 	public void refreshTheStyleRangesForErrors(){
-		CompilationUnit compilationResult = CMModelUtil.getCurrentCompliationUnit();
+		CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
 		if(compilationResult!=null){
 				expandAllChildElements(currentJavaEditor,compilationResult);
 				for (int i=0; i < CMTypeCheckingResults.size(); ++i) {

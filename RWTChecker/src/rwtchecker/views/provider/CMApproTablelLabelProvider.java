@@ -6,13 +6,13 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
-import rwtchecker.CM.CorrespondenceApproTypeProperty;
+import rwtchecker.rwt.RWT_ApproximationProperty;
 
 
 public class CMApproTablelLabelProvider extends LabelProvider implements ITableLabelProvider {
 	
 	public String getColumnText(Object obj, int index) {
-		CorrespondenceApproTypeProperty approximateProperty = (CorrespondenceApproTypeProperty) obj;
+		RWT_ApproximationProperty approximateProperty = (RWT_ApproximationProperty) obj;
 		switch (index) {
 		case 0:
 			return approximateProperty.getProperty_name();

@@ -1,4 +1,4 @@
-package rwtchecker.CMRules;
+package rwtchecker.rwtrules;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -18,17 +18,17 @@ import org.dom4j.io.SAXReader;
 import org.dom4j.io.XMLWriter;
 import org.eclipse.core.resources.IProject;
 
-import rwtchecker.CM.CMType;
+import rwtchecker.rwt.RWType;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.UnitsCheckingUtil;
 
-public class CMTypeRulesManager{
+public class RWTypeRulesManager{
 	
 	private String cmtypeOperationfilePath = "";
-	private ArrayList<CMTypeRule> definedCMTypeRules = new ArrayList<CMTypeRule>();
+	private ArrayList<RWTypeRule> definedCMTypeRules = new ArrayList<RWTypeRule>();
 	
-	public static HashSet<CMTypeRule> ruleSet = new HashSet<CMTypeRule>();
+	public static HashSet<RWTypeRule> ruleSet = new HashSet<RWTypeRule>();
 	
 	public static String error_type = "error_type";
 	
@@ -44,7 +44,7 @@ public class CMTypeRulesManager{
 		return this.definedCMTypeRules.size();
 	}
 	
-	public CMTypeRulesManager(File file){
+	public RWTypeRulesManager(File file){
 		this.cmtypeOperationfilePath = file.getAbsolutePath();
 		if(!file.exists()){
 			this.storeRules();
@@ -54,8 +54,8 @@ public class CMTypeRulesManager{
 	}
 	
 	public static void removeDuplicates(File file){
-		CMTypeRulesManager manager = new CMTypeRulesManager(file);
-		HashSet<CMTypeRule> typeRuleSet = new HashSet<CMTypeRule>();
+		RWTypeRulesManager manager = new RWTypeRulesManager(file);
+		HashSet<RWTypeRule> typeRuleSet = new HashSet<RWTypeRule>();
 		typeRuleSet.addAll(manager.definedCMTypeRules);
 		manager.definedCMTypeRules.clear();
 		manager.definedCMTypeRules.addAll(typeRuleSet);
@@ -72,15 +72,15 @@ public class CMTypeRulesManager{
 	
 	public void storeRules(){
 		Document document = DocumentHelper.createDocument();
-        Element root = document.addElement( CMTypeRulesManager.XMLTag_root );
+        Element root = document.addElement( RWTypeRulesManager.XMLTag_root );
         
-        for (CMTypeRule definedCMTypeRule :definedCMTypeRules){
-        	Element typeRuleElement = root.addElement( CMTypeRulesManager.XMLTag_type_rule );
-        	typeRuleElement.addElement(CMTypeRulesManager.XMLTag_op).addText(definedCMTypeRule.getOperationName());
-        	typeRuleElement.addElement(CMTypeRulesManager.XMLTag_attSetOne).addText(definedCMTypeRule.getCMTypeOneName());
-        	typeRuleElement.addElement(CMTypeRulesManager.XMLTag_attSetTwo).addText(definedCMTypeRule.getCMTypeTwoName());
-        	typeRuleElement.addElement(CMTypeRulesManager.XMLTag_resultAttSet).addText(definedCMTypeRule.getReturnCMTypeName());
-        	typeRuleElement.addElement(CMTypeRulesManager.XMLTag_verfiedStatus).addText(definedCMTypeRule.getVarifiedStatus());
+        for (RWTypeRule definedCMTypeRule :definedCMTypeRules){
+        	Element typeRuleElement = root.addElement( RWTypeRulesManager.XMLTag_type_rule );
+        	typeRuleElement.addElement(RWTypeRulesManager.XMLTag_op).addText(definedCMTypeRule.getOperationName());
+        	typeRuleElement.addElement(RWTypeRulesManager.XMLTag_attSetOne).addText(definedCMTypeRule.getCMTypeOneName());
+        	typeRuleElement.addElement(RWTypeRulesManager.XMLTag_attSetTwo).addText(definedCMTypeRule.getCMTypeTwoName());
+        	typeRuleElement.addElement(RWTypeRulesManager.XMLTag_resultAttSet).addText(definedCMTypeRule.getReturnCMTypeName());
+        	typeRuleElement.addElement(RWTypeRulesManager.XMLTag_verfiedStatus).addText(definedCMTypeRule.getVarifiedStatus());
         }
         XMLWriter writer;
 		try {
@@ -113,15 +113,15 @@ public class CMTypeRulesManager{
 		        try {
 					Document document = reader.read(ruleFile);
 					Element root = document.getRootElement();
-			        for ( Iterator i = root.elementIterator(CMTypeRulesManager.XMLTag_type_rule); i.hasNext(); ) {
+			        for ( Iterator i = root.elementIterator(RWTypeRulesManager.XMLTag_type_rule); i.hasNext(); ) {
 			            Element typeRuleElement = (Element) i.next();
-			            String attSetOne = typeRuleElement.element(CMTypeRulesManager.XMLTag_attSetOne).getText();
-			            String attSetTwo = typeRuleElement.element(CMTypeRulesManager.XMLTag_attSetTwo).getText();
-			            String operation = typeRuleElement.element(CMTypeRulesManager.XMLTag_op).getText();
-			            String resultSet = typeRuleElement.element(CMTypeRulesManager.XMLTag_resultAttSet).getText();
-			            String verifiedStatus = typeRuleElement.element(CMTypeRulesManager.XMLTag_verfiedStatus).getText();
+			            String attSetOne = typeRuleElement.element(RWTypeRulesManager.XMLTag_attSetOne).getText();
+			            String attSetTwo = typeRuleElement.element(RWTypeRulesManager.XMLTag_attSetTwo).getText();
+			            String operation = typeRuleElement.element(RWTypeRulesManager.XMLTag_op).getText();
+			            String resultSet = typeRuleElement.element(RWTypeRulesManager.XMLTag_resultAttSet).getText();
+			            String verifiedStatus = typeRuleElement.element(RWTypeRulesManager.XMLTag_verfiedStatus).getText();
 			            String[] ruleContents = reorderRuleContents(new String[]{operation, attSetOne, attSetTwo});
-			            CMTypeRule newRule =  new CMTypeRule();
+			            RWTypeRule newRule =  new RWTypeRule();
 			            newRule.setCMTypeOneName(ruleContents[1]);
 			            newRule.setCMTypeTwoName(ruleContents[2]);
 			            newRule.setOperationName(operation);
@@ -145,11 +145,11 @@ public class CMTypeRulesManager{
 		String operatorName = ruleInputs[0];
 		String attSetOne = ruleInputs[1];
 		String attSetTwo = ruleInputs[2];
-		if(operatorName.equalsIgnoreCase(CMTypeRuleCategory.Comparable)||
-				operatorName.equalsIgnoreCase(CMTypeRuleCategory.Max)||
-				operatorName.equalsIgnoreCase(CMTypeRuleCategory.Min)||
-				operatorName.equalsIgnoreCase(CMTypeRuleCategory.Multiplication)||
-				operatorName.equalsIgnoreCase(CMTypeRuleCategory.Plus)){
+		if(operatorName.equalsIgnoreCase(RWTypeRuleCategory.Comparable)||
+				operatorName.equalsIgnoreCase(RWTypeRuleCategory.Max)||
+				operatorName.equalsIgnoreCase(RWTypeRuleCategory.Min)||
+				operatorName.equalsIgnoreCase(RWTypeRuleCategory.Multiplication)||
+				operatorName.equalsIgnoreCase(RWTypeRuleCategory.Plus)){
 			if(attSetOne.length()>0 && attSetTwo.length()>0){
 				if(attSetOne.compareTo(attSetTwo)<0){
 					ruleInputs[1] = attSetTwo;
@@ -160,45 +160,45 @@ public class CMTypeRulesManager{
         return ruleInputs;
 	}
 
-	public static CMTypeRulesManager getManagerForCurrentProject(){
+	public static RWTypeRulesManager getManagerForCurrentProject(){
 		if(ActivePart.getFileOfActiveEditror() != null){
-			File file = CMModelUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
-			return new CMTypeRulesManager(file);
+			File file = RWTSystemUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
+			return new RWTypeRulesManager(file);
 		}
 		return null;
 	}
 	
-	public static CMTypeRulesManager getCandidateRuleManager(String fileName){
+	public static RWTypeRulesManager getCandidateRuleManager(String fileName){
 		if(ActivePart.getFileOfActiveEditror() != null){
 			String ruleFileName = String.valueOf(fileName.hashCode());
-			File file = CMModelUtil.getCandidateCMTypeRuleFile(ActivePart.getFileOfActiveEditror().getProject(), ruleFileName);
-			return new CMTypeRulesManager(file);
+			File file = RWTSystemUtil.getCandidateCMTypeRuleFile(ActivePart.getFileOfActiveEditror().getProject(), ruleFileName);
+			return new RWTypeRulesManager(file);
 		}
 		return null;
 	}
 	
-	public void addCMTypeOperation(CMTypeRule cmTypeOperation){
+	public void addCMTypeOperation(RWTypeRule cmTypeOperation){
 		if(!definedCMTypeRules.contains(cmTypeOperation)){
 		// no check on existence, because we care how many times the rules appear
 			this.definedCMTypeRules.add(cmTypeOperation);	
 		}
 	}
 	
-	public void addCMTypeOperations( ArrayList<CMTypeRule> CMTypeOperations){
-		for(CMTypeRule cmTypeOperation: CMTypeOperations){
+	public void addCMTypeOperations( ArrayList<RWTypeRule> CMTypeOperations){
+		for(RWTypeRule cmTypeOperation: CMTypeOperations){
 			addCMTypeOperation(cmTypeOperation);
 		}
 	}
 	
-	public void delCMTypeOperation(CMTypeRule cmTypeOperation){
+	public void delCMTypeOperation(RWTypeRule cmTypeOperation){
 		this.definedCMTypeRules.remove(cmTypeOperation);
 	}
 	
-	public ArrayList<CMTypeRule> getDefinedOperations() {
+	public ArrayList<RWTypeRule> getDefinedOperations() {
 		return definedCMTypeRules;
 	}
 	
-	public static void ruleUsed(CMTypeRule rule){
+	public static void ruleUsed(RWTypeRule rule){
 		ruleSet.add(rule);
 	}
 	
@@ -211,12 +211,12 @@ public class CMTypeRulesManager{
 		if(unitsCheckingRT.length()!=0){
 			return unitsCheckingRT;
 		}
-		if((argumentOneCMType.equals(CMType.TypeLess)&& argumentTwoCMType.startsWith("literal"))
+		if((argumentOneCMType.equals(RWType.TypeLess)&& argumentTwoCMType.startsWith("literal"))
 			||
-			(argumentTwoCMType.equals(CMType.TypeLess)&& argumentOneCMType.startsWith("literal"))){
-			return CMType.TypeLess;
+			(argumentTwoCMType.equals(RWType.TypeLess)&& argumentOneCMType.startsWith("literal"))){
+			return RWType.TypeLess;
 		}
-		for(CMTypeRule cmTypeRule: definedCMTypeRules){
+		for(RWTypeRule cmTypeRule: definedCMTypeRules){
 			if(cmTypeRule.getVarifiedStatus().equals("v")){
 				if(operationName.equals(cmTypeRule.getOperationName())){
 					String parameterOneType = cmTypeRule.getCMTypeOneName().trim();
@@ -227,19 +227,19 @@ public class CMTypeRulesManager{
 					argumentOneCMType = ruleContents[1];
 					argumentTwoCMType = ruleContents[2];
 					//check if follow generic type rule 
-					if(parameterOneType.contains(CMType.genericTypeInRules)){
-						String tempParaOneType = parameterOneType.replace(CMType.genericTypeInRules, "");
+					if(parameterOneType.contains(RWType.genericTypeInRules)){
+						String tempParaOneType = parameterOneType.replace(RWType.genericTypeInRules, "");
 						if(argumentOneCMType.contains(tempParaOneType)){
 							if(parameterTwoType.equals(argumentTwoCMType)
 									||
 									parameterTwoType.length()==0){
-								if(returnType.contains(CMType.genericTypeInRules)){
-									String tempReturnType = returnType.replace(CMType.genericTypeInRules, "");
+								if(returnType.contains(RWType.genericTypeInRules)){
+									String tempReturnType = returnType.replace(RWType.genericTypeInRules, "");
 									ruleUsed(cmTypeRule);
 									return  argumentOneCMType.replace(tempParaOneType, tempReturnType);
 								}
 							}
-							if(parameterTwoType.contains(CMType.genericTypeInRules)){
+							if(parameterTwoType.contains(RWType.genericTypeInRules)){
 								//consider using generic approach. to be continued....
 							}
 						}
@@ -258,10 +258,10 @@ public class CMTypeRulesManager{
 						}
 						*/
 					}
-//					if(CMModelUtil.isSubTypeOf(currentProject, argumentOneCMType, parameterOneType)
-//						&& CMModelUtil.isSubTypeOf(currentProject, argumentTwoCMType, parameterTwoType)){
+//					if(RWTSystemUtil.isSubTypeOf(currentProject, argumentOneCMType, parameterOneType)
+//						&& RWTSystemUtil.isSubTypeOf(currentProject, argumentTwoCMType, parameterTwoType)){
 //						String thisReturnType = cmTypeOperation.getReturnCMTypeName();
-//						if((returnType == null) || (CMModelUtil.isSubTypeOf(currentProject,thisReturnType, returnType))){
+//						if((returnType == null) || (RWTSystemUtil.isSubTypeOf(currentProject,thisReturnType, returnType))){
 //							returnType = thisReturnType;
 //						}
 //					}
@@ -293,14 +293,14 @@ public class CMTypeRulesManager{
 //	}
 	
 	public void assignmentHandling(){
-		for(CMTypeRule cmtypeRule :this.definedCMTypeRules){
+		for(RWTypeRule cmtypeRule :this.definedCMTypeRules){
 				String operandOne = cmtypeRule.getCMTypeOneName();
 				String operandTwo = cmtypeRule.getCMTypeTwoName();
 				String operatorName = cmtypeRule.getOperationName();
 				if((operandTwo.indexOf("@")!=-1) 
 						&& (operandOne.indexOf("@")==-1)
-						&& (operatorName.equalsIgnoreCase(CMTypeRuleCategory.Assignable)) ){
-					for(CMTypeRule cmtypeRuleIn :this.definedCMTypeRules){
+						&& (operatorName.equalsIgnoreCase(RWTypeRuleCategory.Assignable)) ){
+					for(RWTypeRule cmtypeRuleIn :this.definedCMTypeRules){
 						String operandOneIn = cmtypeRuleIn.getCMTypeOneName();
 						String operandTwoIn = cmtypeRuleIn.getCMTypeTwoName();
 						String resultSet = cmtypeRuleIn.getReturnCMTypeName();
@@ -317,7 +317,7 @@ public class CMTypeRulesManager{
 	}
 	
 	public void duplicateHanding(){
-		HashSet<CMTypeRule> set = new HashSet<CMTypeRule>();
+		HashSet<RWTypeRule> set = new HashSet<RWTypeRule>();
 		set.addAll(definedCMTypeRules);
 		this.definedCMTypeRules.clear();
 		this.definedCMTypeRules.addAll(set);
@@ -344,7 +344,7 @@ public class CMTypeRulesManager{
 //		CMTypeRulesManager manager = new CMTypeRulesManager(new File("E:/Develop/EvaluationCMs/KelpieFlightPlanner/CMTypeRuleFile.xml"));
 //		CMTypeRulesManager manager = new CMTypeRulesManager(new File("E:/Develop/EvaluationCMs/KelpieFlightPlanner/CMTypeRuleFile.xml"));
 		
-		CMTypeRulesManager manager = new CMTypeRulesManager(new File("E:/Develop/EvaluationCMs/KelpieFlightPlanner/"));
+		RWTypeRulesManager manager = new RWTypeRulesManager(new File("E:/Develop/EvaluationCMs/KelpieFlightPlanner/"));
 		System.out.println(manager.getDefinedOperations().size());
 //		CMTypeRulesManager.removeDuplicates(new File("E:\\Develop\\EvaluationCMs\\KelpieFlightPlanner\\RWType_rules\\CMTypeRuleFile.xml"));
 	}

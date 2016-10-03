@@ -17,13 +17,13 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRuleCategory;
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
 import rwtchecker.util.ErrorUtil;
 
@@ -51,7 +51,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
 		currentProject = currentFile.getProject();
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){
@@ -71,7 +71,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 			for(String var : varRWTMap.keySet()){
 				String annotatedType = varRWTMap.get(var);
 				if(annotatedType != null){
-					CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, annotatedType);
+					RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedType);
 					if(cmtype!=null && cmtype.getInterval()!=null){
 						varIntvalMap.put(var, cmtype.getInterval());
 					}
@@ -140,7 +140,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 						}
 					}else{
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotation == null){
@@ -149,7 +149,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 							thisCMType = otherSourcefileAnnotation.getCMTypeInBodyDecl(classDeclKey, variableBinding.getName());
 						}
 						if(thisCMType != null){
-							CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, thisCMType);
+							RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, thisCMType);
 							if(cmtype!=null && cmtype.getInterval()!=null){
 								bindIntervalWithExp((SimpleName)node, cmtype.getInterval());
 							}
@@ -182,7 +182,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 					}else{
 						//Method declared in other file; 
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(iMethodBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotationsClone = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotationsClone == null){
@@ -193,7 +193,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 					}
 		 		}
 				if(returnType != null){
-					CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, returnType);
+					RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, returnType);
 					if(cmtype!=null && cmtype.getInterval()!=null){
 						bindIntervalWithExp((SimpleName)node, cmtype.getInterval());
 					}
@@ -459,10 +459,10 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 			return null;
 		}
 		String returnCMtypeName = fileAnnotations.getReturnCMTypeForMethod(methodKey);
-		if(returnCMtypeName.equalsIgnoreCase(CMType.GenericMethod)){
+		if(returnCMtypeName.equalsIgnoreCase(RWType.GenericMethod)){
 			return null;
 		}
-		CMType returnCMtype = CMModelUtil.getCMTypeFromTypeName(currentProject, returnCMtypeName);		
+		RWType returnCMtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, returnCMtypeName);		
 		for (int i=0;i<methodInvocationNode.arguments().size();i++){
 			SingleVariableDeclaration parameterDeclaration = (SingleVariableDeclaration)(methodDecl.parameters().get(i));
 			String parameterTypeName = fileAnnotations.getCMTypeInBodyDecl(methodKey, parameterDeclaration.getName().getIdentifier());
@@ -470,7 +470,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 				continue;
 			}
 			if(parameterTypeName != null){
-				CMType parameterCMtype = CMModelUtil.getCMTypeFromTypeName(currentProject, parameterTypeName);
+				RWType parameterCMtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, parameterTypeName);
 				if(parameterCMtype!=null){
 					RealInterval paraIntval = parameterCMtype.getInterval();
 					RealInterval arguIntval = argumentsIntvals[i]; 
@@ -522,7 +522,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 				parser.setResolveBindings(true);
 				targetedCompilationUnit = (CompilationUnit) parser.createAST(null);
 				declaringNode = targetedCompilationUnit.findDeclaringNode(methodDeclKey);
-				File annotationFile = CMModelUtil.getAnnotationFile(methodDeclFile);
+				File annotationFile = RWTSystemUtil.getAnnotationFile(methodDeclFile);
 				if(annotationFile != null){
 					fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 				}
@@ -552,13 +552,13 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 						return;
 					}
 					
-					if(methodName.equals(CMTypeRuleCategory.Power)){
+					if(methodName.equals(RWTypeRuleCategory.Power)){
 						try{
 							resultIntval = IAMath.power(argumentOneIntval, argumentTwoIntval);
 						}catch(IAException e){
 							//do not know what to do; if argument one is negative
 						}
-					}else if(methodName.equals(CMTypeRuleCategory.Arc_Tangent2)){
+					}else if(methodName.equals(RWTypeRuleCategory.Arc_Tangent2)){
 						try{
 							RealInterval tmp = IAMath.div(argumentOneIntval, argumentTwoIntval);
 							resultIntval = IAMath.atan(tmp);
@@ -566,9 +566,9 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 							resultIntval = new RealInterval(Math.PI/2);
 						}
 						
-					}else if(methodName.equals(CMTypeRuleCategory.Max)){
+					}else if(methodName.equals(RWTypeRuleCategory.Max)){
 						resultIntval = IAMath.max(argumentOneIntval, argumentTwoIntval);
-					}else if(methodName.equals(CMTypeRuleCategory.Min)){
+					}else if(methodName.equals(RWTypeRuleCategory.Min)){
 						resultIntval = IAMath.min(argumentOneIntval, argumentTwoIntval);
 					}
 					
@@ -581,33 +581,33 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 					return;
 				}
 				
-				if(methodName.equals(CMTypeRuleCategory.Natural_Logarithm)){
+				if(methodName.equals(RWTypeRuleCategory.Natural_Logarithm)){
 					resultIntval = IAMath.log(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Abosolute_Value)){
+				}else if(methodName.equals(RWTypeRuleCategory.Abosolute_Value)){
 					resultIntval = argumentIntval;
-				}else if(methodName.equals(CMTypeRuleCategory.Arc_Cosine)){
+				}else if(methodName.equals(RWTypeRuleCategory.Arc_Cosine)){
 					resultIntval = IAMath.acos(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Arc_Sine)){
+				}else if(methodName.equals(RWTypeRuleCategory.Arc_Sine)){
 					resultIntval = IAMath.asin(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Arc_Tangent)){
+				}else if(methodName.equals(RWTypeRuleCategory.Arc_Tangent)){
 					resultIntval = IAMath.atan(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Ceil)){
+				}else if(methodName.equals(RWTypeRuleCategory.Ceil)){
 					resultIntval = argumentIntval;
-				}else if(methodName.equals(CMTypeRuleCategory.Cosine)){
+				}else if(methodName.equals(RWTypeRuleCategory.Cosine)){
 					resultIntval = IAMath.cos(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Exp)){
+				}else if(methodName.equals(RWTypeRuleCategory.Exp)){
 					resultIntval = IAMath.exp(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Floor)){
+				}else if(methodName.equals(RWTypeRuleCategory.Floor)){
 					resultIntval = argumentIntval;
-				}else if(methodName.equals(CMTypeRuleCategory.Sine)){
+				}else if(methodName.equals(RWTypeRuleCategory.Sine)){
 					resultIntval = IAMath.sin(argumentIntval);
-				}else if(methodName.equals(CMTypeRuleCategory.Sqrt)){
+				}else if(methodName.equals(RWTypeRuleCategory.Sqrt)){
 					resultIntval = IAMath.oddPower(argumentIntval,0.5);
-				}else if(methodName.equals(CMTypeRuleCategory.RadiansToDegree)){
+				}else if(methodName.equals(RWTypeRuleCategory.RadiansToDegree)){
 					resultIntval = IAMath.mul(argumentIntval, new RealInterval(180/Math.PI));
-				}else if(methodName.equals(CMTypeRuleCategory.DegreeToRadians)){
+				}else if(methodName.equals(RWTypeRuleCategory.DegreeToRadians)){
 					resultIntval = IAMath.mul(argumentIntval, new RealInterval(Math.PI/180));
-				}else if(methodName.equals(CMTypeRuleCategory.Tangent)){
+				}else if(methodName.equals(RWTypeRuleCategory.Tangent)){
 					resultIntval = IAMath.tan(argumentIntval);
 				}
 			}
@@ -727,7 +727,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 	/**
 	private void bindIntervalWithExp(Expression exp, String annotatedType){
 		if(annotatedType != null){
-			CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, annotatedType);
+			CMType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedType);
 			if(cmtype!=null && cmtype.getInterval()!=null){
 				this.expIntvalMap.put(exp, cmtype.getInterval());
 			}
@@ -762,7 +762,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 				}
 			}else{
 				IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-				File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+				File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 				if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 					FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 					if(otherSourcefileAnnotation == null){
@@ -772,7 +772,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 				}
 			}
 			if(thisCMType != null){
-				CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, thisCMType);
+				RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, thisCMType);
 				if(cmtype!=null){
 					return true;
 				}

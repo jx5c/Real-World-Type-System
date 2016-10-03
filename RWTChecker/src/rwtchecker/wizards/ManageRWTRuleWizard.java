@@ -13,25 +13,25 @@ import java.util.ArrayList;
 import org.eclipse.jface.dialogs.MessageDialog;
 import java.io.*;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRuleCategory;
-import rwtchecker.CMRules.CMTypeRulesManager;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.RWTRulesView;
 
 
-public class ManageCMTypeOperationWizard extends Wizard implements INewWizard {
-	private ManageCMTypeOperationPage page1;
+public class ManageRWTRuleWizard extends Wizard implements INewWizard {
+	private ManageRWTOperationPage page1;
 
-	public ManageCMTypeOperationWizard() {
+	public ManageRWTRuleWizard() {
 		super();
 		setNeedsProgressMonitor(true);
 	}
 	
 	public void addPages() {
-		page1 = new ManageCMTypeOperationPage();
+		page1 = new ManageRWTOperationPage();
 		addPage(page1);
 	}
 
@@ -61,16 +61,16 @@ public class ManageCMTypeOperationWizard extends Wizard implements INewWizard {
 	}
 	
 	private void createCMTypeOperationRule(){
-		File CMTypeOperationRuleFile = CMModelUtil.getRWTypeRulesFiles(page1.getCurrentIProject());
-		CMTypeRulesManager typeOperationManager = new CMTypeRulesManager(CMTypeOperationRuleFile);
+		File CMTypeOperationRuleFile = RWTSystemUtil.getRWTypeRulesFiles(page1.getCurrentIProject());
+		RWTypeRulesManager typeOperationManager = new RWTypeRulesManager(CMTypeOperationRuleFile);
 		
-		CMTypeRule newOp = new CMTypeRule();
+		RWTypeRule newOp = new RWTypeRule();
 		newOp.setOperationName(page1.getOperation());
 		newOp.setCMTypeOneName(page1.getOperandTypeOne());
 		newOp.setCMTypeTwoName(page1.getOperandTypeTwo());
 		newOp.setReturnCMTypeName(page1.getReturnType());
 		//rules created by users are verified by default.
-		newOp.setTypeRuleCategory(CMTypeRule.Verified);
+		newOp.setTypeRuleCategory(RWTypeRule.Verified);
 		typeOperationManager.addCMTypeOperation(newOp);
 		
 		/**do not automatically generate relevant rules for now**/
@@ -79,86 +79,86 @@ public class ManageCMTypeOperationWizard extends Wizard implements INewWizard {
 		
 		RWTRulesView cmTypeOperationView = null;
 		cmTypeOperationView = (RWTRulesView)ActivePart.getSpecificView(RWTRulesView.ID);
-		CMTypeRulesManager manager = CMTypeRulesManager.getManagerForCurrentProject();
+		RWTypeRulesManager manager = RWTypeRulesManager.getManagerForCurrentProject();
 		cmTypeOperationView.getTableViewer().setInput(manager);
 		cmTypeOperationView.getTableViewer().refresh();
 	}
 	
-	private ArrayList<CMTypeRule> getGeneratedOperation(CMTypeRule thisOp, CMTypeRulesManager typeOperationManager){
-		ArrayList<CMTypeRule> generateOps = new ArrayList<CMTypeRule>(); 
-		if(thisOp.getOperationName().equals(CMTypeRuleCategory.Plus)){
-			CMTypeRule newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Plus);
+	private ArrayList<RWTypeRule> getGeneratedOperation(RWTypeRule thisOp, RWTypeRulesManager typeOperationManager){
+		ArrayList<RWTypeRule> generateOps = new ArrayList<RWTypeRule>(); 
+		if(thisOp.getOperationName().equals(RWTypeRuleCategory.Plus)){
+			RWTypeRule newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Plus);
 			newOp.setCMTypeOneName(thisOp.getCMTypeTwoName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeOneName());
 			newOp.setReturnCMTypeName(thisOp.getReturnCMTypeName());
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Subtraction);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Subtraction);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeOneName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeTwoName());
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Subtraction);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Subtraction);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeTwoName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 		}
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.Subtraction)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.Subtraction)){
+			RWTypeRule newOp = new RWTypeRule();
 			
-			newOp.setOperationName(CMTypeRuleCategory.Subtraction);
+			newOp.setOperationName(RWTypeRuleCategory.Subtraction);
 			newOp.setCMTypeOneName(thisOp.getCMTypeOneName());
 			newOp.setCMTypeTwoName(thisOp.getReturnCMTypeName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeTwoName());
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Plus);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Plus);
 			newOp.setCMTypeOneName(thisOp.getCMTypeTwoName());
 			newOp.setCMTypeTwoName(thisOp.getReturnCMTypeName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Plus);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Plus);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeTwoName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 		}
 		
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.Multiplication)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.Multiplication)){
+			RWTypeRule newOp = new RWTypeRule();
 			
 			if(thisOp.getCMTypeOneName().equals(thisOp.getCMTypeTwoName())){
-				newOp.setOperationName(CMTypeRuleCategory.Power);
+				newOp.setOperationName(RWTypeRuleCategory.Power);
 				newOp.setCMTypeOneName(thisOp.getCMTypeOneName());
 				newOp.setCMTypeTwoName("2");
-				newOp = new CMTypeRule();
+				newOp = new RWTypeRule();
 			}
 			
-			newOp.setOperationName(CMTypeRuleCategory.Multiplication);
+			newOp.setOperationName(RWTypeRuleCategory.Multiplication);
 			newOp.setCMTypeOneName(thisOp.getCMTypeTwoName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeOneName());
 			newOp.setReturnCMTypeName(thisOp.getReturnCMTypeName());
 			
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Division);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Division);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeOneName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeTwoName());
 			
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Division);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Division);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeTwoName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
@@ -166,62 +166,62 @@ public class ManageCMTypeOperationWizard extends Wizard implements INewWizard {
 			generateOps.add(newOp);
 		}
 		
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.Division)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.Division)){
+			RWTypeRule newOp = new RWTypeRule();
 			
-			newOp.setOperationName(CMTypeRuleCategory.Division);
+			newOp.setOperationName(RWTypeRuleCategory.Division);
 			newOp.setCMTypeOneName(thisOp.getCMTypeOneName());
 			newOp.setCMTypeTwoName(thisOp.getReturnCMTypeName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeTwoName());
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Multiplication);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Multiplication);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName(thisOp.getCMTypeTwoName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 			
-			newOp = new CMTypeRule();
-			newOp.setOperationName(CMTypeRuleCategory.Division);
+			newOp = new RWTypeRule();
+			newOp.setOperationName(RWTypeRuleCategory.Division);
 			newOp.setCMTypeOneName(thisOp.getCMTypeTwoName());
 			newOp.setCMTypeTwoName(thisOp.getReturnCMTypeName());
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 		}
 		
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.DegreeToRadians)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.DegreeToRadians)){
+			RWTypeRule newOp = new RWTypeRule();
 			
-			newOp.setOperationName(CMTypeRuleCategory.RadiansToDegree);
+			newOp.setOperationName(RWTypeRuleCategory.RadiansToDegree);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName("");
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 		}
 
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.RadiansToDegree)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.RadiansToDegree)){
+			RWTypeRule newOp = new RWTypeRule();
 			
-			newOp.setOperationName(CMTypeRuleCategory.DegreeToRadians);
+			newOp.setOperationName(RWTypeRuleCategory.DegreeToRadians);
 			newOp.setCMTypeOneName(thisOp.getReturnCMTypeName());
 			newOp.setCMTypeTwoName("");
 			newOp.setReturnCMTypeName(thisOp.getCMTypeOneName());
 			generateOps.add(newOp);
 		}
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.Sine)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.Sine)){
+			RWTypeRule newOp = new RWTypeRule();
 			
-			newOp.setOperationName(CMTypeRuleCategory.Cosine);
+			newOp.setOperationName(RWTypeRuleCategory.Cosine);
 			newOp.setCMTypeOneName(thisOp.getCMTypeOneName());
 			newOp.setCMTypeTwoName("");
 			newOp.setReturnCMTypeName(thisOp.getReturnCMTypeName());
 			generateOps.add(newOp);
 		}
-		else if(thisOp.getOperationName().equals(CMTypeRuleCategory.Cosine)){
-			CMTypeRule newOp = new CMTypeRule();
+		else if(thisOp.getOperationName().equals(RWTypeRuleCategory.Cosine)){
+			RWTypeRule newOp = new RWTypeRule();
 			
-			newOp.setOperationName(CMTypeRuleCategory.Sine);
+			newOp.setOperationName(RWTypeRuleCategory.Sine);
 			newOp.setCMTypeOneName(thisOp.getCMTypeOneName());
 			newOp.setCMTypeTwoName("");
 			newOp.setReturnCMTypeName(thisOp.getReturnCMTypeName());

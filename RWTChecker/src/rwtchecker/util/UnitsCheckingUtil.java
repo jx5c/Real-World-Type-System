@@ -1,6 +1,6 @@
 package rwtchecker.util;
 
-import rwtchecker.CMRules.CMTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
 
 public class UnitsCheckingUtil {
 
@@ -9,14 +9,14 @@ public class UnitsCheckingUtil {
 			return "";
 		}
 		if(arguOneType.startsWith("unit") && arguTwoType.startsWith("unit")){
-			if(operationName.equals(CMTypeRuleCategory.Plus) 
-					|| operationName.equals(CMTypeRuleCategory.Subtraction)){
+			if(operationName.equals(RWTypeRuleCategory.Plus) 
+					|| operationName.equals(RWTypeRuleCategory.Subtraction)){
 				if(arguOneType.equals(arguTwoType)){
 					return arguOneType; 
 				}
 			}
 			//format unit1:index1|unit2:index2
-			if(operationName.equals(CMTypeRuleCategory.Multiplication)){
+			if(operationName.equals(RWTypeRuleCategory.Multiplication)){
 				//if()
 			}
 		}
@@ -25,7 +25,7 @@ public class UnitsCheckingUtil {
 	}
 
 	public static void main(String[] args) {
-		System.out.println(UnitsCheckingUtil.unitsComputation("unit=radians","unit=radians",CMTypeRuleCategory.Plus));
+		System.out.println(UnitsCheckingUtil.unitsComputation("unit=radians","unit=radians",RWTypeRuleCategory.Plus));
 	}
 
 }

@@ -25,7 +25,7 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.PlatformUI;
 
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.concept.ConceptDetail;
 import rwtchecker.views.provider.ConceptDetailContentProvider;
 import rwtchecker.views.provider.ConceptDetailLabelProvider;
 import rwtchecker.wizards.ManageConceptWizard;

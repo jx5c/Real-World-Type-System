@@ -16,7 +16,7 @@ import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IFileEditorInput;
 
 import rwtchecker.annotation.FileAnnotations;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 public class DisplayRWTCountActionInJavaEditor implements IEditorActionDelegate {
 	protected Shell shell;
@@ -29,7 +29,7 @@ public class DisplayRWTCountActionInJavaEditor implements IEditorActionDelegate 
 	}
 	
 	public void run(IAction action) {
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			FileAnnotations fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){

@@ -9,7 +9,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 public class ShowConfigActionInNavigator  implements IObjectActionDelegate{
 	private ISelection selection;
@@ -19,7 +19,7 @@ public class ShowConfigActionInNavigator  implements IObjectActionDelegate{
 	public void run(IAction arg0) {
 		IProject iProject = (IProject) (((IStructuredSelection) selection).getFirstElement());
 //		IProject iProject = ((IFile) ((IStructuredSelection) selection).getFirstElement()).getProject();
-		Object location = CMModelUtil.readPropertyFromConfigFile(iProject.getName());
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iProject.getName());
 		if(location!=null){
 			MessageDialog.openInformation(
 					shell,

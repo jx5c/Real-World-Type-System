@@ -1,6 +1,6 @@
-package rwtchecker.CMRules;
+package rwtchecker.rwtrules;
 
-public class CMTypeRule{
+public class RWTypeRule{
 	
 	private static final long serialVersionUID = -1036311609436632588L;
 	private String attSetOne = "";
@@ -23,7 +23,7 @@ public class CMTypeRule{
 	}
 	*/
 	
-	public CMTypeRule(String operationName, String attSetOne, String attSetTwo, 
+	public RWTypeRule(String operationName, String attSetOne, String attSetTwo, 
 			String returnAttSet, String typeRuleCategory) {
 		super();
 		this.attSetOne = attSetOne;
@@ -33,12 +33,12 @@ public class CMTypeRule{
 		this.typeRuleCategory = typeRuleCategory;
 	}
 	
-	public CMTypeRule() {
+	public RWTypeRule() {
 	}
 	
-	public static CMTypeRule constructOpFromString(String ruleString){
+	public static RWTypeRule constructOpFromString(String ruleString){
 		String[] contents = ruleString.split(" ; ");
-		CMTypeRule op = new CMTypeRule(contents[1], contents[2], contents[3], contents[4], contents[0]);
+		RWTypeRule op = new RWTypeRule(contents[1], contents[2], contents[3], contents[4], contents[0]);
 		return op;
 	}
 
@@ -75,8 +75,8 @@ public class CMTypeRule{
 	}
 	
 	public boolean equals(Object obj){
-		if(obj instanceof CMTypeRule){
-			if(((CMTypeRule)obj).toString().equals(this.toString())){
+		if(obj instanceof RWTypeRule){
+			if(((RWTypeRule)obj).toString().equals(this.toString())){
 				return true;
 			}
 		}

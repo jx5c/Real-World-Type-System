@@ -11,7 +11,7 @@ import org.eclipse.jdt.core.dom.*;
 
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.RWTView;
 
 public class TypeInferenceVisitor extends ASTVisitor {
@@ -31,7 +31,7 @@ public class TypeInferenceVisitor extends ASTVisitor {
 		this.compilationUnit = compilationUnit;
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){
@@ -65,7 +65,7 @@ public class TypeInferenceVisitor extends ASTVisitor {
 						}
 					}else{
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotation == null){

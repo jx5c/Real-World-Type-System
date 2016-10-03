@@ -17,9 +17,9 @@ import java.io.*;
 
 import org.eclipse.ui.*;
 
-import rwtchecker.realworldmodel.ConceptAttribute;
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.concept.ConceptAttribute;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.TreeObject;
 
 /**
@@ -116,7 +116,7 @@ public class NewConceptWizard extends Wizard implements INewWizard {
 						newConceptDetail.addAttribute(attribute);
 					}
 					IProject currentProject = page1.getCurrentProject();
-					File newConceptFile = CMModelUtil.getConceptDetailFile(currentProject, page2.getConceptName());
+					File newConceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, page2.getConceptName());
 					ConceptDetail.writeOutConceptDetails(newConceptDetail, newConceptFile);
 				}
 			});

@@ -13,22 +13,22 @@ import java.lang.reflect.InvocationTargetException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.core.runtime.CoreException;
 
-import rwtchecker.CM.CMType;
+import rwtchecker.rwt.RWType;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.RWTView;
 
 
-public class ManageCMTypeWizard extends Wizard implements INewWizard {
-	private ManageCMTypeWizardPage page1;
+public class NewRWTCProjectWizard extends Wizard implements INewWizard {
+	private ManageRWTWizardPage page1;
 	
-	public ManageCMTypeWizard() {
+	public NewRWTCProjectWizard() {
 		super();
 		setNeedsProgressMonitor(true);
 	}
 	
 	public void addPages() {
-		page1 = new ManageCMTypeWizardPage();
+		page1 = new ManageRWTWizardPage();
 		addPage(page1);
 	}
 

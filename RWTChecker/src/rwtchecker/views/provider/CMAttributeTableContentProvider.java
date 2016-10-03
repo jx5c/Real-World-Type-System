@@ -4,9 +4,9 @@ package rwtchecker.views.provider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
-import rwtchecker.CMRules.CMTypeRule;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwt.RWT_Semantic;
 
 public class CMAttributeTableContentProvider implements IStructuredContentProvider {
 		public void inputChanged(Viewer v, Object oldInput, Object newInput) {
@@ -16,7 +16,7 @@ public class CMAttributeTableContentProvider implements IStructuredContentProvid
 		}
 		
 		public Object[] getElements(Object parent) {
-			CM_SemanticType cmsmtype = (CM_SemanticType) parent;
+			RWT_Semantic cmsmtype = (RWT_Semantic) parent;
 			return cmsmtype.getSemanticTypeAttributes().toArray();
 		}
 }

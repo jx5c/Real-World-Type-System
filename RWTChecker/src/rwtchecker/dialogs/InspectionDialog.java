@@ -28,11 +28,11 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.rwt.RWType;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWT_Semantic;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.CMApproTableContentProvider;
 import rwtchecker.views.provider.CMApproTablelLabelProvider;
 import rwtchecker.views.provider.CMAttributeTableContentProvider;
@@ -64,7 +64,7 @@ public class InspectionDialog extends TitleAreaDialog {
 	private String derivationCMType;
 
 	private Action clickActionOnTreeViewer;
-	private CMType selectedCMType ;
+	private RWType selectedCMType ;
 	
 	public InspectionDialog(Shell parentShell, IProject currentProject, NewTypeCheckerVisitor typeCheckingVisitor, Expression exp) {
 		super(parentShell);
@@ -287,7 +287,7 @@ public class InspectionDialog extends TitleAreaDialog {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				if(obj != null){
 					TreeObject thisSelectedTreeObject = (TreeObject)obj;
-					selectedCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, thisSelectedTreeObject);
+					selectedCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, thisSelectedTreeObject);
 					showCMTypeContents(selectedCMType);
 				}
 			}
@@ -295,7 +295,7 @@ public class InspectionDialog extends TitleAreaDialog {
 		
 		String annotatedType = this.typeCheckingVisitor.getAnnotatedTypeForExpression(exp);
 		this.CMTypeDescriptionContentST.setText(annotatedType);
-		cmtypeRootTreeObject = CMModelUtil.readInAllCMTypesToTreeObject(this.currentProject);
+		cmtypeRootTreeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(this.currentProject);
 		cmTypesTreeViewer.setInput(cmtypeRootTreeObject);
 		
 		MouseListener myMouseListener = new MouseListener() {
@@ -314,7 +314,7 @@ public class InspectionDialog extends TitleAreaDialog {
 					}
 				}
 				if(selectedCMType.length()>0){
-					CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, selectedCMType);
+					RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, selectedCMType);
 					showCMTypeContents(cmtype);	
 				}
 			}
@@ -330,7 +330,7 @@ public class InspectionDialog extends TitleAreaDialog {
 					}
 				}
 				if(selectedCMType.length()>0){
-					CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, selectedCMType);
+					RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, selectedCMType);
 					showCMTypeContents(cmtype);	
 				}
 			}
@@ -339,10 +339,10 @@ public class InspectionDialog extends TitleAreaDialog {
 		this.CMTypeDerivationContentST.addMouseListener(myMouseListener);
 	}
 	
-	private void showCMTypeContents(CMType selectedCMType){
+	private void showCMTypeContents(RWType selectedCMType){
 		if(selectedCMType!=null){
 			CMtypeDetailLabel.setText("Type Detail: "+selectedCMType.getTypeName());
-			CM_SemanticType thisType = selectedCMType.getSemanticType();
+			RWT_Semantic thisType = selectedCMType.getSemanticType();
 			ConceptDetail explication = ConceptDetail.readInByLink(thisType.getExplicationLink());
 			associatedExplicationText.setText(explication.getConceptName());
 			typeAttributeViewer.setInput(selectedCMType.getSemanticType());

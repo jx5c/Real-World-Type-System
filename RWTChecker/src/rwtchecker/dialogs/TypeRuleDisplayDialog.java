@@ -13,8 +13,8 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRulesManager;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 public class TypeRuleDisplayDialog extends TitleAreaDialog {
 
 	private Text operandOneText;
@@ -23,10 +23,10 @@ public class TypeRuleDisplayDialog extends TitleAreaDialog {
 	private Text resultText;
 	
 	
-	private CMTypeRule cmTypeOperation;
-	private CMTypeRulesManager manager;
+	private RWTypeRule cmTypeOperation;
+	private RWTypeRulesManager manager;
 	
-	public TypeRuleDisplayDialog(Shell parentShell, CMTypeRule cmTypeOperation, CMTypeRulesManager manager) {
+	public TypeRuleDisplayDialog(Shell parentShell, RWTypeRule cmTypeOperation, RWTypeRulesManager manager) {
 		super(parentShell);
 		this.cmTypeOperation = cmTypeOperation;
 		this.manager = manager;
@@ -112,7 +112,7 @@ public class TypeRuleDisplayDialog extends TitleAreaDialog {
 	protected void okPressed() {
 		
 		this.manager.delCMTypeOperation(cmTypeOperation);
-		CMTypeRule newRule = new CMTypeRule();
+		RWTypeRule newRule = new RWTypeRule();
 		newRule.setCMTypeOneName(operandOneText.getText());
 		newRule.setCMTypeTwoName(operandTwoText.getText());
 		newRule.setOperationName(operatorText.getText());

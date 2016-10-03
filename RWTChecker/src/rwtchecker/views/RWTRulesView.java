@@ -18,27 +18,27 @@ import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.SWT;
 
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.dialogs.TypeRuleDisplayDialog;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
-import rwtchecker.wizards.ManageCMTypeOperationWizard;
-import rwtchecker.wizards.NewCMTypeOperationWizard;
+import rwtchecker.util.RWTSystemUtil;
+import rwtchecker.wizards.ManageRWTRuleWizard;
+import rwtchecker.wizards.NewRWTRuleWizard;
 
 public class RWTRulesView extends ViewPart {
 
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "cmtypechecker.views.CMTypeRulesView";
+	public static final String ID = "rwtchecker.views.RWTRulesView";
 
 	private TableViewer tableViewer;
 	private Action loadCMTypeOperationsAction;
 	private Action createNewCMTypeOperationAction;
 	private Action delCMTypeOperationAction;
 	
-	private CMTypeRulesManager manager;
+	private RWTypeRulesManager manager;
 	
 	private Action doubleClickAction;
 	 
@@ -48,8 +48,8 @@ public class RWTRulesView extends ViewPart {
 		public void dispose() {
 		}
 		public Object[] getElements(Object parent) {
-			if(parent instanceof CMTypeRulesManager){
-				CMTypeRulesManager operationRules = (CMTypeRulesManager)(parent);
+			if(parent instanceof RWTypeRulesManager){
+				RWTypeRulesManager operationRules = (RWTypeRulesManager)(parent);
 				return operationRules.getDefinedOperations().toArray();	
 			}
 			return new Object[0];
@@ -57,7 +57,7 @@ public class RWTRulesView extends ViewPart {
 	}
 	class CMOperationViewLabelProvider extends LabelProvider implements ITableLabelProvider {
 		public String getColumnText(Object obj, int index) {
-			CMTypeRule operation = (CMTypeRule)obj;
+			RWTypeRule operation = (RWTypeRule)obj;
 			switch (index) {
 			case 0:
 				return operation.getOperationName();
@@ -197,7 +197,7 @@ public class RWTRulesView extends ViewPart {
 		createNewCMTypeOperationAction = new Action() {
 			public void run() {
 //				NewCMTypeOperationWizard wizard = new NewCMTypeOperationWizard();
-				ManageCMTypeOperationWizard wizard = new ManageCMTypeOperationWizard();
+				ManageRWTRuleWizard wizard = new ManageRWTRuleWizard();
 				wizard.init(RWTRulesView.this.getSite().getWorkbenchWindow().getWorkbench(), null);
 			    WizardDialog dialog = new WizardDialog(RWTRulesView.this.getSite().getShell(), wizard);
 			    dialog.create();
@@ -211,7 +211,7 @@ public class RWTRulesView extends ViewPart {
 		
 		loadCMTypeOperationsAction = new Action() {
 			public void run() {
-				CMTypeRulesManager newManager = CMTypeRulesManager.getManagerForCurrentProject();
+				RWTypeRulesManager newManager = RWTypeRulesManager.getManagerForCurrentProject();
 				manager = newManager; 
 				tableViewer.setInput(manager);
 				tableViewer.refresh();
@@ -226,7 +226,7 @@ public class RWTRulesView extends ViewPart {
 			public void run() {
 				int selectedRow = tableViewer.getTable().getSelectionIndex();
 				if(tableViewer.getTable().getItem(selectedRow) != null){
-					CMTypeRule cmTypeOperation = (CMTypeRule)(tableViewer.getTable().getItem(selectedRow).getData());
+					RWTypeRule cmTypeOperation = (RWTypeRule)(tableViewer.getTable().getItem(selectedRow).getData());
 					if(manager!=null){
 						manager.delCMTypeOperation(cmTypeOperation);
 						tableViewer.setInput(manager);
@@ -244,7 +244,7 @@ public class RWTRulesView extends ViewPart {
 			public void run() {
 				ISelection selection = tableViewer.getSelection();
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
-				CMTypeRule cmTypeOperation = (CMTypeRule)obj;
+				RWTypeRule cmTypeOperation = (RWTypeRule)obj;
 				
 				IWorkbench workbench = PlatformUI.getWorkbench();
 	    		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
@@ -277,11 +277,11 @@ public class RWTRulesView extends ViewPart {
 		return tableViewer;
 	}
 
-	public CMTypeRulesManager getManager() {
+	public RWTypeRulesManager getManager() {
 		return manager;
 	}
 
-	public void setManager(CMTypeRulesManager manager) {
+	public void setManager(RWTypeRulesManager manager) {
 		this.manager = manager;
 	}
 	

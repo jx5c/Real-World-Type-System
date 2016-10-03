@@ -65,19 +65,19 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 
-import rwtchecker.CM.CMAttribute;
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
-import rwtchecker.CM.CorrespondenceApproTypeProperty;
+import rwtchecker.concept.ConceptAttribute;
+import rwtchecker.concept.ConceptDetail;
 import rwtchecker.dialogs.CMTypeApproxPropertyDialog;
 import rwtchecker.dialogs.CMTypeAttributeEditingDialog;
 import rwtchecker.dialogs.CMTypeRenameDialog;
 import rwtchecker.dialogs.SelectConceptExplicationDialog;
 import rwtchecker.dialogs.TypeDerivationDialog;
-import rwtchecker.realworldmodel.ConceptAttribute;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.rwt.RWT_Attribute;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwt.RWT_Semantic;
+import rwtchecker.rwt.RWT_ApproximationProperty;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.CMApproTableContentProvider;
 import rwtchecker.views.provider.CMApproTablelLabelProvider;
 import rwtchecker.views.provider.CMAttributeTableContentProvider;
@@ -86,7 +86,7 @@ import rwtchecker.views.provider.CMViewTreeContentProvider;
 import rwtchecker.views.provider.CMViewTreeViewLabelProvider;
 import rwtchecker.views.provider.TreeObject;
 
-public class ManageCMTypeWizardPage extends WizardPage {
+public class ManageRWTWizardPage extends WizardPage {
 	public static final String PAGE_NAME = "ManageCMTypeWizardPage";
 	
 	private Text containerText;
@@ -97,7 +97,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 	
 	//these two fields are used to represent the currently selected tree object and cm type
 	private TreeObject cmtypeTreeSelectedObject;
-	private CMType selectedCMType;
+	private RWType selectedCMType;
 	
 	//for the display of concept detail
 	private TableViewer typeAttributeViewer;
@@ -117,7 +117,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 	private Action renameCorrespondenceTypeOnTreeView;
 	private Action insertCorrespondenceTypeOnTreeView;
 	
-	public ManageCMTypeWizardPage() {
+	public ManageRWTWizardPage() {
 		super(PAGE_NAME);
 		setTitle("New Correspondence Type Wizard page 1");
 		setDescription("This wizard creates a new correspondence type.");
@@ -294,8 +294,8 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
 					String conceptName = associatedExplicationText.getText();
-					File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
-					File newConceptFile = CMModelUtil.getConceptDetailFile(currentProject, conceptName);
+					File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
+					File newConceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, conceptName);
 					if(cmtypeFile.exists()){
 						if(newConceptFile.exists()){
 							selectedCMType.getSemanticType().setExplicationLink(newConceptFile.getAbsolutePath());
@@ -304,15 +304,15 @@ public class ManageCMTypeWizardPage extends WizardPage {
 						TableItem[] attributes = typeAttributeViewer.getTable().getItems();
 						for (TableItem attTI : attributes){
 							if(attTI.getChecked()){
-								CMAttribute att = (CMAttribute)(attTI.getData());
+								RWT_Attribute att = (RWT_Attribute)(attTI.getData());
 								att.setEnableStatus("y");
 							}else{
-								CMAttribute att = (CMAttribute)(attTI.getData());
+								RWT_Attribute att = (RWT_Attribute)(attTI.getData());
 								att.setEnableStatus("n");
 							}
 						}
 					}
-					CMType.writeOutCMType(selectedCMType, cmtypeFile);
+					RWType.writeOutCMType(selectedCMType, cmtypeFile);
 				}
 			}
 			@Override
@@ -332,17 +332,17 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
-					CMType[] cmtypes = CMType.readInAllCMTypes(currentProject);
-					for(CMType cmtype : cmtypes){
-						for(CMAttribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
+					RWType[] cmtypes = RWType.readInAllCMTypes(currentProject);
+					for(RWType cmtype : cmtypes){
+						for(RWT_Attribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
 							if(cmatt.getAttributeName().trim().equalsIgnoreCase("tainting")){
-								cmatt.setEnableStatus(CMAttribute.disEnableMark);
+								cmatt.setEnableStatus(RWT_Attribute.disEnableMark);
 							}else{
-								cmatt.setEnableStatus(CMAttribute.enableMark);
+								cmatt.setEnableStatus(RWT_Attribute.enableMark);
 							}
 						}
-						File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
-						CMType.writeOutCMType(cmtype, cmtypeFile);
+						File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
+						RWType.writeOutCMType(cmtype, cmtypeFile);
 					}
 				}
 			}
@@ -363,17 +363,17 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
-					CMType[] cmtypes = CMType.readInAllCMTypes(currentProject);
-					for(CMType cmtype : cmtypes){
-						for(CMAttribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
+					RWType[] cmtypes = RWType.readInAllCMTypes(currentProject);
+					for(RWType cmtype : cmtypes){
+						for(RWT_Attribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
 							if(cmatt.getAttributeName().trim().equalsIgnoreCase("tainting")){
-								cmatt.setEnableStatus(CMAttribute.enableMark);
+								cmatt.setEnableStatus(RWT_Attribute.enableMark);
 							}else{
-								cmatt.setEnableStatus(CMAttribute.disEnableMark);
+								cmatt.setEnableStatus(RWT_Attribute.disEnableMark);
 							}
 						}
-						File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
-						CMType.writeOutCMType(cmtype, cmtypeFile);
+						File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
+						RWType.writeOutCMType(cmtype, cmtypeFile);
 					}
 				}
 			}
@@ -394,18 +394,18 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
-					CMType[] cmtypes = CMType.readInAllCMTypes(currentProject);
-					for(CMType cmtype : cmtypes){
-						for(CMAttribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
+					RWType[] cmtypes = RWType.readInAllCMTypes(currentProject);
+					for(RWType cmtype : cmtypes){
+						for(RWT_Attribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
 //							if(cmatt.getAttributeName().trim().equalsIgnoreCase("unit")){
 //								cmatt.setEnableStatus(CMAttribute.enableMark);
 //							}else{
 //								cmatt.setEnableStatus(CMAttribute.disEnableMark);
 //							}
-							cmatt.setEnableStatus(CMAttribute.disEnableMark);
+							cmatt.setEnableStatus(RWT_Attribute.disEnableMark);
 						}
-						File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
-						CMType.writeOutCMType(cmtype, cmtypeFile);
+						File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
+						RWType.writeOutCMType(cmtype, cmtypeFile);
 					}
 				}
 			}
@@ -426,17 +426,17 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
-					CMType[] cmtypes = CMType.readInAllCMTypes(currentProject);
-					for(CMType cmtype : cmtypes){
-						for(CMAttribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
+					RWType[] cmtypes = RWType.readInAllCMTypes(currentProject);
+					for(RWType cmtype : cmtypes){
+						for(RWT_Attribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
 							if(cmatt.getAttributeName().trim().equalsIgnoreCase("dimension")){
-								cmatt.setEnableStatus(CMAttribute.enableMark);
+								cmatt.setEnableStatus(RWT_Attribute.enableMark);
 							}else{
-								cmatt.setEnableStatus(CMAttribute.disEnableMark);
+								cmatt.setEnableStatus(RWT_Attribute.disEnableMark);
 							}
 						}
-						File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
-						CMType.writeOutCMType(cmtype, cmtypeFile);
+						File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
+						RWType.writeOutCMType(cmtype, cmtypeFile);
 					}
 				}
 			}
@@ -457,18 +457,18 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			@Override
 			public void widgetSelected(SelectionEvent arg0) {
 				if(currentProject != null){
-					CMType[] cmtypes = CMType.readInAllCMTypes(currentProject);
-					for(CMType cmtype : cmtypes){
-						for(CMAttribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
+					RWType[] cmtypes = RWType.readInAllCMTypes(currentProject);
+					for(RWType cmtype : cmtypes){
+						for(RWT_Attribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
 							if(cmatt.getAttributeName().trim().equalsIgnoreCase("dimension")||
 									cmatt.getAttributeName().trim().equalsIgnoreCase("unit")){
-								cmatt.setEnableStatus(CMAttribute.enableMark);
+								cmatt.setEnableStatus(RWT_Attribute.enableMark);
 							}else{
-								cmatt.setEnableStatus(CMAttribute.disEnableMark);
+								cmatt.setEnableStatus(RWT_Attribute.disEnableMark);
 							}
 						}
-						File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
-						CMType.writeOutCMType(cmtype, cmtypeFile);
+						File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
+						RWType.writeOutCMType(cmtype, cmtypeFile);
 					}
 				}
 			}
@@ -505,17 +505,17 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			public void widgetSelected(SelectionEvent arg0) {
 				String targetAtt = targetAttributeText.getText().trim();
 				if(currentProject != null){
-					CMType[] cmtypes = CMType.readInAllCMTypes(currentProject);
-					for(CMType cmtype : cmtypes){
-						for(CMAttribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
+					RWType[] cmtypes = RWType.readInAllCMTypes(currentProject);
+					for(RWType cmtype : cmtypes){
+						for(RWT_Attribute cmatt:cmtype.getSemanticType().getSemanticTypeAttributes()){
 							if(cmatt.getAttributeName().trim().equalsIgnoreCase(targetAtt)){
-								cmatt.setEnableStatus(CMAttribute.enableMark);
+								cmatt.setEnableStatus(RWT_Attribute.enableMark);
 							}else{
-								cmatt.setEnableStatus(CMAttribute.disEnableMark);
+								cmatt.setEnableStatus(RWT_Attribute.disEnableMark);
 							}
 						}
-						File cmtypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
-						CMType.writeOutCMType(cmtype, cmtypeFile);
+						File cmtypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtype.getTypeName());
+						RWType.writeOutCMType(cmtype, cmtypeFile);
 					}
 				}
 			}
@@ -543,7 +543,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 		if( currentFile != null){
 	        currentProject = currentFile.getProject();	
 	        this.containerText.setText(currentProject.getName());
-			cmtypeRootTreeObject = CMModelUtil.readInAllCMTypesToTreeObject(this.currentProject);
+			cmtypeRootTreeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(this.currentProject);
 			cmTypesTreeViewer.setInput(cmtypeRootTreeObject);
 		}
 	}
@@ -593,12 +593,12 @@ public class ManageCMTypeWizardPage extends WizardPage {
 			TreeItem item = (TreeItem)event.item;
 			if(item!=null){
 				TreeObject targetTreeObject = (TreeObject)(item.getData());
-				CMType sourceCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, dragedSourceTO);
+				RWType sourceCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, dragedSourceTO);
 				if((targetTreeObject!= null)
 					&&(sourceCMType!= null))
 				{
 					TreeItem newItem = new TreeItem(item, SWT.NONE);
-					File sourceCMTypeFile = CMModelUtil.getCMTypeFile(currentProject, dragedSourceTO);
+					File sourceCMTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, dragedSourceTO);
 					dragedSourceTO.getParent().removeChild(dragedSourceTO);
 					TreeObject.updateTreeObjectToFile(currentProject, dragedSourceTO.getParent());
 					targetTreeObject.addChild(dragedSourceTO);
@@ -607,7 +607,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 					newItem.setData(dragedSourceTO);
 					TreeObject.updateTreeObjectToFile(currentProject, targetTreeObject);
 					String targetCMTypeName = targetTreeObject.getName();
-					CMType.writeOutCMType(sourceCMType, sourceCMTypeFile);
+					RWType.writeOutCMType(sourceCMType, sourceCMTypeFile);
 					cmTypesTreeViewer.refresh();
 				}
 			}
@@ -640,17 +640,17 @@ public class ManageCMTypeWizardPage extends WizardPage {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				if(obj != null){
 					cmtypeTreeSelectedObject = (TreeObject)obj;
-					selectedCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+					selectedCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
 					if(selectedCMType != null){
 						CMtypeDetailLabel.setText("Type Detail: "+selectedCMType.getTypeName());
-						CM_SemanticType thisType = selectedCMType.getSemanticType();
+						RWT_Semantic thisType = selectedCMType.getSemanticType();
 						ConceptDetail explication = ConceptDetail.readInByLink(thisType.getExplicationLink());
 						associatedExplicationText.setText(explication.getConceptName());
 						typeAttributeViewer.setInput(selectedCMType.getSemanticType());
 						approxAttributeViewer.setInput(selectedCMType.getApproximationType());
 						
 						for (TableItem attItem : typeAttributeViewer.getTable().getItems()){
-							CMAttribute att = (CMAttribute)(attItem.getData());
+							RWT_Attribute att = (RWT_Attribute)(attItem.getData());
 							if(att.getEnableStatus().equals("y")){
 								attItem.setChecked(true);
 							}else{
@@ -659,13 +659,8 @@ public class ManageCMTypeWizardPage extends WizardPage {
 						}
 						
 						dialogChanged();
-					}else{
-						TreeObject parentNode =cmtypeTreeSelectedObject.getParent(); 
-						parentNode.removeChild(cmtypeTreeSelectedObject);
-						TreeObject.updateTreeObjectToFile(currentProject, parentNode);
-						cmTypesTreeViewer.refresh();
 					}
-					if(cmtypeTreeSelectedObject.getName().equals(CMModelUtil.CMTypesFolder)){
+					if(cmtypeTreeSelectedObject.getName().equals(RWTSystemUtil.CMTypesFolder)){
 						createSubCMTypeInTreeViewer.setEnabled(false);
 						return;
 					}else{
@@ -697,20 +692,21 @@ public class ManageCMTypeWizardPage extends WizardPage {
 				String parentTypeTOName = cmtypeTreeSelectedObject.getName();
 				int typeNameIndex = 0;
 				String newCMTypeTOName = parentTypeTOName+"_subType_"+typeNameIndex;
-				File newTypeDir = CMModelUtil.getCMTypeFile(currentProject, newCMTypeTOName);
+				File newTypeDir = RWTSystemUtil.getCMTypeFile(currentProject, newCMTypeTOName);
 				while(newTypeDir.exists()){
 					typeNameIndex++;
 					newCMTypeTOName = parentTypeTOName+"_subType_"+typeNameIndex;	
-					newTypeDir = CMModelUtil.getCMTypeFile(currentProject ,newCMTypeTOName);
+					newTypeDir = RWTSystemUtil.getCMTypeFile(currentProject ,newCMTypeTOName);
 				}
 				
 				TreeObject newSubTypeTO = new TreeObject(newCMTypeTOName);
-				cmtypeTreeSelectedObject.addChild(newSubTypeTO);
-				TreeObject.updateTreeObjectToFile(currentProject, cmtypeTreeSelectedObject);
+				TreeObject invisiableTop = TreeObject.getTopLevelTreeObject(cmtypeTreeSelectedObject);
+				invisiableTop.getChildren()[0].addChild(newSubTypeTO);
+				TreeObject.updateTreeObjectToFile(currentProject, invisiableTop);
 				
 				String newTypeName = newSubTypeTO.getName();
-				CMType newCMType = new CMType(CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject), newTypeName);
-				CMType.writeOutCMType(newCMType, newTypeDir);
+				RWType newCMType = new RWType(RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject), newTypeName);
+				RWType.writeOutCMType(newCMType, newTypeDir);
 				cmTypesTreeViewer.refresh();
 			}
 		};	
@@ -733,11 +729,11 @@ public class ManageCMTypeWizardPage extends WizardPage {
 
 				int typeNameIndex = 0;
 				String newCMTypeTOName = parentTypeTOName+"_subType_"+typeNameIndex;
-				File newTypeDir = CMModelUtil.getCMTypeFile(currentProject, newCMTypeTOName);
+				File newTypeDir = RWTSystemUtil.getCMTypeFile(currentProject, newCMTypeTOName);
 				while(newTypeDir.exists()){
 					typeNameIndex++;
 					newCMTypeTOName = parentTypeTOName+"_subType_"+typeNameIndex;	
-					newTypeDir = CMModelUtil.getCMTypeFile(currentProject, newCMTypeTOName);
+					newTypeDir = RWTSystemUtil.getCMTypeFile(currentProject, newCMTypeTOName);
 				}
 				
 				TreeObject newSubTypeTO = new TreeObject(newCMTypeTOName);
@@ -745,8 +741,8 @@ public class ManageCMTypeWizardPage extends WizardPage {
 				TreeObject.updateTreeObjectToFile(currentProject, cmtypeTreeSelectedObject);
 
 				String newTypeName = newSubTypeTO.getName();
-				CMType newCMType = new CMType(CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject), newTypeName);
-				CMType.writeOutCMType(newCMType, newTypeDir);
+				RWType newCMType = new RWType(RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject), newTypeName);
+				RWType.writeOutCMType(newCMType, newTypeDir);
 				cmTypesTreeViewer.refresh();
 			}
 		};	
@@ -764,16 +760,16 @@ public class ManageCMTypeWizardPage extends WizardPage {
 					return;
 				}
 				TreeObject parentTO = cmtypeTreeSelectedObject.getParent();
-				CMType originalCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
-				File originalCMTypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
+				RWType originalCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+				File originalCMTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
 				String parentTypeTOName = parentTO.getName();
 				int typeNameIndex = 0;
 				String newCMTypeTOName = parentTypeTOName+"_subType_"+typeNameIndex;
-				File newTypeDir = CMModelUtil.getCMTypeFile(currentProject, newCMTypeTOName);
+				File newTypeDir = RWTSystemUtil.getCMTypeFile(currentProject, newCMTypeTOName);
 				while(newTypeDir.exists()){
 					typeNameIndex++;
 					newCMTypeTOName = parentTypeTOName+"_subType_"+typeNameIndex;
-					newTypeDir = CMModelUtil.getCMTypeFile(currentProject, newCMTypeTOName);
+					newTypeDir = RWTSystemUtil.getCMTypeFile(currentProject, newCMTypeTOName);
 				}
 				
 				TreeObject newSubTypeTO = new TreeObject(newCMTypeTOName);
@@ -783,10 +779,10 @@ public class ManageCMTypeWizardPage extends WizardPage {
 				cmtypeTreeSelectedObject.setParent(newSubTypeTO);
 				
 				String newTypeName = newSubTypeTO.getName();
-				CMType newCMType = new CMType(CMModelUtil.getCMTypeFromTreeObject(currentProject, parentTO), newTypeName);
-				CMType.writeOutCMType(newCMType, newTypeDir);
+				RWType newCMType = new RWType(RWTSystemUtil.getCMTypeFromTreeObject(currentProject, parentTO), newTypeName);
+				RWType.writeOutCMType(newCMType, newTypeDir);
 				
-				CMType.writeOutCMType(originalCMType, originalCMTypeFile);
+				RWType.writeOutCMType(originalCMType, originalCMTypeFile);
 				TreeObject.updateTreeObjectToFile(currentProject, parentTO);
 				cmTypesTreeViewer.refresh();
 			}
@@ -798,7 +794,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 		
 		delCorrespondenceTypeInTreeViewer = new Action(){
 			public void run() {
-				File fileToDel = CMModelUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
+				File fileToDel = RWTSystemUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
 				if( fileToDel.exists() 
 					&& fileToDel.isDirectory()){
 					deleteDirectory(fileToDel);
@@ -875,30 +871,30 @@ public class ManageCMTypeWizardPage extends WizardPage {
 	
 	private void loadCLEARAtt(){
 		if(cmtypeTreeSelectedObject!= null){
-			selectedCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+			selectedCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
 			if(selectedCMType != null){
 				CMtypeDetailLabel.setText("Type Detail: "+selectedCMType.getTypeName());
-				CM_SemanticType thisType = selectedCMType.getSemanticType();
+				RWT_Semantic thisType = selectedCMType.getSemanticType();
 				ConceptDetail explication = ConceptDetail.readInByLink(thisType.getExplicationLink());
 				associatedExplicationText.setText(explication.getConceptName());
 				String conceptName = associatedExplicationText.getText();
-				File newConceptFile = CMModelUtil.getConceptDetailFile(currentProject, conceptName);
+				File newConceptFile = RWTSystemUtil.getConceptDetailFile(currentProject, conceptName);
 				if(newConceptFile.exists()){
 					ConceptDetail conceptDetail = ConceptDetail.readInConceptDetail(newConceptFile);
 					selectedCMType.getSemanticType().setExplicationLink(newConceptFile.getAbsolutePath());	
 					ArrayList<ConceptAttribute> conceptsAtts = conceptDetail.getAttributes();
-					ArrayList<CMAttribute> semanticAtts = thisType.getSemanticTypeAttributes();
+					ArrayList<RWT_Attribute> semanticAtts = thisType.getSemanticTypeAttributes();
 					for(ConceptAttribute conceptAttribute: conceptsAtts){
 						String attName = conceptAttribute.getAttributeName();
 						boolean existAtt = false;
-						for(CMAttribute semanticAtt : semanticAtts){
+						for(RWT_Attribute semanticAtt : semanticAtts){
 							if(semanticAtt.getAttributeName().equalsIgnoreCase(attName)){
 								existAtt = true;
 								break;
 							}
 						}
 						if(!existAtt){
-							CMAttribute newSemanticTypeAtt = new CMAttribute(attName, "");
+							RWT_Attribute newSemanticTypeAtt = new RWT_Attribute(attName, "");
 							thisType.addSemanticTypeAtt(newSemanticTypeAtt);
 						}
 					}
@@ -947,7 +943,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 	
 	private void addTypeAttributeEvent(){
 		if(selectedCMType != null){
-			CMAttribute newAtt = new CMAttribute("new Attribute", "Attribute Type");
+			RWT_Attribute newAtt = new RWT_Attribute("new Attribute", "Attribute Type");
 			  if(!selectedCMType.getSemanticType().getSemanticTypeAttributes().contains(newAtt)){
 				  selectedCMType.getSemanticType().getSemanticTypeAttributes().add(newAtt);
 				  typeAttributeViewer.setInput(selectedCMType.getSemanticType()); 
@@ -975,7 +971,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 		if(selectedCMType != null){
 		  TableItem selectedItem = typeAttributeViewer.getTable().getSelection()[0];
 		  if(selectedItem != null){
-			  CMAttribute deleteAtt = new CMAttribute(selectedItem.getText(0), selectedItem.getText(1));
+			  RWT_Attribute deleteAtt = new RWT_Attribute(selectedItem.getText(0), selectedItem.getText(1));
 			  if(selectedCMType.getSemanticType().getSemanticTypeAttributes().contains(deleteAtt)){
 				  selectedCMType.getSemanticType().getSemanticTypeAttributes().remove(deleteAtt);
 				  typeAttributeViewer.setInput(selectedCMType.getSemanticType()); 
@@ -986,7 +982,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 	
 	private void addApproxAttributeEvent(){
 		if(selectedCMType != null){
-			 CorrespondenceApproTypeProperty newAtt = new CorrespondenceApproTypeProperty("new Property", "Property Description");
+			 RWT_ApproximationProperty newAtt = new RWT_ApproximationProperty("new Property", "Property Description");
 			 newAtt.setPossibleValue("0");
 			  if(!selectedCMType.getApproximationType().getApproximateProperties().contains(newAtt)){
 				  selectedCMType.getApproximationType().getApproximateProperties().add(newAtt);
@@ -1013,7 +1009,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 		if(approxAttributeViewer.getTable().getSelection()[0] != null){
 			  TableItem selectedItem = approxAttributeViewer.getTable().getSelection()[0];
 			  if(selectedItem != null){
-				  CorrespondenceApproTypeProperty deleteAtt = new CorrespondenceApproTypeProperty(selectedItem.getText(0), selectedItem.getText(1));
+				  RWT_ApproximationProperty deleteAtt = new RWT_ApproximationProperty(selectedItem.getText(0), selectedItem.getText(1));
 				  if(selectedCMType.getApproximationType().getApproximateProperties().contains(deleteAtt)){
 					  selectedCMType.getApproximationType().getApproximateProperties().remove(deleteAtt);
 					  approxAttributeViewer.setInput(selectedCMType.getApproximationType()); 
@@ -1024,8 +1020,8 @@ public class ManageCMTypeWizardPage extends WizardPage {
 	
 	private void editingCMTypeNameInTree(final TreeObject selectedTO){
 		String oldName = cmtypeTreeSelectedObject.getName();
-		File oldCMTypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
-		CMType editingCMType = CMType.readInCorrespondenceType(oldCMTypeFile);
+		File oldCMTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
+		RWType editingCMType = RWType.readInCorrespondenceType(oldCMTypeFile);
 		IWorkbench workbench = PlatformUI.getWorkbench();
 		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 		CMTypeRenameDialog dialog = new CMTypeRenameDialog(window.getShell(), currentProject, cmtypeTreeSelectedObject );
@@ -1034,10 +1030,10 @@ public class ManageCMTypeWizardPage extends WizardPage {
 		if(dialog.open()==Window.OK){
 			String newName = cmtypeTreeSelectedObject.getName();
 			if(!oldName.equals(newName)){
-				File newCMTypeFile = CMModelUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
+				File newCMTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, cmtypeTreeSelectedObject);
 				editingCMType.setTypeName(newName);
 				oldCMTypeFile.renameTo(newCMTypeFile);
-				CMType.writeOutCMType(editingCMType, newCMTypeFile);
+				RWType.writeOutCMType(editingCMType, newCMTypeFile);
 				TreeObject.updateTreeObjectToFile(currentProject, cmtypeTreeSelectedObject);
 				cmTypesTreeViewer.refresh();
 			}
@@ -1105,7 +1101,7 @@ public class ManageCMTypeWizardPage extends WizardPage {
 				IResource container = ResourcesPlugin.getWorkspace().getRoot()
 				.findMember(new Path(getContainerName()));
 				this.currentProject =  container.getProject();
-				cmtypeRootTreeObject = CMModelUtil.readInAllCMTypesToTreeObject(this.currentProject);
+				cmtypeRootTreeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(this.currentProject);
 				cmTypesTreeViewer.setInput(cmtypeRootTreeObject);
 			}
 		}

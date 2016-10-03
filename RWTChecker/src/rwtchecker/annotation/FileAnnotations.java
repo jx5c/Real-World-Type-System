@@ -39,17 +39,22 @@ import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.BodyDeclaration;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jdt.core.dom.IBinding;
 import org.eclipse.jdt.core.dom.IMethodBinding;
+import org.eclipse.jdt.core.dom.IVariableBinding;
 import org.eclipse.jdt.core.dom.Javadoc;
+import org.eclipse.jdt.core.dom.MethodDeclaration;
+import org.eclipse.jdt.core.dom.SimpleName;
 import org.eclipse.jdt.core.dom.TagElement;
 import org.eclipse.jdt.core.dom.TextElement;
+import org.eclipse.jdt.core.dom.TypeDeclaration;
 import org.eclipse.jface.text.BadLocationException;
 import org.eclipse.jface.text.IDocument;
 import org.eclipse.text.edits.MalformedTreeException;
 
-import rwtchecker.CM.CMType;
+import rwtchecker.rwt.RWType;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 
 public class FileAnnotations {
@@ -153,7 +158,7 @@ public class FileAnnotations {
 		}
 		//if 
 		for(RWTAnnotation anno : thisAnnotations){
-			if(anno.getAnnotationType().equals(RWTAnnotation.Return) && anno.getAnnotationContents().equals(CMType.GenericMethod)){
+			if(anno.getAnnotationType().equals(RWTAnnotation.Return) && anno.getAnnotationContents().equals(RWType.GenericMethod)){
 				return false;
 			}
 		}
@@ -246,7 +251,7 @@ public class FileAnnotations {
 		}
 		IFile methodDeclFile = ResourcesPlugin.getWorkspace().getRoot().getFile(iMethodBinding.getJavaElement().getPath());
 		if((methodDeclFile != null) && (methodDeclFile.getFileExtension().toLowerCase().endsWith("java"))){
-			File annotationFile = CMModelUtil.getAnnotationFile(methodDeclFile);
+			File annotationFile = RWTSystemUtil.getAnnotationFile(methodDeclFile);
 			if(annotationFile != null){
 				FileAnnotations fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 				if(fileAnnotations!=null && fileAnnotations.getReturnCMTypeForMethod(iMethodBinding.getKey())!=null){
@@ -259,7 +264,7 @@ public class FileAnnotations {
 
 	public static void changeAnnotationsStatus(){
 		IFile currentFile = ActivePart.getFileOfActiveEditror();		
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		
 		FileAnnotations fileAnnotations = new FileAnnotations ();
 		if(annotationFile.exists()){
@@ -268,7 +273,7 @@ public class FileAnnotations {
 				return;
 			}
 		}
-		CompilationUnit compilationResult = CMModelUtil.getCurrentCompliationUnit();
+		CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
 		HashMap <String, ArrayList<RWTAnnotation>> annotations = fileAnnotations.getAnnotations();
 		
 		Iterator<String> keysets = annotations.keySet().iterator();
@@ -552,6 +557,64 @@ public class FileAnnotations {
 				allVariableMap.put(bodyDelKey, variableMap);
 			}
 		}
+	}
+	
+	public static RWType lookupRWTByVarName(ASTNode node, CompilationUnit compilationResult){
+		String rwtypeName = "";
+		if(node !=null){
+			if(node instanceof SimpleName){							
+				IBinding binding= ((SimpleName)node).resolveBinding();
+				if (binding.getKind() == IBinding.METHOD) {
+					ASTNode methodDeclNode = compilationResult.findDeclaringNode(binding.getKey());
+					if(methodDeclNode instanceof MethodDeclaration){
+						MethodDeclaration methodDecl = (MethodDeclaration)methodDeclNode;
+						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(methodDecl.resolveBinding().getJavaElement().getPath());
+						FileAnnotations fileAnnotation = getFileAnnotation(ifile);
+						if(fileAnnotation != null){
+							rwtypeName = fileAnnotation.getReturnCMTypeForMethod(binding.getKey());
+						}
+					}
+				}else if (binding.getKind() == IBinding.VARIABLE) {
+					IVariableBinding bindingDecl= ((IVariableBinding) ((SimpleName)node).resolveBinding()).getVariableDeclaration();
+					String varName = bindingDecl.getName();
+					IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(bindingDecl.getJavaElement().getPath());
+					FileAnnotations fileAnnotation = getFileAnnotation(ifile);
+					if(bindingDecl.isField()){
+						if(fileAnnotation != null){
+							rwtypeName = fileAnnotation.getCMTypeInBodyDecl(bindingDecl.getDeclaringClass().getKey(), varName);
+						}
+					}else{
+						if(fileAnnotation != null){
+							rwtypeName = fileAnnotation.getCMTypeInBodyDecl(bindingDecl.getDeclaringMethod().getKey(), varName);
+						}
+					}
+			 	}			 	
+			}
+		}
+		RWType rwtype = RWTSystemUtil.getCMTypeFromTypeName(ActivePart.getFileOfActiveEditror().getProject(), rwtypeName);
+		return rwtype;
+	}
+	
+	private static FileAnnotations getFileAnnotation(IFile ifile){
+		if(ifile!=null){
+			File annotationFile = RWTSystemUtil.getAnnotationFile(ifile);
+			if(annotationFile == null){
+				//not java files
+				return null;
+			}
+			FileAnnotations fileAnnotations = new FileAnnotations ();
+			if(!annotationFile.exists()){
+				try {
+					annotationFile.createNewFile();
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}else{
+				fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
+			}
+			return fileAnnotations;
+		}
+		return null;
 	}
 	
 	public static void main(String args[]){

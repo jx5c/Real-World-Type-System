@@ -39,11 +39,11 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.CM.CMAttribute;
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWT_Attribute;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwt.RWT_Semantic;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.CMViewTreeContentProvider;
 import rwtchecker.views.provider.CMViewTreeViewLabelProvider;
 import rwtchecker.views.provider.TreeObject;
@@ -61,7 +61,7 @@ public class AttToBeCheckedSelectionDialog extends TitleAreaDialog {
 	private IProject currentProject;
 	
 	private Label CMtypeDetailLabel;
-	private CMType selectedNewCMType;
+	private RWType selectedNewCMType;
 	private Text associatedExplicationText;
 	private TableViewer typeAttributeViewer;
 	
@@ -75,7 +75,7 @@ public class AttToBeCheckedSelectionDialog extends TitleAreaDialog {
 	public AttToBeCheckedSelectionDialog(Shell parentShell, IProject currentProject) {
 		super(parentShell);
 		this.currentProject = currentProject;
-		baseTypes = CMModelUtil.getBaseTypes(this.currentProject);
+		baseTypes = RWTSystemUtil.getBaseTypes(this.currentProject);
 	}
 
 	@Override
@@ -152,7 +152,7 @@ public class AttToBeCheckedSelectionDialog extends TitleAreaDialog {
 					saveUnitsToBeChecked();
 					
 					cmtypeTreeSelectedObject = (TreeObject)obj;
-					selectedNewCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+					selectedNewCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
 					if(selectedNewCMType != null){
 						CMtypeDetailLabel.setText("Type Detail: "+selectedNewCMType.getTypeName());
 						ConceptDetail explication = ConceptDetail.readInByLink(selectedNewCMType.getSemanticType().getExplicationLink());
@@ -240,7 +240,7 @@ public class AttToBeCheckedSelectionDialog extends TitleAreaDialog {
 	private void LoadBaseTypes(IProject currentProject) {
 		
 		/**reserved for future usage**/
-//		TreeObject baseTypesTO = CMModelUtil.readInBaseTypesToTreeObject(currentProject);
+//		TreeObject baseTypesTO = RWTSystemUtil.readInBaseTypesToTreeObject(currentProject);
 //		this.cmTypesTreeViewer.setInput(baseTypesTO);
 	}
 	
@@ -307,7 +307,7 @@ public class AttToBeCheckedSelectionDialog extends TitleAreaDialog {
 		private String attValue = "";
 		private String checkingRange = "none";
 		
-		public CheckingSemanticTypeAttribute(CMAttribute semanticTypeAtt){
+		public CheckingSemanticTypeAttribute(RWT_Attribute semanticTypeAtt){
 			 this.attName = semanticTypeAtt.getAttributeName();
 			 this.attValue = semanticTypeAtt.getAttributeValue();
 		}
@@ -360,9 +360,9 @@ public class AttToBeCheckedSelectionDialog extends TitleAreaDialog {
 		public void dispose() {
 		}
 		public Object[] getElements(Object parent) {
-			CMType cmtype = (CMType) parent;
+			RWType cmtype = (RWType) parent;
 			ArrayList<CheckingSemanticTypeAttribute> atts = new ArrayList<CheckingSemanticTypeAttribute>();
-			for(CMAttribute att : cmtype.getSemanticType().getSemanticTypeAttributes()){
+			for(RWT_Attribute att : cmtype.getSemanticType().getSemanticTypeAttributes()){
 				CheckingSemanticTypeAttribute newAtt = new CheckingSemanticTypeAttribute(att);
 				atts.add(newAtt);
 			}

@@ -11,6 +11,7 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.part.*;
 import org.eclipse.jdt.core.dom.ASTNode;
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.swt.custom.StyleRange;
 import org.eclipse.swt.custom.StyledText;
@@ -31,7 +32,7 @@ public class DiagnoseView extends ViewPart {
 	/**
 	 * The ID of the view as specified by the extension.
 	 */
-	public static final String ID = "cmtypechecker.views.DiagnoseView";
+	public static final String ID = "rwtchecker.views.DiagnoseView";
 	
 	public static final String[] permissionStatus =  new String[]{"Operation Allowed", "Operation Denied"};
 
@@ -39,10 +40,10 @@ public class DiagnoseView extends ViewPart {
 	private StyledText textControl;
 //	private ExampleEditingSupport exampleEditingSupport;
 	
-	private static final Image CHECKED = Activator.getImageDescriptor(
-		"icons/checked.gif").createImage();
-	private static final Image UNCHECKED = Activator.getImageDescriptor(
-		"icons/unchecked.gif").createImage();
+	
+	static ImageDescriptor imageD = Activator.getImageDescriptor("icons/checked.gif");
+	private static final Image CHECKED = imageD.createImage();
+	private static final Image UNCHECKED = Activator.getImageDescriptor("icons/unchecked.gif").createImage();
 	
 	class ErrorViewContentProvider implements IStructuredContentProvider {
 		public void inputChanged(Viewer v, Object oldInput, Object newInput) {

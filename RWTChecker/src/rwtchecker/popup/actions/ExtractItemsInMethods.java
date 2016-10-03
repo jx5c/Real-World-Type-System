@@ -59,8 +59,8 @@ import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.extractor.Extractor;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.ExtractionMethodItemsVisitor;
 
 public class ExtractItemsInMethods implements IObjectActionDelegate {

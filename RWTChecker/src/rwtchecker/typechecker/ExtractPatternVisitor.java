@@ -18,11 +18,11 @@ import org.eclipse.jdt.core.ICompilationUnit;
 import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRuleCategory;
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.annotation.FileAnnotations;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRulesManager;
+import rwtchecker.util.RWTSystemUtil;
 
 /**
  * Current version selects elements: 
@@ -34,7 +34,7 @@ import rwtchecker.util.CMModelUtil;
  */
 public class ExtractPatternVisitor extends ASTVisitor {
 	
-	private CMTypeRulesManager cmTypeOperationManager;
+	private RWTypeRulesManager cmTypeOperationManager;
 	
 	private HashMap<Expression, String> annotatedTypeTableForExpression = new HashMap<Expression, String>();
 	
@@ -51,14 +51,14 @@ public class ExtractPatternVisitor extends ASTVisitor {
 	
 	private ArrayList<String> hashedValueOfFunction = new ArrayList<String>();
 	
-	public ExtractPatternVisitor(CMTypeRulesManager manager, CompilationUnit compilationUnit) {
+	public ExtractPatternVisitor(RWTypeRulesManager manager, CompilationUnit compilationUnit) {
 		super(true);
 		this.cmTypeOperationManager = manager;
 		this.compilationUnit = compilationUnit;		
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
 		currentProject = currentFile.getProject();
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){
@@ -97,7 +97,7 @@ public class ExtractPatternVisitor extends ASTVisitor {
 						}
 					}else{
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotation == null){
@@ -124,7 +124,7 @@ public class ExtractPatternVisitor extends ASTVisitor {
 					}else{
 						//Method declared in other file; 
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(iMethodBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotationsClone = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotationsClone == null){
@@ -197,7 +197,7 @@ public class ExtractPatternVisitor extends ASTVisitor {
 	//itemize selected program elements
 	private void addItem(String item){
 		//add all CM types   
-		if(!item.equals(CMType.TypeLess)){
+		if(!item.equals(RWType.TypeLess)){
 			/*
 			if(!hashedValueOfFunction.contains(String.valueOf(item.hashCode()))){
 				hashedValueOfFunction.add(String.valueOf(item.hashCode()));
@@ -247,8 +247,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 			String nameType =  this.getAnnotatedTypeForExpression(qualifiedName.getName());
 			String qualifierType = this.getAnnotatedTypeForExpression(qualifiedName.getQualifier());
 			String resultType = nameType;
-			if(nameType.equals(CMType.error_propogate) || nameType.equals(CMType.error_source)){
-				this.associateAnnotatedTypeWithExpression(qualifiedName, CMType.error_propogate);
+			if(nameType.equals(RWType.error_propogate) || nameType.equals(RWType.error_source)){
+				this.associateAnnotatedTypeWithExpression(qualifiedName, RWType.error_propogate);
 			}else{
 				resultType = getUnionType(qualifierType,nameType);
 			}
@@ -261,8 +261,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 			String annotatedInstanceType = this.getAnnotatedTypeForExpression(fieldInstance);
 			String annotatedIdentifierType = this.getAnnotatedTypeForExpression(fieldAccessNode.getName());
 			String resultType = annotatedIdentifierType;
-			if(resultType.equals(CMType.error_propogate) || resultType.equals(CMType.error_source)){
-				this.associateAnnotatedTypeWithExpression(fieldAccessNode, CMType.error_propogate);
+			if(resultType.equals(RWType.error_propogate) || resultType.equals(RWType.error_source)){
+				this.associateAnnotatedTypeWithExpression(fieldAccessNode, RWType.error_propogate);
 			}else{
 				resultType = getUnionType(annotatedInstanceType,annotatedIdentifierType);
 			}
@@ -273,8 +273,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 			ArrayAccess arrayAccess = (ArrayAccess)node;
 			String annotatedType =  this.getAnnotatedTypeForExpression(arrayAccess.getArray());
 					String resultType = annotatedType;
-					if(resultType.equals(CMType.error_propogate) || resultType.equals(CMType.error_source)){
-						this.associateAnnotatedTypeWithExpression(arrayAccess, CMType.error_propogate);
+					if(resultType.equals(RWType.error_propogate) || resultType.equals(RWType.error_source)){
+						this.associateAnnotatedTypeWithExpression(arrayAccess, RWType.error_propogate);
 					}
 					this.associateAnnotatedTypeWithExpression(arrayAccess, resultType);
 		}
@@ -289,8 +289,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 			for (int i=0;i<methodInvocationNode.arguments().size();i++){
 				Expression exp = (Expression)(methodInvocationNode.arguments().get(i));
 				String argumentCMType = this.getAnnotatedTypeForExpression(exp);
-				if(argumentCMType.equals(CMType.error_propogate) || argumentCMType.equals(CMType.error_source)){
-					this.associateAnnotatedTypeWithExpression(methodInvocationNode, CMType.error_propogate);
+				if(argumentCMType.equals(RWType.error_propogate) || argumentCMType.equals(RWType.error_source)){
+					this.associateAnnotatedTypeWithExpression(methodInvocationNode, RWType.error_propogate);
 					return;
 				}
 			}
@@ -307,8 +307,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 		else if(node instanceof ParenthesizedExpression){
 			ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression)node;
 					String argumentCMType = this.getAnnotatedTypeForExpression(parenthesizedExpression.getExpression());
-					if(argumentCMType.equals(CMType.error_propogate) || argumentCMType.equals(CMType.error_source)){
-						this.associateAnnotatedTypeWithExpression(parenthesizedExpression, CMType.error_propogate);
+					if(argumentCMType.equals(RWType.error_propogate) || argumentCMType.equals(RWType.error_source)){
+						this.associateAnnotatedTypeWithExpression(parenthesizedExpression, RWType.error_propogate);
 						return;
 					}else{
 						this.associateAnnotatedTypeWithExpression(parenthesizedExpression, argumentCMType);
@@ -350,11 +350,11 @@ public class ExtractPatternVisitor extends ASTVisitor {
 			String leftCMType = this.getAnnotatedTypeForExpression(leftExp);
 			String rightCMType = this.getAnnotatedTypeForExpression(rightExp);
 			//error propagate
-			if((leftCMType.equals(CMType.error_source)) || (leftCMType.equals(CMType.error_propogate))
-					||	(rightCMType.equals(CMType.error_source)) || (rightCMType.equals(CMType.error_propogate))){
+			if((leftCMType.equals(RWType.error_source)) || (leftCMType.equals(RWType.error_propogate))
+					||	(rightCMType.equals(RWType.error_source)) || (rightCMType.equals(RWType.error_propogate))){
 				return;
 			}
-			else if(leftCMType.equals(CMType.TypeLess) && !rightCMType.equals(CMType.TypeLess)){
+			else if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
 				if(leftExp instanceof SimpleName){
 					IBinding fbinding = ((SimpleName)leftExp).resolveBinding();
 					if(fbinding instanceof IVariableBinding){
@@ -392,13 +392,13 @@ public class ExtractPatternVisitor extends ASTVisitor {
 				String leftCMType = this.getAnnotatedTypeForExpression(fragment.getName());
 				String rightCMType = this.getAnnotatedTypeForExpression(fragment.getInitializer());
 				//error propagate
-				if(rightCMType.equals(CMType.error_propogate) || rightCMType.equals(CMType.error_source)){
+				if(rightCMType.equals(RWType.error_propogate) || rightCMType.equals(RWType.error_source)){
 					return;
 				}
-				if(leftCMType.equals(CMType.error_propogate) || leftCMType.equals(CMType.error_source)){
+				if(leftCMType.equals(RWType.error_propogate) || leftCMType.equals(RWType.error_source)){
 					return;
 				}
-				if(leftCMType.equals(CMType.TypeLess) && !rightCMType.equals(CMType.TypeLess)){
+				if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
 					if(fragment.getName() instanceof SimpleName){
 						IBinding fbinding = ((SimpleName)fragment.getName()).resolveBinding();
 						if(fbinding instanceof IVariableBinding){
@@ -466,7 +466,7 @@ public class ExtractPatternVisitor extends ASTVisitor {
 			return;
 		}
 		//with annotated cm type
-		File annotationFile = CMModelUtil.getAnnotationFile(methodDeclFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(methodDeclFile);
 		if(annotationFile != null){
 			FileAnnotations fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations!=null && fileAnnotations.getReturnCMTypeForMethod(methodDeclKey)!=null){
@@ -478,7 +478,7 @@ public class ExtractPatternVisitor extends ASTVisitor {
 				for (int i=0;i<methodInvocationNode.arguments().size();i++){
 					Expression exp = (Expression)(methodInvocationNode.arguments().get(i));
 					String argumentCMType = this.getAnnotatedTypeForExpression(exp);
-					if(!argumentCMType.equals(CMType.TypeLess)){
+					if(!argumentCMType.equals(RWType.TypeLess)){
 						hasTypedArguments = true;
 						break;
 					}
@@ -536,8 +536,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 				String argumentOneAnnotatedType = this.getAnnotatedTypeForExpression(argumentOne);
 				String argumentTwoAnnotatedType = this.getAnnotatedTypeForExpression(argumentTwo);
 
-				if(argumentTwoAnnotatedType.equalsIgnoreCase(CMType.TypeLess) && argumentOneAnnotatedType.equalsIgnoreCase(CMType.TypeLess)){
-						this.associateAnnotatedTypeWithExpression(methodInvocationNode, CMType.TypeLess);
+				if(argumentTwoAnnotatedType.equalsIgnoreCase(RWType.TypeLess) && argumentOneAnnotatedType.equalsIgnoreCase(RWType.TypeLess)){
+						this.associateAnnotatedTypeWithExpression(methodInvocationNode, RWType.TypeLess);
 						return;
 				}
 				String returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, argumentOneAnnotatedType, methodName, argumentTwoAnnotatedType); 
@@ -545,7 +545,7 @@ public class ExtractPatternVisitor extends ASTVisitor {
 					this.associateAnnotatedTypeWithExpression(methodInvocationNode,  returnType);
 					return;
 				}else {
-					this.associateAnnotatedTypeWithExpression(methodInvocationNode, CMType.error_source);
+					this.associateAnnotatedTypeWithExpression(methodInvocationNode, RWType.error_source);
 					return;
 				}
 			}
@@ -553,20 +553,20 @@ public class ExtractPatternVisitor extends ASTVisitor {
 				Expression argument = (Expression)(methodInvocationNode.arguments().get(0));
 				String argumentAnnotatedType = this.getAnnotatedTypeForExpression(argument);
 
-				if(argumentAnnotatedType.equalsIgnoreCase(CMType.TypeLess)){
-					this.associateAnnotatedTypeWithExpression(methodInvocationNode, CMType.TypeLess);
+				if(argumentAnnotatedType.equalsIgnoreCase(RWType.TypeLess)){
+					this.associateAnnotatedTypeWithExpression(methodInvocationNode, RWType.TypeLess);
 					return;
 				}
 				String returnType = null;
-				returnType=this.cmTypeOperationManager.getReturnType(this.currentProject, argumentAnnotatedType, methodName, CMType.TypeLess); 
+				returnType=this.cmTypeOperationManager.getReturnType(this.currentProject, argumentAnnotatedType, methodName, RWType.TypeLess); 
 				if((returnType != null)){
 					this.associateAnnotatedTypeWithExpression(methodInvocationNode, returnType);
 				}else{
-					this.associateAnnotatedTypeWithExpression(methodInvocationNode,  CMType.error_source);	
+					this.associateAnnotatedTypeWithExpression(methodInvocationNode,  RWType.error_source);	
 				}
 
 				//abs function
-				if(methodName.equalsIgnoreCase(CMTypeRuleCategory.Abosolute_Value)){
+				if(methodName.equalsIgnoreCase(RWTypeRuleCategory.Abosolute_Value)){
 					addTypeInfo(methodInvocationNode,argumentAnnotatedType);
 					return;
 				}
@@ -580,34 +580,34 @@ public class ExtractPatternVisitor extends ASTVisitor {
 		Expression rightEP = infixExpression.getRightOperand();
 		String CMTypeAnnotatedTypeOne = this.getAnnotatedTypeForExpression(leftEP);
 		String CMTypeAnnotatedTypeTwo = this.getAnnotatedTypeForExpression(rightEP);
-		if((CMTypeAnnotatedTypeOne.equals(CMType.error_source)) || (CMTypeAnnotatedTypeOne.equals(CMType.error_propogate))
-				||	(CMTypeAnnotatedTypeTwo.equals(CMType.error_source)) || (CMTypeAnnotatedTypeTwo.equals(CMType.error_propogate))){
-			this.associateAnnotatedTypeWithExpression(infixExpression, CMType.error_propogate);
+		if((CMTypeAnnotatedTypeOne.equals(RWType.error_source)) || (CMTypeAnnotatedTypeOne.equals(RWType.error_propogate))
+				||	(CMTypeAnnotatedTypeTwo.equals(RWType.error_source)) || (CMTypeAnnotatedTypeTwo.equals(RWType.error_propogate))){
+			this.associateAnnotatedTypeWithExpression(infixExpression, RWType.error_propogate);
 			return;
 		}
-		if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-			this.associateAnnotatedTypeWithExpression(infixExpression, CMType.TypeLess);
+		if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+			this.associateAnnotatedTypeWithExpression(infixExpression, RWType.TypeLess);
 		}
 	}
 	
 	private void check_Remander_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = CMType.TypeLess;
+		String infixExpressionType = RWType.TypeLess;
 				//type rules part
-				if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-					infixExpressionType = CMType.TypeLess;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+					infixExpressionType = RWType.TypeLess;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-					infixExpressionType = CMType.TypeLess;
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+					infixExpressionType = RWType.TypeLess;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
-					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
+					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
 					if(returnType != null ){
 						infixExpressionType = returnType;
 					}else{
-						infixExpressionType = CMType.TypeLess;
+						infixExpressionType = RWType.TypeLess;
 					}	
 				}
 				this.associateAnnotatedTypeWithExpression(infixExpression, infixExpressionType);
@@ -623,15 +623,15 @@ public class ExtractPatternVisitor extends ASTVisitor {
 	}
 	
 	private void check_Plus_Minus_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression plusInfixExpression, int extendedIndex, String operation_type){
-		String infixExpressionType = CMType.TypeLess;
+		String infixExpressionType = RWType.TypeLess;
 				//type rules part
-				if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-					infixExpressionType = CMType.TypeLess;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+					infixExpressionType = RWType.TypeLess;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
 					infixExpressionType = CMTypeAnnotatedTypeTwo;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
@@ -639,8 +639,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 					if(returnType != null ){
 						infixExpressionType = returnType;
 					}else{
-						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(CMType.TypeLess) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(CMType.TypeLess)){							
-							infixExpressionType = CMType.TypeLess;
+						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(RWType.TypeLess) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(RWType.TypeLess)){							
+							infixExpressionType = RWType.TypeLess;
 						}
 					}	
 				}
@@ -657,24 +657,24 @@ public class ExtractPatternVisitor extends ASTVisitor {
 	}
 	
 	private void check_Times_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = CMType.TypeLess;
+		String infixExpressionType = RWType.TypeLess;
 				//type rules part
-				if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-					infixExpressionType = CMType.TypeLess;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+					infixExpressionType = RWType.TypeLess;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
 					infixExpressionType = CMTypeAnnotatedTypeTwo;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
-					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
+					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
 					if(returnType != null ){
 						infixExpressionType = returnType;
 					}else{
-						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(CMType.TypeLess) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(CMType.TypeLess)){							
-							infixExpressionType = CMType.error_source;
+						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(RWType.TypeLess) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(RWType.TypeLess)){							
+							infixExpressionType = RWType.error_source;
 						}
 					}
 				}
@@ -690,28 +690,28 @@ public class ExtractPatternVisitor extends ASTVisitor {
 	}
 	
 	private void check_Division_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){	
-		String infixExpressionType = CMType.TypeLess;
+		String infixExpressionType = RWType.TypeLess;
 			//type rules part
-			if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-				infixExpressionType = CMType.TypeLess;
+			if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+				infixExpressionType = RWType.TypeLess;
 			}		
-			else if(CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
-				String inverseType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, CMTypeRuleCategory.Multiplicative_Inverse, "");
+			else if(CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && !CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
+				String inverseType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, RWTypeRuleCategory.Multiplicative_Inverse, "");
 				if(inverseType != null ){
 					infixExpressionType = inverseType;
 				}else{
-					infixExpressionType = CMType.error_source;
+					infixExpressionType = RWType.error_source;
 				}
 			}
-			else if(!CMTypeAnnotatedTypeOne.equals(CMType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(CMType.TypeLess)){
+			else if(!CMTypeAnnotatedTypeOne.equals(RWType.TypeLess) && CMTypeAnnotatedTypeTwo.equals(RWType.TypeLess)){
 				infixExpressionType = CMTypeAnnotatedTypeOne;
 			}else{
 				String returnType = null;
-				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
+				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
 				if(returnType != null ){
 					infixExpressionType = returnType;
 				}else{
-					infixExpressionType = CMType.error_source;
+					infixExpressionType = RWType.error_source;
 				}
 			}
 			this.associateAnnotatedTypeWithExpression(infixExpression, infixExpressionType);
@@ -729,8 +729,8 @@ public class ExtractPatternVisitor extends ASTVisitor {
 		if(annotatedTypeTableForExpression.get(exp) != null){
 			return annotatedTypeTableForExpression.get(exp);
 		}else{
-			annotatedTypeTableForExpression.put(exp, CMType.TypeLess);
-			return CMType.TypeLess;
+			annotatedTypeTableForExpression.put(exp, RWType.TypeLess);
+			return RWType.TypeLess;
 		}
 	}
 	
@@ -741,10 +741,10 @@ public class ExtractPatternVisitor extends ASTVisitor {
 
 
 	private String getUnionType(String contextTypeName, String typeName){
-		if(contextTypeName.equals(CMType.TypeLess)){
+		if(contextTypeName.equals(RWType.TypeLess)){
 			return typeName;
 		}else{
-			String combinedType = this.cmTypeOperationManager.getReturnType(currentProject, contextTypeName, CMTypeRuleCategory.TypeContext, typeName);
+			String combinedType = this.cmTypeOperationManager.getReturnType(currentProject, contextTypeName, RWTypeRuleCategory.TypeContext, typeName);
 			if(combinedType!=null){
 				return combinedType;
 			}else{

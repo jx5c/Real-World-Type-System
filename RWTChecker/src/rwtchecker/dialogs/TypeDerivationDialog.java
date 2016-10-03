@@ -39,10 +39,10 @@ import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_SemanticType;
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWT_Semantic;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.CMApproTableContentProvider;
 import rwtchecker.views.provider.CMApproTablelLabelProvider;
 import rwtchecker.views.provider.CMAttributeTableContentProvider;
@@ -60,7 +60,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 	private String derivationSpecification;
 	
 	private Label CMtypeDetailLabel;
-	private CMType selectedNewCMType;
+	private RWType selectedNewCMType;
 	private Text associatedExplicationText;
 	private TableViewer typeAttributeViewer;
 	private TableViewer approxAttributeViewer;
@@ -74,7 +74,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 	public TypeDerivationDialog(Shell parentShell, IProject currentProject) {
 		super(parentShell);
 		this.currentProject = currentProject;
-		baseTypes = CMModelUtil.getBaseTypes(this.currentProject);
+		baseTypes = RWTSystemUtil.getBaseTypes(this.currentProject);
 	}
 
 	@Override
@@ -153,10 +153,10 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				if(obj != null){
 					cmtypeTreeSelectedObject = (TreeObject)obj;
-					selectedNewCMType = CMModelUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
+					selectedNewCMType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, cmtypeTreeSelectedObject);
 					if(selectedNewCMType != null){
 						CMtypeDetailLabel.setText("Type Detail: "+selectedNewCMType.getTypeName());
-						CM_SemanticType thisType = selectedNewCMType.getSemanticType();
+						RWT_Semantic thisType = selectedNewCMType.getSemanticType();
 						ConceptDetail explication = ConceptDetail.readInByLink(thisType.getExplicationLink());
 						associatedExplicationText.setText(explication.getConceptName());
 						typeAttributeViewer.setInput(selectedNewCMType.getSemanticType());
@@ -252,7 +252,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 			public void modifyText(ModifyEvent arg0) {
 				String derivation = derivationSpecificationText.getText();
 				if(derivationSpecificationText.getText().length() > 0){
-					if(!derivation.contains(CMModelUtil.complexTypeSeparator)){
+					if(!derivation.contains(RWTSystemUtil.complexTypeSeparator)){
 						String cmtypePart = "";
 						if(derivation.indexOf("^")!=-1){
 							cmtypePart = derivation.split("\\^")[0];
@@ -267,7 +267,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 							setErrorMessage("please use the correct format of derivation");
 						}
 					}else{
-						String[] specificationTypes = derivation.split("\\"+CMModelUtil.complexTypeSeparator);
+						String[] specificationTypes = derivation.split("\\"+RWTSystemUtil.complexTypeSeparator);
 						for(String specificationType: specificationTypes){
 							String cmtypePart = "";
 							if(specificationType.indexOf("^")!=-1){
@@ -339,7 +339,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 	}
 	
 	private void LoadCMTypes(IProject currentProject) {
-		TreeObject baseTypesTO = CMModelUtil.readInAllCMTypesToTreeObject(currentProject);
+		TreeObject baseTypesTO = RWTSystemUtil.readInAllCMTypesToTreeObject(currentProject);
 		this.cmTypesTreeViewer.setInput(baseTypesTO);
 	}
 	
@@ -395,7 +395,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 	protected void okPressed() {
 		String derivation = derivationSpecificationText.getText();
 		if(derivationSpecificationText.getText().length() > 0){
-			if(!derivation.contains(CMModelUtil.complexTypeSeparator)){
+			if(!derivation.contains(RWTSystemUtil.complexTypeSeparator)){
 				if(derivation.indexOf("^")!=-1){
 					String cmtypePart = derivation.split("\\^")[0];
 					if(baseTypes.contains(cmtypePart)){
@@ -403,7 +403,7 @@ public class TypeDerivationDialog extends TitleAreaDialog {
 					}
 				}
 			}else{
-				String[] specificationTypes = derivation.split("\\"+CMModelUtil.complexTypeSeparator);
+				String[] specificationTypes = derivation.split("\\"+RWTSystemUtil.complexTypeSeparator);
 				for(String specificationType: specificationTypes){
 					if(!baseTypes.contains(specificationType)){
 						setReturnCode(CANCEL);

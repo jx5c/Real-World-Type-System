@@ -59,13 +59,13 @@ import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
 
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.extractor.Extractor;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.ExtractionMethodItemsVisitor;
 import rwtchecker.typechecker.ExtractorVisitor;
 import rwtchecker.typechecker.MethodItemsetVisitor;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
 
 public class ExtractTerms implements IObjectActionDelegate {
@@ -93,7 +93,7 @@ public class ExtractTerms implements IObjectActionDelegate {
 
 	    IJavaProject javaProject = JavaCore.create(iProject);
 	    try {
-	    	ArrayList<IResource> javaSourceFiles = CMModelUtil.getAllJavaSourceFiles(javaProject);
+	    	ArrayList<IResource> javaSourceFiles = RWTSystemUtil.getAllJavaSourceFiles(javaProject);
     		try {
     			BufferedReader in = new BufferedReader(new FileReader("e:\\confirmedList.txt"));
     			String temp = null;

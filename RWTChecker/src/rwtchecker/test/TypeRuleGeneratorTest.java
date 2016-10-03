@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRulesManager;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 
 public class TypeRuleGeneratorTest {
 	
@@ -26,15 +26,15 @@ public class TypeRuleGeneratorTest {
 		
 		File folder = new File("E:\\Develop\\EvaluationCMs\\KelpieFlightPlanner\\CMTYPE_Rules");
 		File[] files = folder.listFiles();
-		ArrayList<CMTypeRule> ruleList = new ArrayList<CMTypeRule>();
+		ArrayList<RWTypeRule> ruleList = new ArrayList<RWTypeRule>();
 		for (int i=0;i<files.length;i++ ){
 			File file = files[i];
-			CMTypeRulesManager cmtm = new CMTypeRulesManager(file);
+			RWTypeRulesManager cmtm = new RWTypeRulesManager(file);
 			ruleList.addAll(cmtm.getDefinedOperations());
 		}
 		Map<String, Integer > typeRuleMap = new HashMap<String, Integer>();
 		for (int i=0;i<ruleList.size();i++){
-			CMTypeRule cmTypeRule = ruleList.get(i);
+			RWTypeRule cmTypeRule = ruleList.get(i);
 			if(typeRuleMap.containsKey(cmTypeRule.toString())){
 				int court = typeRuleMap.get(cmTypeRule.toString());
 				court = court + 1;
@@ -48,7 +48,7 @@ public class TypeRuleGeneratorTest {
 			bw = new BufferedWriter(new FileWriter("e://jianjian.csv"));
 			for (int i=0;i<typeRuleMap.keySet().size();i++){
 				int court = typeRuleMap.get(typeRuleMap.keySet().toArray()[i].toString());
-				CMTypeRule cmtypeRule = CMTypeRule.constructOpFromString(typeRuleMap.keySet().toArray()[i].toString());
+				RWTypeRule cmtypeRule = RWTypeRule.constructOpFromString(typeRuleMap.keySet().toArray()[i].toString());
 				bw.write(court +"," + cmtypeRule.getOperationName() +"," + cmtypeRule.getCMTypeOneName()+"," + cmtypeRule.getCMTypeTwoName() +","+ cmtypeRule.getReturnCMTypeName()+"\n");
 			}
 			bw.close();

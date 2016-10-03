@@ -20,7 +20,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Text;
 
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.TreeObject;
 
 public class CMTypeRenameDialog extends TitleAreaDialog {
@@ -153,7 +153,7 @@ public class CMTypeRenameDialog extends TitleAreaDialog {
 			valid = false;
 		}else{
 			renameTreeObject.setName(newNameText.getText().trim());
-			File newCMTypeFile = CMModelUtil.getCMTypeFile(currentProject, renameTreeObject);
+			File newCMTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, renameTreeObject);
 			if(newCMTypeFile.exists()){
 				setErrorMessage("the file for that name is existed, please use another name");
 				renameTreeObject.setName(oldNameText.getText().trim());

@@ -14,13 +14,13 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.jdt.core.dom.*;
 
-import rwtchecker.CM.CMType;
 import rwtchecker.annotation.AnnotationLearner;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
 import rwtchecker.popup.actions.TypePropagationProjectInNavigator;
 import rwtchecker.popup.actions.TypePropagationProjectInNavigator.PropagatedMethodsSigniture;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.RWTView;
 
 public class TypeInferenceParameterToArgumentsVisitor extends TypeInferenceVisitor {
@@ -125,7 +125,7 @@ public class TypeInferenceParameterToArgumentsVisitor extends TypeInferenceVisit
 				if(binding !=null){
 					if (binding.getKind() == IBinding.VARIABLE) {
 						String rwtype = getRWTypeForVarLikeExp((SimpleName)node);
-						if(rwtype.length()>0&& !rwtype.equals(CMType.GenericMethod)){
+						if(rwtype.length()>0&& !rwtype.equals(RWType.GenericMethod)){
 							current_itemset.add(rwtype);
 							hasRWType = true;
 						}else{
@@ -307,8 +307,8 @@ public class TypeInferenceParameterToArgumentsVisitor extends TypeInferenceVisit
 		}
 	}
 	
-	private void propagateTypeForVars(Expression exp, String RWType){
-		if (RWType.equals(CMType.NonType)|| RWType.length()==0){
+	private void propagateTypeForVars(Expression exp, String rwtype){
+		if (rwtype.equals(RWType.NonType)|| rwtype.length()==0){
 			return;
 		}
 		//propagating types for local variables
@@ -324,12 +324,12 @@ public class TypeInferenceParameterToArgumentsVisitor extends TypeInferenceVisit
 		 	if (binding.getKind() == IBinding.VARIABLE) {
 				IVariableBinding bindingDecl= ((IVariableBinding) ((SimpleName)exp).resolveBinding()).getVariableDeclaration();
 				String formalElementName = bindingDecl.getName();
-    			System.out.println("Propagation: variables need propagation here: "+RWType);
+    			System.out.println("Propagation: variables need propagation here: "+rwtype);
 				if(bindingDecl.isField()){
 					ASTNode declaringClassNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringClass());
 					if(declaringClassNode!= null && declaringClassNode instanceof TypeDeclaration){
 		    			TypeDeclaration parentTD = (TypeDeclaration)declaringClassNode;						    			
-		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, RWType, true);
+		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
 					}
 //					else{
 //						String declarationBodykey = bindingDecl.getDeclaringClass().getKey();
@@ -339,7 +339,7 @@ public class TypeInferenceParameterToArgumentsVisitor extends TypeInferenceVisit
 				}else{
 					ASTNode declaringMethodNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringMethod());
 					MethodDeclaration methodDeclaration = (MethodDeclaration)declaringMethodNode;
-	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, RWType, true);
+	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
 				}
 			}
 		 	else {

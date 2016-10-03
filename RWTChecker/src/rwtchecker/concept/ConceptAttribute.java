@@ -1,4 +1,4 @@
-package rwtchecker.realworldmodel;
+package rwtchecker.concept;
 
 import java.io.Serializable;
 import java.util.ArrayList;

@@ -13,7 +13,7 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 
 public class ConfigActionInNavigator implements IObjectActionDelegate {
@@ -45,16 +45,16 @@ public class ConfigActionInNavigator implements IObjectActionDelegate {
         String dir = dlg.open();
         System.out.println("the opened dir is: "+dir);
         if (dir != null) {
-        	CMModelUtil.storePropertyToConfigFile(iProject.getName(), dir);
-        	String conceptDir = dir + CMModelUtil.PathSeparator + CMModelUtil.ConceptDefinitionFolder;
+        	RWTSystemUtil.storePropertyToConfigFile(iProject.getName(), dir);
+        	String conceptDir = dir + RWTSystemUtil.PathSeparator + RWTSystemUtil.ConceptDefinitionFolder;
         	if(!new File(conceptDir).exists()){
         		new File(conceptDir).mkdir();	
         	}
-        	String cmTypeDir = dir + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder;
+        	String cmTypeDir = dir + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder;
         	if(!new File(cmTypeDir).exists()){
         		new File(cmTypeDir).mkdir();
         	}
-        	String annotationDir = dir + CMModelUtil.PathSeparator + CMModelUtil.annotationFolder;
+        	String annotationDir = dir + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder;
         	if(!new File(annotationDir).exists()){
         		new File(annotationDir).mkdir();
         	}

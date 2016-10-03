@@ -21,18 +21,18 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRuleCategory;
-import rwtchecker.CMRules.CMTypeRulesManager;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRulesManager;
+import rwtchecker.util.RWTSystemUtil;
 
 public class CandidateRuleVisitor extends ASTVisitor {
 	
 	private static String generatedRuleMarker = "@";
 	
-	private CMTypeRulesManager cmTypeOperationManager;
-	private CMTypeRulesManager candidateRuleManager;
+	private RWTypeRulesManager cmTypeOperationManager;
+	private RWTypeRulesManager candidateRuleManager;
 	
 	private HashMap<Expression, String> candidateTypeMapForExpression = new HashMap<Expression, String>();
 	
@@ -52,7 +52,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 	private String currentAccessMethodKey = null;
 	private String currentAccessClassKey = null;
 	
-	public CandidateRuleVisitor(CMTypeRulesManager manager, CompilationUnit compilationUnit, 
+	public CandidateRuleVisitor(RWTypeRulesManager manager, CompilationUnit compilationUnit, 
 			Map<Integer, ArrayList<String>> inputVarsCommentsMap, Map<Integer, ArrayList<String>> inputFuncCommentsMap) {
 		super(true);
 		this.cmTypeOperationManager = manager;
@@ -60,7 +60,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
 		currentProject = currentFile.getProject();
-		this.candidateRuleManager = CMTypeRulesManager.getCandidateRuleManager(currentFile.getName());
+		this.candidateRuleManager = RWTypeRulesManager.getCandidateRuleManager(currentFile.getName());
 		this.candidateRuleManager.clear();
 		
 		this.varsCommentsMap = inputVarsCommentsMap;
@@ -73,7 +73,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 	
 	private String checkReturnCMType(String[] argument_cmtypes, ArrayList<String> possibleArgumentReturnTypes){
 		if(possibleArgumentReturnTypes == null){
-			return CMType.UnknownType;
+			return RWType.UnknownType;
 		}
 		if(argument_cmtypes.length == 0){
 			//no argument, only return types
@@ -100,7 +100,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 				}
 			}
 		}
-		return CMType.UnknownType;
+		return RWType.UnknownType;
 	}
 	
 	public void preVisit(ASTNode node) {
@@ -414,7 +414,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 //												}
 											}else{
 //												String synthesizedCMType = iMethodBinding.getKey() +"_"+ argumentCMTypes;
-												associateCMTypeWithExpression(methodInvocationNode, CMType.UnknownType);	
+												associateCMTypeWithExpression(methodInvocationNode, RWType.UnknownType);	
 											}
 										}
 									return false;
@@ -465,8 +465,8 @@ public class CandidateRuleVisitor extends ASTVisitor {
 			Expression rightEP = infixExpression.getRightOperand();
 			String CMTypeAnnotatedTypeOne = this.getAnnotatedTypeForExpression(leftEP);
 			String CMTypeAnnotatedTypeTwo = this.getAnnotatedTypeForExpression(rightEP);
-				if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-					this.associateCMTypeWithExpression(infixExpression, CMType.UnknownType);
+				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+					this.associateCMTypeWithExpression(infixExpression, RWType.UnknownType);
 				}
 			Operator thisop = infixExpression.getOperator();
 			if((thisop.equals(InfixExpression.Operator.LESS))
@@ -476,13 +476,13 @@ public class CandidateRuleVisitor extends ASTVisitor {
 			||(thisop.equals(InfixExpression.Operator.EQUALS))
 			||(thisop.equals(InfixExpression.Operator.NOT_EQUALS))
 			){
-					if((!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) ) 
-							&& !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)
+					if((!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) ) 
+							&& !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)
 							&& !CMTypeAnnotatedTypeOne.equals(CMTypeAnnotatedTypeTwo)){
 							//candidate rule of comparison 
-						String operation_type = CMTypeRuleCategory.Comparable; 
+						String operation_type = RWTypeRuleCategory.Comparable; 
 						String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker +operation_type+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
-						CMTypeRule newUVRule = new CMTypeRule(operation_type, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(operation_type, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);
 					}
 			}		
@@ -490,9 +490,9 @@ public class CandidateRuleVisitor extends ASTVisitor {
 				check_Remander_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
 			}
 			if(thisop.equals(InfixExpression.Operator.PLUS)){
-				check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, CMTypeRuleCategory.Plus);
+				check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, RWTypeRuleCategory.Plus);
 			}else if(thisop.equals(InfixExpression.Operator.MINUS)){
-				check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, CMTypeRuleCategory.Subtraction);
+				check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, RWTypeRuleCategory.Subtraction);
 			}
 			else if(thisop.equals(InfixExpression.Operator.TIMES)){
 				check_Times_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
@@ -520,11 +520,11 @@ public class CandidateRuleVisitor extends ASTVisitor {
 			if(leftCMType.equals(rightCMType)){
 				return;
 			}
-			else if(!leftCMType.equalsIgnoreCase(CMType.UnknownType) &&
+			else if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
 					!leftCMType.equalsIgnoreCase(rightCMType) && 
-					!rightCMType.equalsIgnoreCase(CMType.UnknownType) ){
+					!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
 //				String synthetizedResultType = leftCMType + "_"+CMTypeRuleCategory.Assignable+"_" + rightCMType;
-				CMTypeRule newUVRule = new CMTypeRule(CMTypeRuleCategory.Assignable, leftCMType,  rightCMType, "", CMTypeRule.notVerified);
+				RWTypeRule newUVRule = new RWTypeRule(RWTypeRuleCategory.Assignable, leftCMType,  rightCMType, "", RWTypeRule.notVerified);
 				this.candidateRuleManager.addCMTypeOperation(newUVRule);
 			}
 			//now, did not include inference here
@@ -565,11 +565,11 @@ public class CandidateRuleVisitor extends ASTVisitor {
 				if(leftCMType.equals(rightCMType)){
 					return;
 				}
-				else if(!leftCMType.equalsIgnoreCase(CMType.UnknownType) &&
+				else if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
 						!leftCMType.equalsIgnoreCase(rightCMType) && 
-						!rightCMType.equalsIgnoreCase(CMType.UnknownType) ){
+						!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
 //					String synthetizedResultType = leftCMType + "_"+CMTypeRuleCategory.Assignable+"_" + rightCMType;
-					CMTypeRule newUVRule = new CMTypeRule(CMTypeRuleCategory.Assignable, leftCMType,  rightCMType, "", CMTypeRule.notVerified);
+					RWTypeRule newUVRule = new RWTypeRule(RWTypeRuleCategory.Assignable, leftCMType,  rightCMType, "", RWTypeRule.notVerified);
 					this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 				}
 				/* no inference right now
@@ -633,8 +633,8 @@ public class CandidateRuleVisitor extends ASTVisitor {
 				
 				String argumentOneAnnotatedType = this.getAnnotatedTypeForExpression(argumentOne);
 				String argumentTwoAnnotatedType = this.getAnnotatedTypeForExpression(argumentTwo);
-					if(argumentTwoAnnotatedType.equalsIgnoreCase(CMType.UnknownType) && argumentOneAnnotatedType.equalsIgnoreCase(CMType.UnknownType)){
-						this.associateCMTypeWithExpression(methodInvocationNode, CMType.UnknownType);
+					if(argumentTwoAnnotatedType.equalsIgnoreCase(RWType.UnknownType) && argumentOneAnnotatedType.equalsIgnoreCase(RWType.UnknownType)){
+						this.associateCMTypeWithExpression(methodInvocationNode, RWType.UnknownType);
 						return;
 					}
 					String returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, argumentOneAnnotatedType, methodName, argumentTwoAnnotatedType); 
@@ -642,17 +642,17 @@ public class CandidateRuleVisitor extends ASTVisitor {
 						this.associateCMTypeWithExpression(methodInvocationNode,  returnType);
 						return;
 					}else{
-						if(methodName.equals(CMTypeRuleCategory.Power)){
+						if(methodName.equals(RWTypeRuleCategory.Power)){
 							String synthetizedOpName = "java.lang.Math."+methodName;
 							String synthetizedResultType = argumentOneAnnotatedType;
-							CMTypeRule newUVRule = new CMTypeRule(synthetizedOpName, argumentOneAnnotatedType,  argumentTwoAnnotatedType, synthetizedResultType, CMTypeRule.notVerified);
+							RWTypeRule newUVRule = new RWTypeRule(synthetizedOpName, argumentOneAnnotatedType,  argumentTwoAnnotatedType, synthetizedResultType, RWTypeRule.notVerified);
 							this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 							this.associateCMTypeWithExpression(methodInvocationNode,  synthetizedResultType);
 							return;
 						}
 						String synthetizedOpName = "java.lang.Math."+methodName;
 						String synthetizedResultType = argumentOneAnnotatedType + generatedRuleMarker + synthetizedOpName +generatedRuleMarker+ argumentTwoAnnotatedType;
-						CMTypeRule newUVRule = new CMTypeRule(synthetizedOpName, argumentOneAnnotatedType,  argumentTwoAnnotatedType, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(synthetizedOpName, argumentOneAnnotatedType,  argumentTwoAnnotatedType, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 						this.associateCMTypeWithExpression(methodInvocationNode,  synthetizedResultType);
 						return;
@@ -662,59 +662,59 @@ public class CandidateRuleVisitor extends ASTVisitor {
 				Expression argument = (Expression)(methodInvocationNode.arguments().get(0));
 				String argumentAnnotatedType = this.getAnnotatedTypeForExpression(argument);
 
-				if(argumentAnnotatedType.equalsIgnoreCase(CMType.UnknownType)){
-					this.associateCMTypeWithExpression(methodInvocationNode, CMType.UnknownType);
+				if(argumentAnnotatedType.equalsIgnoreCase(RWType.UnknownType)){
+					this.associateCMTypeWithExpression(methodInvocationNode, RWType.UnknownType);
 					return;
 				}
 				String returnType = null;
-				returnType=this.cmTypeOperationManager.getReturnType(this.currentProject, argumentAnnotatedType, methodName, CMType.TypeLess); 
+				returnType=this.cmTypeOperationManager.getReturnType(this.currentProject, argumentAnnotatedType, methodName, RWType.TypeLess); 
 				if(returnType != null){
 					this.associateCMTypeWithExpression(methodInvocationNode,  returnType);
 					return;
 				}else{
 					String synthetizedOpName = "java.lang.Math."+methodName;
 					//abs function
-					if(methodName.equalsIgnoreCase(CMTypeRuleCategory.Abosolute_Value)){
+					if(methodName.equalsIgnoreCase(RWTypeRuleCategory.Abosolute_Value)){
 						associateCMTypeWithExpression(methodInvocationNode, argumentAnnotatedType);
 					}
-					if(methodName.equalsIgnoreCase(CMTypeRuleCategory.Sine)
+					if(methodName.equalsIgnoreCase(RWTypeRuleCategory.Sine)
 							||
-							methodName.equalsIgnoreCase(CMTypeRuleCategory.Cosine)
+							methodName.equalsIgnoreCase(RWTypeRuleCategory.Cosine)
 							||
-							methodName.equalsIgnoreCase(CMTypeRuleCategory.Tangent)){
+							methodName.equalsIgnoreCase(RWTypeRuleCategory.Tangent)){
 						String synthetizedResultType = argumentAnnotatedType.replace("unit=radians", "unit=");
-						CMTypeRule newUVRule = new CMTypeRule(synthetizedOpName, argumentAnnotatedType,  CMType.TypeLess, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(synthetizedOpName, argumentAnnotatedType,  RWType.TypeLess, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 						this.associateCMTypeWithExpression(methodInvocationNode,  synthetizedResultType);
 					}
-					if(methodName.equalsIgnoreCase(CMTypeRuleCategory.RadiansToDegree)){
+					if(methodName.equalsIgnoreCase(RWTypeRuleCategory.RadiansToDegree)){
 						String synthetizedResultType = argumentAnnotatedType.replace("unit=radians", "unit=degrees");
-						CMTypeRule newUVRule = new CMTypeRule(synthetizedOpName, argumentAnnotatedType,  CMType.TypeLess, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(synthetizedOpName, argumentAnnotatedType,  RWType.TypeLess, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 						this.associateCMTypeWithExpression(methodInvocationNode,  synthetizedResultType);
 					}
-					if(methodName.equalsIgnoreCase(CMTypeRuleCategory.DegreeToRadians)){
+					if(methodName.equalsIgnoreCase(RWTypeRuleCategory.DegreeToRadians)){
 						String synthetizedResultType = argumentAnnotatedType.replace("unit=degrees", "unit=radians");
-						CMTypeRule newUVRule = new CMTypeRule(synthetizedOpName, argumentAnnotatedType,  CMType.TypeLess, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(synthetizedOpName, argumentAnnotatedType,  RWType.TypeLess, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 						this.associateCMTypeWithExpression(methodInvocationNode,  synthetizedResultType);
 					}
-					if(methodName.equalsIgnoreCase(CMTypeRuleCategory.Arc_Cosine)
+					if(methodName.equalsIgnoreCase(RWTypeRuleCategory.Arc_Cosine)
 							||
-							methodName.equalsIgnoreCase(CMTypeRuleCategory.Arc_Sine)
+							methodName.equalsIgnoreCase(RWTypeRuleCategory.Arc_Sine)
 							||
-							methodName.equalsIgnoreCase(CMTypeRuleCategory.Arc_Tangent)){
+							methodName.equalsIgnoreCase(RWTypeRuleCategory.Arc_Tangent)){
 						String synthetizedResultType = "";
 						if(argumentAnnotatedType.contains("unit=")){
 							synthetizedResultType = argumentAnnotatedType.replace("unit=", "unit=radians"); 
 						}else{
-							if(argumentAnnotatedType.equals(CMType.TypeLess)){
+							if(argumentAnnotatedType.equals(RWType.TypeLess)){
 								synthetizedResultType = "unit=radians";	
 							}else{
 								synthetizedResultType = argumentAnnotatedType + ";unit=radians";
 							}
 						}
-						CMTypeRule newUVRule = new CMTypeRule(synthetizedOpName, argumentAnnotatedType,  CMType.TypeLess, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(synthetizedOpName, argumentAnnotatedType,  RWType.TypeLess, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);	
 						this.associateCMTypeWithExpression(methodInvocationNode,  synthetizedResultType);
 					}
@@ -724,25 +724,25 @@ public class CandidateRuleVisitor extends ASTVisitor {
 	}
 	
 	private void check_Remander_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
 			//type rules part
-			if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-				infixExpressionType = CMType.UnknownType;
+			if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+				infixExpressionType = RWType.UnknownType;
 			}		
-			else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-				infixExpressionType = CMType.UnknownType;
+			else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+				infixExpressionType = RWType.UnknownType;
 			}
-			else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+			else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 				infixExpressionType = CMTypeAnnotatedTypeOne;
 			}else{
 				String returnType = null;
-				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
+				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
 				if(returnType != null){
 					infixExpressionType = returnType;
 				}else{
-					String operation_type = CMTypeRuleCategory.REMAINDER; 
+					String operation_type = RWTypeRuleCategory.REMAINDER; 
 					String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker +operation_type+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
-					CMTypeRule newUVRule = new CMTypeRule(operation_type, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, CMTypeRule.notVerified);
+					RWTypeRule newUVRule = new RWTypeRule(operation_type, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, RWTypeRule.notVerified);
 					this.candidateRuleManager.addCMTypeOperation(newUVRule);
 					infixExpressionType = synthetizedResultType;
 				}	
@@ -760,14 +760,14 @@ public class CandidateRuleVisitor extends ASTVisitor {
 	}
 	
 	private void check_Plus_Minus_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression plusInfixExpression, int extendedIndex, String operation_type){
-		String infixExpressionType = CMType.UnknownType;
-				if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-					infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+					infixExpressionType = RWType.UnknownType;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeTwo;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
@@ -776,7 +776,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 						infixExpressionType = returnType;
 					}else{
 						String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker +operation_type+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
-						CMTypeRule newUVRule = new CMTypeRule(operation_type, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, CMTypeRule.notVerified);
+						RWTypeRule newUVRule = new RWTypeRule(operation_type, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);
 						infixExpressionType = synthetizedResultType;
 					}	
@@ -795,24 +795,24 @@ public class CandidateRuleVisitor extends ASTVisitor {
 	}
 	
 	private void check_Times_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
 				//type rules part
-				if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-					infixExpressionType = CMType.UnknownType;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+					infixExpressionType = RWType.UnknownType;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeTwo;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
-					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
+					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
 					if(returnType != null){
 						infixExpressionType = returnType;
 					}else{
-						String synthetizedResultType = CMTypeAnnotatedTypeOne +  generatedRuleMarker +CMTypeRuleCategory.Multiplication+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
-						CMTypeRule newUVRule = new CMTypeRule(CMTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, CMTypeRule.notVerified);
+						String synthetizedResultType = CMTypeAnnotatedTypeOne +  generatedRuleMarker +RWTypeRuleCategory.Multiplication+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
+						RWTypeRule newUVRule = new RWTypeRule(RWTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, RWTypeRule.notVerified);
 						this.candidateRuleManager.addCMTypeOperation(newUVRule);
 						infixExpressionType = synthetizedResultType;
 					}	
@@ -829,7 +829,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 	}
 	
 	private void check_Division_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo,InfixExpression infixExpression, int extendedIndex){	
-		String infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
 		/*
 		FractionFormat ff = new FractionFormat();
 		try {
@@ -839,31 +839,31 @@ public class CandidateRuleVisitor extends ASTVisitor {
 		}
 		*/
 			//type rules part
-			if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-				infixExpressionType = CMType.UnknownType;
+			if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+				infixExpressionType = RWType.UnknownType;
 			}		
-			else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-				String inverseType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, CMTypeRuleCategory.Multiplicative_Inverse, "");
+			else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+				String inverseType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, RWTypeRuleCategory.Multiplicative_Inverse, "");
 				if(inverseType!=null){
 					infixExpressionType = inverseType;
 				}else{
-					String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker +CMTypeRuleCategory.Division+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
-					CMTypeRule newUVRule = new CMTypeRule(CMTypeRuleCategory.Division, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, CMTypeRule.notVerified);
+					String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker +RWTypeRuleCategory.Division+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
+					RWTypeRule newUVRule = new RWTypeRule(RWTypeRuleCategory.Division, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, RWTypeRule.notVerified);
 					this.candidateRuleManager.addCMTypeOperation(newUVRule);
 					infixExpressionType = synthetizedResultType;
 				}
 				
 			}
-			else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+			else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 				infixExpressionType = CMTypeAnnotatedTypeOne;
 			}else{
 				String returnType = null;
-				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
+				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
 				if(returnType!=null){
 					infixExpressionType = returnType;
 				}else{
-					String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker+CMTypeRuleCategory.Division+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
-					CMTypeRule newUVRule = new CMTypeRule(CMTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, CMTypeRule.notVerified);
+					String synthetizedResultType = CMTypeAnnotatedTypeOne + generatedRuleMarker+RWTypeRuleCategory.Division+ generatedRuleMarker + CMTypeAnnotatedTypeTwo;
+					RWTypeRule newUVRule = new RWTypeRule(RWTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, synthetizedResultType, RWTypeRule.notVerified);
 					this.candidateRuleManager.addCMTypeOperation(newUVRule);
 					infixExpressionType = synthetizedResultType;
 				}
@@ -883,8 +883,8 @@ public class CandidateRuleVisitor extends ASTVisitor {
 		if(candidateTypeMapForExpression.get(exp) != null){
 			return candidateTypeMapForExpression.get(exp);
 		}else{
-			candidateTypeMapForExpression.put(exp, CMType.UnknownType);
-			return CMType.UnknownType;
+			candidateTypeMapForExpression.put(exp, RWType.UnknownType);
+			return RWType.UnknownType;
 		}
 	}
 	
@@ -906,7 +906,7 @@ public class CandidateRuleVisitor extends ASTVisitor {
 
 	private void associateCMTypeWithExpression(Expression exp, String annotatedType){
 		if(annotatedType != null){
-			CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, annotatedType);
+			RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedType);
 			if(cmtype!=null){
 				this.candidateTypeMapForExpression.put(exp, cmtype.getEnabledAttributeSet());
 			}else{

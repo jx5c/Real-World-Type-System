@@ -20,7 +20,7 @@ import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
 import rwtchecker.annotation.visitor.TypeInferenceAssignmentsVisitor;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 
 public class TypeInferenceAssignments implements IObjectActionDelegate {
@@ -39,7 +39,7 @@ public class TypeInferenceAssignments implements IObjectActionDelegate {
 			return;
 		}else{
 			IJavaProject javaProject = JavaCore.create(iProject);
-			ArrayList<IResource> javaSourceFiles = CMModelUtil.getAllJavaSourceFiles(javaProject);
+			ArrayList<IResource> javaSourceFiles = RWTSystemUtil.getAllJavaSourceFiles(javaProject);
 			for(IResource javaSource:javaSourceFiles){
         		ASTParser parser = ASTParser.newParser(AST.JLS3);
         		parser.setKind(ASTParser.K_COMPILATION_UNIT);

@@ -28,15 +28,27 @@ import org.eclipse.jdt.core.JavaModelException;
 import org.eclipse.jdt.core.dom.AST;
 import org.eclipse.jdt.core.dom.ASTParser;
 import org.eclipse.jdt.core.dom.CompilationUnit;
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.window.Window;
+import org.eclipse.swt.SWT;
+import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.ui.IWorkbench;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 
-import rwtchecker.CM.CMType;
 import rwtchecker.annotation.FileAnnotations;
+import rwtchecker.dialogs.NoRWTFoundErrorDialog;
+import rwtchecker.rwt.RWType;
 import rwtchecker.views.provider.TreeObject;
 
-public class CMModelUtil {
+public class RWTSystemUtil {
+	
+	public static String defaultRWTSystemFolder = "rwt";
 	public static String PathSeparator = System.getProperty("file.separator");
 	public static String RealWorldConcept_FileExtension = "concept";
-	public static String ProjectConfigFile = "CMReferenceLocation.prop";
+	public static String ProjectConfigFile = "RWTSystemLocation.prop";
 	public static String CMTypeRulesFile = "CMTypeRulesFile.prop";
 	
 //	public static String CMTypeOperationRuleFile = "CMTypeRuleFile.xml";
@@ -63,7 +75,7 @@ public class CMModelUtil {
 	}
 	
 	public static void storePropertyToConfigFile(String key, String contents){
-		String configFileLoc = CMModelUtil.getConfigFile();
+		String configFileLoc = RWTSystemUtil.getConfigFile();
 		File configFile = new File(configFileLoc);
 		try {
 			if(!configFile.exists()){
@@ -79,7 +91,7 @@ public class CMModelUtil {
 	}
 	
 	public static Object readPropertyFromConfigFile(String key){
-		String configFileLoc = CMModelUtil.getConfigFile();
+		String configFileLoc = RWTSystemUtil.getConfigFile();
 		File configFile = new File(configFileLoc);
 		try {
 			if(!configFile.exists()){
@@ -87,86 +99,112 @@ public class CMModelUtil {
 			}
 			Properties prop = new Properties();
 			prop.load(new FileInputStream(configFile));
+			if(!prop.containsKey(key)){
+				while(true){
+					final IWorkbench workbench = PlatformUI.getWorkbench();
+					IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+					NoRWTFoundErrorDialog errordialog = new NoRWTFoundErrorDialog(window.getShell(),key);
+					errordialog.open();
+					if(errordialog.getReturnCode()==Window.OK){
+						MessageBox messageBox = new MessageBox(window.getShell(), SWT.OK | SWT.ICON_INFORMATION);
+				        messageBox.setText("Real-world type system has been set");
+				        messageBox.setMessage("The location of real-world type system is set to: "+prop.get(key));
+						break;
+					}
+					//System.out.println(errordialog.getReturnCode());
+				}	
+			}
 			return prop.get(key);
-		} catch (IOException e) {
+		} catch (IOException e){
 			e.printStackTrace();
 		}
 		return null;
 	}
 	
+	private static void enforceConfig(){
+		final IWorkbench workbench = PlatformUI.getWorkbench();
+		IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
+		MessageDialog dialog = new MessageDialog(window.getShell(), "My Title", null,
+			    "My message", MessageDialog.ERROR, new String[] { "First",
+			        "Second", "Third" }, 0);
+			int result = dialog.open();
+			System.out.println(result);
+//			workbench.restart();
+	}
+	
 	public static File getCMTypeRulesFile(IProject iproject){
-		Object location = CMModelUtil.readPropertyFromConfigFile(iproject.getName());
-		File cmtypeOperationRuleFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.CMTypeRulesFile);
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iproject.getName());
+		File cmtypeOperationRuleFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypeRulesFile);
 		return cmtypeOperationRuleFile;
 	}
 	
 	public static File getRWTypeRulesFiles(IProject iproject){
-		Object location = CMModelUtil.readPropertyFromConfigFile(iproject.getName());
-		File cmtypeOperationRuleFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.RWTypeRulesFolder);
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iproject.getName());
+		File cmtypeOperationRuleFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.RWTypeRulesFolder);
 		return cmtypeOperationRuleFile;
 	}
 	
 	public static File getCandidateCMTypeRuleFile(IProject iproject, String fileName){
-		Object location = CMModelUtil.readPropertyFromConfigFile(iproject.getName());
-		File cmtypeRuleFolder = new File(location + CMModelUtil.PathSeparator + CMModelUtil.RWTypeCandidateRules_Folder );
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iproject.getName());
+		File cmtypeRuleFolder = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.RWTypeCandidateRules_Folder );
 		if(!cmtypeRuleFolder.exists()){
 			cmtypeRuleFolder.mkdir();
 		}
-		File cmtypeOperationRuleFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.RWTypeCandidateRules_Folder + CMModelUtil.PathSeparator + fileName + CMModelUtil.CMTypeRule_ext);
+		File cmtypeOperationRuleFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.RWTypeCandidateRules_Folder + RWTSystemUtil.PathSeparator + fileName + RWTSystemUtil.CMTypeRule_ext);
 		return cmtypeOperationRuleFile;
 	}
 	
 	public static File getCMTypePatternFile(IProject iproject, String fileName){
-		Object location = CMModelUtil.readPropertyFromConfigFile(iproject.getName());
-		File cmTypePatternFolder = new File(location + CMModelUtil.PathSeparator + CMModelUtil.CMTypePatternFolder );
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iproject.getName());
+		File cmTypePatternFolder = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypePatternFolder );
 		if(!cmTypePatternFolder.exists()){
 			cmTypePatternFolder.mkdir();
 		}
 		String cmtypePatternFileName = String.valueOf(fileName.hashCode());
-		File cmtypePatternFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.CMTypePatternFolder + CMModelUtil.PathSeparator + cmtypePatternFileName + CMModelUtil.CMTypePattern_ext);
+		File cmtypePatternFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypePatternFolder + RWTSystemUtil.PathSeparator + cmtypePatternFileName + RWTSystemUtil.CMTypePattern_ext);
 		return cmtypePatternFile;
 	}
 	
 	public static File getConceptDetailFile(IProject selectedProject, String conceptName){
-		Object location = CMModelUtil.readPropertyFromConfigFile(selectedProject.getName());
-		String filePath = location.toString() + CMModelUtil.PathSeparator + ConceptDefinitionFolder + CMModelUtil.PathSeparator + conceptName+"."+CMModelUtil.RealWorldConcept_FileExtension;
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(selectedProject.getName());
+		String filePath = location.toString() + RWTSystemUtil.PathSeparator + ConceptDefinitionFolder + RWTSystemUtil.PathSeparator + conceptName+"."+RWTSystemUtil.RealWorldConcept_FileExtension;
 		return new File(filePath);
 	}
 	
 	public static File getTreeIndexFile(IProject selectedProject){
-		Object location = CMModelUtil.readPropertyFromConfigFile(selectedProject.getName());
-		File cMTypeDir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder);
-		String treeIndexPath = cMTypeDir.getAbsolutePath() + CMModelUtil.PathSeparator + TreeObject.treeIndexFileName;
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(selectedProject.getName());
+		File cMTypeDir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder);
+		String treeIndexPath = cMTypeDir.getAbsolutePath() + RWTSystemUtil.PathSeparator + TreeObject.treeIndexFileName;
 		return new File(treeIndexPath);
 	}
 	
 	public static File getCMTypeFile(IProject selectedProject, TreeObject selectedTO){
-		Object location = CMModelUtil.readPropertyFromConfigFile(selectedProject.getName());
-		File cMTypeDir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder);
-		String CMTypeFile = cMTypeDir.getAbsolutePath() + CMModelUtil.PathSeparator + selectedTO.getName().trim();
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(selectedProject.getName());
+		File cMTypeDir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder);
+		String CMTypeFile = cMTypeDir.getAbsolutePath() + RWTSystemUtil.PathSeparator + selectedTO.getName().trim();
 		return new File(CMTypeFile);
 	}
 	
 	public static File getCMTypeFile(IProject selectedProject, String typeName){
-		Object location = CMModelUtil.readPropertyFromConfigFile(selectedProject.getName());
-		File cMTypeDir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder);
-		String CMTypeFile = cMTypeDir.getAbsolutePath() + CMModelUtil.PathSeparator + typeName.trim();
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(selectedProject.getName());
+		File cMTypeDir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder);
+		String CMTypeFile = cMTypeDir.getAbsolutePath() + RWTSystemUtil.PathSeparator + typeName.trim();
 		return new File(CMTypeFile);
 	}
 	
 	public static File generateXMLFile(IProject selectedProject, String typeName){
-		Object location = CMModelUtil.readPropertyFromConfigFile(selectedProject.getName());
-		File cMTypeDir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder);
-		String xml = cMTypeDir.getAbsolutePath() + CMModelUtil.PathSeparator + typeName.trim()+".xml";
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(selectedProject.getName());
+		File cMTypeDir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder);
+		String xml = cMTypeDir.getAbsolutePath() + RWTSystemUtil.PathSeparator + typeName.trim()+".xml";
 		return new File(xml);
 	}
 	
 	public static ArrayList<String> getBaseTypes(IProject selectedProject){
 		ArrayList<String> results = new ArrayList<String>();
 		if(selectedProject!=null){
-			Object location = CMModelUtil.readPropertyFromConfigFile(selectedProject.getName());
+			Object location = RWTSystemUtil.readPropertyFromConfigFile(selectedProject.getName());
 			if(location !=null){
-				File baseTypeDir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder);
+				File baseTypeDir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder);
 				File dir = new File(baseTypeDir.toString());
 				if((dir.exists())&& (dir.isDirectory())){
 					File[] baseTypesFiles = dir.listFiles(new FilenameFilter() {
@@ -190,12 +228,12 @@ public class CMModelUtil {
 	
 	public static File getAnnotationFile(IFile ifile){
 		if(ifile.getFileExtension().equals("java")){
-			Object location = CMModelUtil.readPropertyFromConfigFile(ifile.getProject().getName());
-			File annotationFolder = new File(location + CMModelUtil.PathSeparator + CMModelUtil.annotationFolder);
+			Object location = RWTSystemUtil.readPropertyFromConfigFile(ifile.getProject().getName());
+			File annotationFolder = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder);
 			if(!annotationFolder.exists()){
 				annotationFolder.mkdir();
 			}
-			File annotationPropFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.annotationFolder+ CMModelUtil.PathSeparator + CMModelUtil.annotationPropFile);
+			File annotationPropFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder+ RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationPropFile);
 			if(!annotationPropFile.exists()){
 				try {
 					annotationPropFile.createNewFile();
@@ -214,12 +252,12 @@ public class CMModelUtil {
 			String fileKeyName = ifile.getProjectRelativePath().toString();
 			if(annotationProp.get(fileKeyName) != null){
 				String annotationFileName = annotationProp.get(fileKeyName).toString(); 
-				String annotationFilePath = annotationFolder + CMModelUtil.PathSeparator + annotationFileName;
+				String annotationFilePath = annotationFolder + RWTSystemUtil.PathSeparator + annotationFileName;
 				return new File(annotationFilePath);
 			}else{
 				int fileCourt = annotationFolder.list().length;
 				String annotationFileName = String.valueOf(fileCourt) + annotationExtension;
-				String annotationFileAbsPath = annotationFolder + CMModelUtil.PathSeparator + annotationFileName;
+				String annotationFileAbsPath = annotationFolder + RWTSystemUtil.PathSeparator + annotationFileName;
 				FileAnnotations fileAnnotations = new FileAnnotations();
 				FileAnnotations.saveToFile(fileAnnotations, new File(annotationFileAbsPath));
 				annotationProp.put(ifile.getProjectRelativePath().toString(), annotationFileName);
@@ -237,12 +275,12 @@ public class CMModelUtil {
 	
 	public static ArrayList<FileAnnotations> getAllFileAnntationsForProject(IProject curProject){
 		ArrayList<FileAnnotations> results = new ArrayList<FileAnnotations>();
-		Object location = CMModelUtil.readPropertyFromConfigFile(curProject.getName());
-		File annotationFolder = new File(location + CMModelUtil.PathSeparator + CMModelUtil.annotationFolder);
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(curProject.getName());
+		File annotationFolder = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder);
 		if(!annotationFolder.exists()){
 			annotationFolder.mkdir();
 		}
-		File annotationPropFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.annotationFolder+ CMModelUtil.PathSeparator + CMModelUtil.annotationPropFile);
+		File annotationPropFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder+ RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationPropFile);
 		if(!annotationPropFile.exists()){
 			try {
 				annotationPropFile.createNewFile();
@@ -259,8 +297,8 @@ public class CMModelUtil {
 			e.printStackTrace();
 		}
 		for(Object fileName : annotationProp.values()){			
-			File annotationFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.annotationFolder+ CMModelUtil.PathSeparator + fileName);
-			if(annotationFile.isFile() && annotationFile.getName().endsWith(CMModelUtil.annotationExtension)){
+			File annotationFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder+ RWTSystemUtil.PathSeparator + fileName);
+			if(annotationFile.isFile() && annotationFile.getName().endsWith(RWTSystemUtil.annotationExtension)){
 				FileAnnotations thisFileAnno = FileAnnotations.loadFromXMLFile(annotationFile); 
 				results.add(thisFileAnno);
 			}
@@ -273,13 +311,13 @@ public class CMModelUtil {
 	public static String errorReportPropFile = "errorReports.prop";
 	
 	public static File getErrorReportFile(IFile ifile){
-		Object location = CMModelUtil.readPropertyFromConfigFile(ifile.getProject().getName());
-		File errorReportsFolder = new File(location + CMModelUtil.PathSeparator + CMModelUtil.errorReportsFolder);
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(ifile.getProject().getName());
+		File errorReportsFolder = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.errorReportsFolder);
 		if(!errorReportsFolder.exists()){
 			errorReportsFolder.mkdir();
 		}
 		
-		File errorReportPropFile = new File(location + CMModelUtil.PathSeparator + CMModelUtil.errorReportsFolder+ CMModelUtil.PathSeparator + CMModelUtil.errorReportPropFile);
+		File errorReportPropFile = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.errorReportsFolder+ RWTSystemUtil.PathSeparator + RWTSystemUtil.errorReportPropFile);
 		if(!errorReportPropFile.exists()){
 			try {
 				errorReportPropFile.createNewFile();
@@ -302,7 +340,7 @@ public class CMModelUtil {
 		}else{
 			int fileCourt = errorReportsFolder.list().length;
 			String errorReportFileName = String.valueOf(fileCourt) + errorReportExtension;
-			errorReportFileName = errorReportsFolder + CMModelUtil.PathSeparator + errorReportFileName;
+			errorReportFileName = errorReportsFolder + RWTSystemUtil.PathSeparator + errorReportFileName;
 			errorReportProp.put(ifile.getProjectRelativePath().toString(), errorReportFileName);
 			try {
 				errorReportProp.store(new FileOutputStream(errorReportPropFile), null);
@@ -334,14 +372,11 @@ public class CMModelUtil {
 	}
 	
 	public static TreeObject readInAllCMTypesToTreeObject(IProject iproject){
-		TreeObject invisibleRootTreeObject = new TreeObject("");
-		File treeIndexFile = CMModelUtil.getTreeIndexFile(iproject);
+		TreeObject invisibleRootTreeObject = new TreeObject("invisible");
+		File treeIndexFile = RWTSystemUtil.getTreeIndexFile(iproject);
 		if(!treeIndexFile.exists()){
 			try {
 				TreeObject cmtypeListTO = new TreeObject(TreeObject.treeObjectTopName);
-				//create a error type which is needed in type rule definition
-				//TreeObject errorType = new TreeObject(CMType.errorType);
-				//cmtypeListTO.addChild(errorType);
 				invisibleRootTreeObject.addChild(cmtypeListTO);				
 				treeIndexFile.createNewFile();
 				TreeObject.writeOutTreeObject(invisibleRootTreeObject, treeIndexFile);
@@ -354,11 +389,11 @@ public class CMModelUtil {
 		
 		
 //		if(location !=null){
-//			File cMTypeDir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.CMTypesFolder);
+//			File cMTypeDir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.CMTypesFolder);
 //			File[] topLevelFolders = cMTypeDir.listFiles();
 //			for(File topLevelFolder:topLevelFolders ){
 //				TreeObject topLevelTO = new TreeObject(topLevelFolder.getName());
-//				File treeIndexFile = new File(topLevelFolder.getAbsolutePath() + CMModelUtil.PathSeparator + TreeObject.treeIndexFileName);
+//				File treeIndexFile = new File(topLevelFolder.getAbsolutePath() + RWTSystemUtil.PathSeparator + TreeObject.treeIndexFileName);
 //				if(!treeIndexFile.exists()){
 //					try {
 //						treeIndexFile.createNewFile();
@@ -396,27 +431,27 @@ public class CMModelUtil {
 //		}	
 //	}	
 	
-	public static CMType getCMTypeFromTypeName(IProject currentProject, String annotatedTypeName){
-		if(annotatedTypeName!=null){
-			File cmTypeFile = CMModelUtil.getCMTypeFile(currentProject, annotatedTypeName);
+	public static RWType getCMTypeFromTypeName(IProject currentProject, String annotatedTypeName){
+		if(annotatedTypeName!=null && annotatedTypeName.length()>0){
+			File cmTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, annotatedTypeName);
 			if((cmTypeFile!= null) && (cmTypeFile.exists())){
-				return CMType.readInCorrespondenceType(cmTypeFile);
+				return RWType.readInCorrespondenceType(cmTypeFile);
 			}
 		}
 		return null;
 	}
 	
-	public static CMType getCMTypeFromTreeObject(IProject currentProject, TreeObject selectedTO){
-		File cmTypeFile = CMModelUtil.getCMTypeFile(currentProject, selectedTO);
+	public static RWType getCMTypeFromTreeObject(IProject currentProject, TreeObject selectedTO){
+		File cmTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, selectedTO);
 		if((cmTypeFile!= null) && (cmTypeFile.exists())){
-			return CMType.readInCorrespondenceType(cmTypeFile);
+			return RWType.readInCorrespondenceType(cmTypeFile);
 		}
 		return null;
 	}
 	
 	public static ArrayList<IResource> getAllJavaSourceFiles(IJavaProject javaProject){
 		IPackageFragmentRoot[] packageFragmentRoot;
-		 ArrayList<IResource> javaSourceFiles = new ArrayList<IResource>();
+		ArrayList<IResource> javaSourceFiles = new ArrayList<IResource>();
 		try {
 			packageFragmentRoot = javaProject.getAllPackageFragmentRoots();
 	        for (int i = 0; i < packageFragmentRoot.length; i++){
@@ -452,5 +487,9 @@ public class CMModelUtil {
 			e.printStackTrace();
 		}
 	}
+	
+}
+
+class NoRWTSystemFoundException extends Exception{
 	
 }

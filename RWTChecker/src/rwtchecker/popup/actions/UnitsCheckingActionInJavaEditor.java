@@ -48,14 +48,14 @@ import org.eclipse.ui.editors.text.IFoldingCommandIds;
 import org.eclipse.ui.texteditor.ITextEditor;
 import org.eclipse.ui.texteditor.TextOperationAction;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.perspective.RWTCheckerPerspective;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.CandidateRuleVisitor;
 import rwtchecker.typechecker.TypeCheckingVisitor;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
 import rwtchecker.views.RWTRulesView;
 import rwtchecker.views.RWTView;
@@ -117,7 +117,7 @@ public class UnitsCheckingActionInJavaEditor implements IEditorActionDelegate {
 			parser.setResolveBindings(true); // we need bindings later on
 			compilationResult = (CompilationUnit) parser.createAST(null);
 			
-			TreeObject treeObject = CMModelUtil.readInAllCMTypesToTreeObject(ifile);
+			TreeObject treeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(ifile);
 			cmTypeView.getTreeViewer().setInput(treeObject);
 			cmTypeView.setTypeChecked(false);
 			typeChecking(compilationResult);
@@ -131,7 +131,7 @@ public class UnitsCheckingActionInJavaEditor implements IEditorActionDelegate {
 	}
 	
 	protected void typeChecking(CompilationUnit compilationResult){
-		CMTypeRulesManager manager = CMTypeRulesManager.getManagerForCurrentProject();
+		RWTypeRulesManager manager = RWTypeRulesManager.getManagerForCurrentProject();
 		cmTypeOperationView.setManager(manager);
 		cmTypeOperationView.getTableViewer().setInput(manager);
 		

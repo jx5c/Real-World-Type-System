@@ -6,7 +6,7 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
-import rwtchecker.realworldmodel.ConceptAttribute;
+import rwtchecker.concept.ConceptAttribute;
 
 public class AttributeTypeLabelProvider extends LabelProvider implements ITableLabelProvider {
 	

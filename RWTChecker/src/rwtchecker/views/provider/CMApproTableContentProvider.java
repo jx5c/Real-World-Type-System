@@ -4,8 +4,8 @@ package rwtchecker.views.provider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CM.CM_ApproxType;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwt.RWT_Approx;
 
 
 public class CMApproTableContentProvider implements IStructuredContentProvider {
@@ -16,8 +16,8 @@ public class CMApproTableContentProvider implements IStructuredContentProvider {
 	}
 	
 	public Object[] getElements(Object parent) {
-		if (parent instanceof CM_ApproxType){
-			return ((CM_ApproxType)parent).getApproximateProperties().toArray();
+		if (parent instanceof RWT_Approx){
+			return ((RWT_Approx)parent).getApproximateProperties().toArray();
 		}
 		return new Object[0];
 	}

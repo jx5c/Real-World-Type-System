@@ -50,7 +50,7 @@ import org.eclipse.ui.texteditor.ITextEditor;
 
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 public class RevisionVisitor extends ASTVisitor{
 	
@@ -88,7 +88,7 @@ public class RevisionVisitor extends ASTVisitor{
 					variableCMType = fileAnnotations.getCMTypeInBodyDecl(classDeclKey, variableName);
 				}else{
 					IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-					File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+					File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 					if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 						FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 						if(otherSourcefileAnnotation == null){
@@ -176,7 +176,7 @@ public class RevisionVisitor extends ASTVisitor{
 				variableCMType = fileAnnotations.getCMTypeInBodyDecl(classDeclKey, variableName);
 			}else{
 				IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-				File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+				File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 				if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 					FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 					if(otherSourcefileAnnotation == null){
@@ -245,7 +245,7 @@ public class RevisionVisitor extends ASTVisitor{
 					variableCMType = fileAnnotations.getCMTypeInBodyDecl(classDeclKey, variableName);
 				}else{
 					IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-					File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+					File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 					if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 						FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 						if(otherSourcefileAnnotation == null){

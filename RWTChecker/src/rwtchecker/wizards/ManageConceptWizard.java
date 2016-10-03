@@ -16,9 +16,9 @@ import java.io.*;
 
 import org.eclipse.ui.*;
 
-import rwtchecker.realworldmodel.ConceptAttribute;
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.concept.ConceptAttribute;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.TreeObject;
 
 /**

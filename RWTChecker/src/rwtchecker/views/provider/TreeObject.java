@@ -4,23 +4,34 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Stack;
 
+import org.dom4j.Document;
+import org.dom4j.DocumentException;
+import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
+import org.dom4j.io.SAXReader;
+import org.dom4j.io.XMLWriter;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.runtime.IAdaptable;
 
-import rwtchecker.CM.CMType;
+import rwtchecker.rwt.RWT_Attribute;
+import rwtchecker.rwt.RWT_Semantic;
+import rwtchecker.rwt.RWType;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
+import rwtchecker.util.XMLGeneratorForTypes;
 
 
 
-public class TreeObject implements IAdaptable, Serializable{
+public class TreeObject implements IAdaptable{
 
 	private static final long serialVersionUID = -7452002560040464889L;
 	private String name;
@@ -84,75 +95,66 @@ public class TreeObject implements IAdaptable, Serializable{
 		return children.size()>0;
 	}
 	
+//	private static String XMLTag_rootLevel = "invisible";
+	private static String XMLTag_topLevel = "rwts";
+	private static String XMLTag_childrenLevel = "rwt";
+	
+	
 	public static void writeOutTreeObject(TreeObject treeObject, File fileLocation){
-		if(!fileLocation.exists()){
-			try {
-				fileLocation.createNewFile();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+		if(fileLocation==null || !fileLocation.isFile()){
+			return;
 		}
-		ObjectOutputStream out;
+		Document document = DocumentHelper.createDocument();
+        Element root = document.addElement( XMLTag_topLevel );
+		for(TreeObject child : treeObject.children.get(0).children){
+			Element typeElement = root.addElement( XMLTag_childrenLevel );
+	        typeElement.addText(child.name);	
+		}
+
+        XMLWriter writer;
 		try {
-			out = new ObjectOutputStream
-			(new FileOutputStream(fileLocation));
-			out.writeObject(treeObject);
-			out.close();
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
+//			file.delete();
+//			file.createNewFile();
+			writer = new XMLWriter(
+			        new FileWriter(fileLocation));
+            writer.write( document );
+            writer.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
 	public static TreeObject readInTreeObject(IProject iproject, File fileLocation){
-		TreeObject treeObject = new TreeObject();
-		ObjectInputStream in;
+		TreeObject invisibleRoot = new TreeObject("invisible");
+		TreeObject treeObject = new TreeObject(treeObjectTopName);
 		if(fileLocation.exists()){
-			try {
-				in = new ObjectInputStream(new FileInputStream(fileLocation));
-				treeObject = (TreeObject)in.readObject();
-//				clearUp(iproject, treeObject);
-				in.close();
-			} catch (FileNotFoundException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			} catch (ClassNotFoundException e) {
+	        SAXReader reader = new SAXReader();
+	        try {
+				Document document = reader.read(fileLocation);
+				Element root = document.getRootElement();
+				for ( Iterator i = root.elementIterator(XMLTag_childrenLevel); i.hasNext(); ) {
+					Element element = (Element) i.next();
+					TreeObject child = new TreeObject(element.getText());
+					treeObject.addChild(child);
+				}				
+			} catch (DocumentException e) {
 				e.printStackTrace();
 			}
 		}
-		return treeObject; 
+		invisibleRoot.addChild(treeObject);
+		return invisibleRoot; 
 	}
 	
-//	private static void clearUp(IProject currentProject, TreeObject to){
-//		if(!to.name.equals(treeObjectTopName) && CMModelUtil.getCMTypeFromTreeObject(currentProject, to) == null){
-//			to.getParent().removeChild(to);
-//		}else{
-//			for(TreeObject nextTo :to.children){
-//				clearUp(currentProject, nextTo);
-//			}
-//		}
-//	}
-	
-	private static TreeObject getTopLevelTreeObject(TreeObject treeObject){
-		if((treeObject == null) 
-				|| (treeObject.getName().equals(""))){
-			return null ;
+	public static TreeObject getTopLevelTreeObject(TreeObject treeObject){
+		TreeObject node = treeObject;
+		while(node.getParent()!=null){
+			node = node.getParent();
 		}
-		TreeObject parentTO = treeObject.getParent();
-		TreeObject childTO = treeObject;
-		while (!(childTO.getName().equals(treeObjectTopName) 
-				&& 
-				parentTO.getName().equals("") )){
-			childTO = parentTO;
-			parentTO = parentTO.getParent();
-		}
-		return parentTO;
+		return node;
 	}
 	
 	public static void updateTreeObjectToFile(IProject currentProject, TreeObject cmtypeTreeSelectedObject){
-		File treeIndexFile = CMModelUtil.getTreeIndexFile(currentProject);
+		File treeIndexFile = RWTSystemUtil.getTreeIndexFile(currentProject);
 		if(treeIndexFile!= null ){
 			if(!treeIndexFile.exists()){
 				try {
@@ -167,61 +169,61 @@ public class TreeObject implements IAdaptable, Serializable{
 			}
 		}
 	}
-
-	public boolean isPrimaryType() {
-		return isPrimaryType;
-	}
-
-	public void setPrimaryType(boolean isPrimaryType) {
-		this.isPrimaryType = isPrimaryType;
-	}
-	
-	
-	public static ArrayList<String> getAllSuperTypes(String currentType){
-		TreeObject treeObject = CMModelUtil.readInAllCMTypesToTreeObject(ActivePart.getFileOfActiveEditror());
-		TreeObject currentTO = depthSearchFirst(currentType, treeObject);
-		ArrayList<String> superTypeList = new ArrayList<String>();
-		if(currentTO!=null){
-			TreeObject parentTO = currentTO.getParent();
-			while(!parentTO.toString().equals(TreeObject.treeObjectTopName)){
-				superTypeList.add(parentTO.toString());
-				parentTO = parentTO.getParent();
-			}
-		}
-		return superTypeList;
-	}
-	
-	private static TreeObject depthSearchFirst(String currentType, TreeObject currentTO){
-		TreeObject[] children = currentTO.getChildren();
-		for(int i=0;i<children.length;i++){
-			if(children[i].getName().equals(currentType)){
-				return children[i];
-			}else{
-				return depthSearchFirst(currentType,children[i]);	
-			}
-		}
-		return null;
-	}
-	
-	public static boolean isSubTypeOf(IProject currentProject, String typeNameOne, String typeNameTwo){
-		if(typeNameOne == null){
-			return false;
-		}
-		if(typeNameTwo == null){
-			return false;
-		}
-		if(typeNameOne.length() == 0){
-			return false;
-		}
-		if(typeNameTwo.length() == 0){
-			return false;
-		}
-		ArrayList<String> superTypeListOne = getAllSuperTypes(typeNameOne);
-		if(superTypeListOne.contains(typeNameTwo)){
-			return true;
-		}else{
-			return false;
-		}
-	}
+//
+//	public boolean isPrimaryType() {
+//		return isPrimaryType;
+//	}
+//
+//	public void setPrimaryType(boolean isPrimaryType) {
+//		this.isPrimaryType = isPrimaryType;
+//	}
+//	
+//	
+//	public static ArrayList<String> getAllSuperTypes(String currentType){
+//		TreeObject treeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(ActivePart.getFileOfActiveEditror());
+//		TreeObject currentTO = depthSearchFirst(currentType, treeObject);
+//		ArrayList<String> superTypeList = new ArrayList<String>();
+//		if(currentTO!=null){
+//			TreeObject parentTO = currentTO.getParent();
+//			while(!parentTO.toString().equals(TreeObject.treeObjectTopName)){
+//				superTypeList.add(parentTO.toString());
+//				parentTO = parentTO.getParent();
+//			}
+//		}
+//		return superTypeList;
+//	}
+//	
+//	private static TreeObject depthSearchFirst(String currentType, TreeObject currentTO){
+//		TreeObject[] children = currentTO.getChildren();
+//		for(int i=0;i<children.length;i++){
+//			if(children[i].getName().equals(currentType)){
+//				return children[i];
+//			}else{
+//				return depthSearchFirst(currentType,children[i]);	
+//			}
+//		}
+//		return null;
+//	}
+//	
+//	public static boolean isSubTypeOf(IProject currentProject, String typeNameOne, String typeNameTwo){
+//		if(typeNameOne == null){
+//			return false;
+//		}
+//		if(typeNameTwo == null){
+//			return false;
+//		}
+//		if(typeNameOne.length() == 0){
+//			return false;
+//		}
+//		if(typeNameTwo.length() == 0){
+//			return false;
+//		}
+//		ArrayList<String> superTypeListOne = getAllSuperTypes(typeNameOne);
+//		if(superTypeListOne.contains(typeNameTwo)){
+//			return true;
+//		}else{
+//			return false;
+//		}
+//	}
 	
 }

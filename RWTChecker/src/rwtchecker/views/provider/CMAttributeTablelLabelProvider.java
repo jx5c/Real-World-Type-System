@@ -6,13 +6,13 @@ import org.eclipse.swt.graphics.Image;
 import org.eclipse.ui.ISharedImages;
 import org.eclipse.ui.PlatformUI;
 
-import rwtchecker.CM.CMAttribute;
+import rwtchecker.rwt.RWT_Attribute;
 
 
 public class CMAttributeTablelLabelProvider extends LabelProvider implements ITableLabelProvider {
 	
 	public String getColumnText(Object obj, int index) {
-		CMAttribute semanticAttribute = (CMAttribute)obj;
+		RWT_Attribute semanticAttribute = (RWT_Attribute)obj;
 		switch (index) {
 			case 0:
 				return semanticAttribute.getAttributeName();

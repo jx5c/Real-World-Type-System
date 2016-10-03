@@ -13,7 +13,7 @@ import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
 import rwtchecker.annotation.FileAnnotations;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 public class GetStatisticActionInNavigator  implements IObjectActionDelegate{
 	private ISelection selection;
@@ -22,7 +22,7 @@ public class GetStatisticActionInNavigator  implements IObjectActionDelegate{
 	@Override
 	public void run(IAction arg0) {
 		IProject iProject = (IProject) (((IStructuredSelection) selection).getFirstElement());
-		Object location = CMModelUtil.readPropertyFromConfigFile(iProject.getName());
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iProject.getName());
 		if(location==null){
 			MessageDialog.openInformation(
 					shell,
@@ -30,7 +30,7 @@ public class GetStatisticActionInNavigator  implements IObjectActionDelegate{
 					"Error! Please setup the real-world type folders for the project first");
 			return ;
 		}
-		ArrayList<FileAnnotations> allAnnotations = CMModelUtil.getAllFileAnntationsForProject(iProject);
+		ArrayList<FileAnnotations> allAnnotations = RWTSystemUtil.getAllFileAnntationsForProject(iProject);
 		int totalAnnoCount = 0;
 		HashSet<String> rwtsUsed = new HashSet<String>();
 		for(FileAnnotations anno : allAnnotations ){

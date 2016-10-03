@@ -5,7 +5,7 @@ import java.util.List;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
 import org.eclipse.jface.viewers.Viewer;
 
-import rwtchecker.realworldmodel.ConceptAttribute;
+import rwtchecker.concept.ConceptAttribute;
 
 
 public class ConceptDetailContentProvider implements IStructuredContentProvider {

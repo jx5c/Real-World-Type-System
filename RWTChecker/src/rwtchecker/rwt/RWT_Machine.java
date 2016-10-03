@@ -1,48 +1,48 @@
-package rwtchecker.CM;
+package rwtchecker.rwt;
 
 import java.util.ArrayList;
 
-public class CM_MachineType{
+public class RWT_Machine{
 
 	private String explicationLink = "";
 	
-	private ArrayList<CMAttribute> machineTypeAttributes = new ArrayList<CMAttribute>();
+	private ArrayList<RWT_Attribute> machineTypeAttributes = new ArrayList<RWT_Attribute>();
 
-	public CM_MachineType(){
+	public RWT_Machine(){
 	}
 	
-	public CM_MachineType(CM_MachineType existingType){
+	public RWT_Machine(RWT_Machine existingType){
 		if(existingType!=null){
 			explicationLink = existingType.explicationLink;
 			machineTypeAttributes.addAll(existingType.getSemanticTypeAttributes());
 		}
 	}
 	
-	public void addSemanticTypeAtt(CMAttribute newAtt){
+	public void addSemanticTypeAtt(RWT_Attribute newAtt){
 		if(!machineTypeAttributes.contains(newAtt)){
 			machineTypeAttributes.add(newAtt);
 		}
 	}
 	
-	public void addSemanticTypeAtts(ArrayList<CMAttribute> newAtts){
-		for(CMAttribute att: newAtts){
+	public void addSemanticTypeAtts(ArrayList<RWT_Attribute> newAtts){
+		for(RWT_Attribute att: newAtts){
 			if(!machineTypeAttributes.contains(att)){
 				machineTypeAttributes.add(att);
 			}
 		}
 	}
 
-	public ArrayList<CMAttribute> getSemanticTypeAttributes() {
+	public ArrayList<RWT_Attribute> getSemanticTypeAttributes() {
 		return machineTypeAttributes;
 	}
 
 	public void setSemanticTypeAttributes(
-			ArrayList<CMAttribute> semanticTypeAttributes) {
+			ArrayList<RWT_Attribute> semanticTypeAttributes) {
 		this.machineTypeAttributes = semanticTypeAttributes;
 	}
 	
 	public String findAttValue(String attName){
-		for(CMAttribute att: this.machineTypeAttributes){
+		for(RWT_Attribute att: this.machineTypeAttributes){
 			if(att.getAttributeName().equalsIgnoreCase(attName)){
 				return att.getAttributeValue();
 			}

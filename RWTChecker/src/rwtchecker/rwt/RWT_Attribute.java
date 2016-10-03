@@ -1,7 +1,7 @@
-package rwtchecker.CM;
+package rwtchecker.rwt;
 
 
-public class CMAttribute{
+public class RWT_Attribute{
 	
 	private String attributeName = "";
 	private String attributeValue = "";
@@ -10,7 +10,7 @@ public class CMAttribute{
 	public static String enableMark = "y";
 	public static String disEnableMark = "n";
 	
-	public CMAttribute(String attributeName,
+	public RWT_Attribute(String attributeName,
 			String attributeValue) {
 		super();
 		this.attributeName = attributeName;
@@ -24,8 +24,8 @@ public class CMAttribute{
 		this.attributeName = attributeName;
 	}
 	public boolean equals(Object attribute){
-		if(attribute instanceof CMAttribute ){
-			if(((CMAttribute)attribute).getAttributeName().equals(attributeName)){
+		if(attribute instanceof RWT_Attribute ){
+			if(((RWT_Attribute)attribute).getAttributeName().equals(attributeName)){
 				return true;
 			}
 		}

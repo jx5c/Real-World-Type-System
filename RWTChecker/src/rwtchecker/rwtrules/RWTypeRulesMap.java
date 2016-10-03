@@ -1,4 +1,4 @@
-package rwtchecker.CMRules;
+package rwtchecker.rwtrules;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -14,15 +14,15 @@ import java.util.Map;
 import org.eclipse.core.resources.IProject;
 
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
-public class CMTypeRulesMap implements Serializable{
+public class RWTypeRulesMap implements Serializable{
 	
 	private static final long serialVersionUID = 5880862074200358476L;
 	private String cmtypefilePath = "";
 	private Map<String, String> typeRuleMap = new HashMap<String, String>(); 
 	
-	public CMTypeRulesMap(File file){
+	public RWTypeRulesMap(File file){
 		this.cmtypefilePath = file.getAbsolutePath();
 		if(!file.exists()){
 			this.storeRules();
@@ -31,10 +31,10 @@ public class CMTypeRulesMap implements Serializable{
 		}
 	}
 	
-	public static CMTypeRulesMap getCMTypeRulesMapForCurrentProject(){
+	public static RWTypeRulesMap getCMTypeRulesMapForCurrentProject(){
 		if(ActivePart.getFileOfActiveEditror() != null){
-			File file = CMModelUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
-			return new CMTypeRulesMap(file);
+			File file = RWTSystemUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
+			return new RWTypeRulesMap(file);
 		}
 		return null;
 	}
@@ -83,8 +83,8 @@ public class CMTypeRulesMap implements Serializable{
 	
 	public static String constructKey(String cmTypeOneName, String cmTypeTwoName, String operationName){
 		String typeRuleKey = "";
-		if((operationName.equals(CMTypeRuleCategory.Plus))
-			&&(operationName.equals(CMTypeRuleCategory.Multiplication))
+		if((operationName.equals(RWTypeRuleCategory.Plus))
+			&&(operationName.equals(RWTypeRuleCategory.Multiplication))
 		){
 			if(cmTypeOneName.compareToIgnoreCase(cmTypeTwoName)<0){
 				typeRuleKey = cmTypeOneName + operationName + cmTypeTwoName;

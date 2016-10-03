@@ -18,12 +18,12 @@ import org.eclipse.jdt.core.JavaCore;
 import org.eclipse.jdt.core.dom.*;
 import org.eclipse.jdt.core.dom.InfixExpression.Operator;
 
-import rwtchecker.CM.CMAttribute;
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRuleCategory;
-import rwtchecker.CMRules.CMTypeRulesManager;
 import rwtchecker.annotation.FileAnnotations;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWT_Attribute;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRulesManager;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
 import rwtchecker.util.ErrorUtil;
 
@@ -31,7 +31,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	
 	public static HashSet<String> cmtypeHashSet = new HashSet<String>();
 	
-	private CMTypeRulesManager cmTypeOperationManager;
+	private RWTypeRulesManager cmTypeOperationManager;
 	
 	private ArrayList<DiagnosticMessage> errorReports = new ArrayList<DiagnosticMessage>();
 	
@@ -67,7 +67,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	private boolean insideTargetedMethod = false;
 	private String targetedMethodDeclKey = "";
 	
-	private String returnCMTypesForTargetedMethod = CMType.TypeLess;
+	private String returnCMTypesForTargetedMethod = RWType.TypeLess;
 	private boolean methodInvError = false;
 	private boolean insideBranch = false;
 	private boolean errorInsideBranch = false;
@@ -84,7 +84,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 		return variableCourt;
 	}
 	
-	public TypeCheckingVisitor(CMTypeRulesManager manager, CompilationUnit compilationUnit, boolean unitsChecking) {
+	public TypeCheckingVisitor(RWTypeRulesManager manager, CompilationUnit compilationUnit, boolean unitsChecking) {
 		super(true);
 		this.cmTypeOperationManager = manager;
 		this.compilationUnit = compilationUnit;
@@ -92,7 +92,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 		currentFilePath = this.compilationUnit.getJavaElement().getPath();
 		currentFile = ResourcesPlugin.getWorkspace().getRoot().getFile(currentFilePath);
 		currentProject = currentFile.getProject();
-		File annotationFile = CMModelUtil.getAnnotationFile(currentFile);
+		File annotationFile = RWTSystemUtil.getAnnotationFile(currentFile);
 		if(annotationFile!= null && annotationFile.exists()){
 			fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 			if(fileAnnotations == null){
@@ -138,7 +138,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			//if method declaration has a return type binding
 			if(!this.methodReturnMap.containsKey(methodKey)
 					||
-					this.methodReturnMap.get(methodKey).equals(CMType.GenericMethod)){
+					this.methodReturnMap.get(methodKey).equals(RWType.GenericMethod)){
 				if(this.parsingMethodDelcMode){
 					if(methodKey.equals(this.targetedMethodDeclKey)){
 						this.insideTargetedMethod = true;
@@ -168,7 +168,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 						}
 					}else{
 						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 							if(otherSourcefileAnnotation == null){
@@ -215,7 +215,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 						}else{
 							//Method declared in other file; 
 							IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(iMethodBinding.getJavaElement().getPath());
-							File otherSourceFileAnnotationFile = CMModelUtil.getAnnotationFile(ifile);
+							File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 							if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
 								FileAnnotations otherSourcefileAnnotationsClone = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
 								if(otherSourcefileAnnotationsClone == null){
@@ -422,25 +422,25 @@ public class TypeCheckingVisitor extends ASTVisitor {
 				if(leftCMType.equals(rightCMType)){
 					return;
 				}
-				if(!leftCMType.equals(CMType.TypeLess) && !rightCMType.equals(CMType.TypeLess)){
-					String returnType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, CMTypeRuleCategory.Assignable, rightCMType);
+				if(!leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
+					String returnType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, rightCMType);
 					if(returnType != null){
 						return;
 					}
 				}
 				
-			    if(!leftCMType.equalsIgnoreCase(CMType.UnknownType) &&
+			    if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
 						!leftCMType.equalsIgnoreCase(rightCMType) && 
-						!rightCMType.equalsIgnoreCase(CMType.UnknownType) ){
+						!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
 					addNewErrorMessage(node , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
 				}
 			}else if(operator.equals(Assignment.Operator.PLUS_ASSIGN)){
-				String returnType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, CMTypeRuleCategory.Plus, rightCMType);
+				String returnType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Plus, rightCMType);
 				if(returnType != null){
 					if(returnType.equals(leftCMType)){
 						return;
 					}else{
-						String assignableType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, CMTypeRuleCategory.Assignable, returnType);
+						String assignableType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, returnType);
 						if(assignableType != null){
 							return;
 						}else{
@@ -457,8 +457,8 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			//simple inference here
 			//if we are in units checking, do inference here 
 			if(this.checkingUnits){
-				if(leftCMType.equals(CMType.TypeLess) && !rightCMType.equals(CMType.TypeLess) 
-						&& !rightCMType.equals(CMType.error_propogate) && !rightCMType.equals(CMType.error_source)){
+				if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
+						&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
 					if(leftExp instanceof SimpleName){
 						IBinding fbinding = ((SimpleName)leftExp).resolveBinding();
 						if(fbinding instanceof IVariableBinding){
@@ -490,24 +490,24 @@ public class TypeCheckingVisitor extends ASTVisitor {
 				if(leftCMType.equals(rightCMType)){
 					return;
 				}
-				if(!leftCMType.equals(CMType.TypeLess) && !rightCMType.equals(CMType.TypeLess)){
-					String returnType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, CMTypeRuleCategory.Assignable, rightCMType);
+				if(!leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
+					String returnType = this.cmTypeOperationManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, rightCMType);
 					if(returnType != null){
 						return;
 					}else{
 						addNewErrorMessage(node , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);
 					}
 				}
-				else if(!leftCMType.equalsIgnoreCase(CMType.UnknownType) &&
+				else if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
 						!leftCMType.equalsIgnoreCase(rightCMType) && 
-						!rightCMType.equalsIgnoreCase(CMType.UnknownType) ){
+						!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
 					addNewErrorMessage(node , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
 				}
 				//simple inference here
 				//if we are in units checking, do inference here
 				if(this.checkingUnits){
-					if(leftCMType.equals(CMType.TypeLess) && !rightCMType.equals(CMType.TypeLess) 
-							&& !rightCMType.equals(CMType.error_propogate) && !rightCMType.equals(CMType.error_source)){
+					if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
+							&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
 						Expression leftExp = fragment.getName();
 						if(leftExp instanceof SimpleName){
 							IBinding fbinding = ((SimpleName)leftExp).resolveBinding();
@@ -533,18 +533,18 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			PrefixExpression.Operator operator = prefixExp.getOperator();
 			String argumentCMType = this.getAnnotatedTypeForExpression(prefixExp.getOperand());
 			String prefixExpressionType = argumentCMType;
-			if(prefixExpressionType.equals(CMType.TypeLess)){
+			if(prefixExpressionType.equals(RWType.TypeLess)){
 				associateAttSetsWithExp(prefixExp, prefixExpressionType);
 				return;
 			}
 			String operatorType = "";
 			if(operator.equals(PrefixExpression.Operator.MINUS)){
-				operatorType = CMTypeRuleCategory.Unary_minus;
+				operatorType = RWTypeRuleCategory.Unary_minus;
 
 			}else if(operator.equals(PrefixExpression.Operator.PLUS)){
-				operatorType = CMTypeRuleCategory.Unary_plus;
+				operatorType = RWTypeRuleCategory.Unary_plus;
 			}
-			String returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, prefixExpressionType, operatorType, CMType.TypeLess);				
+			String returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, prefixExpressionType, operatorType, RWType.TypeLess);				
 			if(returnType != null ){
 				associateAttSetsWithExp(prefixExp, returnType);	
 			}else{
@@ -595,13 +595,13 @@ public class TypeCheckingVisitor extends ASTVisitor {
 				if(variableMap.get(parameterName)!=null){
 					String annotatedParaCMType = variableMap.get(parameterName);
 					if(annotatedParaCMType.length()>0){
-						CMType parameterCMtype = CMModelUtil.getCMTypeFromTypeName(currentProject, annotatedParaCMType);
+						RWType parameterCMtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedParaCMType);
 						String parameterCMtypeAttSet = parameterCMtype.getEnabledAttributeSet();
 						if(checkingUnits){
 							parameterCMtypeAttSet = parameterCMtype.getUnitsAttribute();
 						}
 						if(!parameterCMtypeAttSet.equals(argument_cmtypes[i])){
-							String tempReturnType = cmTypeOperationManager.getReturnType(currentProject, parameterCMtypeAttSet, CMTypeRuleCategory.Assignable,  argument_cmtypes[i]);
+							String tempReturnType = cmTypeOperationManager.getReturnType(currentProject, parameterCMtypeAttSet, RWTypeRuleCategory.Assignable,  argument_cmtypes[i]);
 							if(tempReturnType==null){
 								addNewErrorMessage(methodInvocationNode , ErrorUtil.methodArgumentError(), DiagnosticMessage.ERROR);
 								break;
@@ -679,7 +679,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 				parser.setResolveBindings(true);
 				targetedCompilationUnit = (CompilationUnit) parser.createAST(null);
 				declaringNode = targetedCompilationUnit.findDeclaringNode(bodyDeclKey);
-				File annotationFile = CMModelUtil.getAnnotationFile(methodDeclFile);
+				File annotationFile = RWTSystemUtil.getAnnotationFile(methodDeclFile);
 				if(annotationFile != null){
 					fileAnnotations = FileAnnotations.loadFromXMLFile(annotationFile);
 				}
@@ -713,7 +713,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			if(parameterTypeName == null || parameterTypeName.length()==0){
 				continue;
 			}
-			CMType parameterCMtype = CMModelUtil.getCMTypeFromTypeName(currentProject, parameterTypeName);
+			RWType parameterCMtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, parameterTypeName);
 			if(parameterCMtype!=null){
 				String parameterCMtypeAttSet = parameterCMtype.getEnabledAttributeSet();
 				if(checkingUnits){
@@ -726,7 +726,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 					continue;
 				}
 				if(!parameterCMtypeAttSet.equals(argumentCMType)){
-					String tempReturnType = cmTypeOperationManager.getReturnType(currentProject, parameterCMtypeAttSet, CMTypeRuleCategory.Assignable,  argumentCMType);
+					String tempReturnType = cmTypeOperationManager.getReturnType(currentProject, parameterCMtypeAttSet, RWTypeRuleCategory.Assignable,  argumentCMType);
 					if(tempReturnType==null){
 						addNewErrorMessage(node , ErrorUtil.methodArgumentError(), DiagnosticMessage.ERROR);
 						break;
@@ -782,10 +782,10 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			
 			//fileAnnotations is for the method declaration
 			String returnType = checkReturnCMType(bodyDeclKey,methodDecl,methodInvocationNode,argumentCMTypes,fileAnnotations);
-			if(returnType.equalsIgnoreCase(CMType.GenericMethod)){
+			if(returnType.equalsIgnoreCase(RWType.GenericMethod)){
 				returnType = handleGenericMethod(targetedCompilationUnit,methodInvocationNode,bodyDeclKey,argumentCMTypes);
 			}
-			if(expCMType.equals(CMType.TypeLess)){
+			if(expCMType.equals(RWType.TypeLess)){
 				associateAttSetsWithExp(methodInvocationNode, returnType);	
 			}else{
 				String finalReturnType = NewTypeCheckerVisitor.uniteTwoSets(expCMType, returnType, cmTypeOperationManager);
@@ -795,15 +795,15 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	}
 			
 	private String checkReturnCMType(String methodKey, MethodDeclaration methodDecl, MethodInvocation methodInvocationNode, String[] argument_cmtypes, FileAnnotations fileAnnotations){
-		String returnCMTypeAtt = CMType.UnknownType;
+		String returnCMTypeAtt = RWType.UnknownType;
 		if(fileAnnotations==null){
-			return CMType.UnknownType;
+			return RWType.UnknownType;
 		}
 		String returnCMtypeName = fileAnnotations.getReturnCMTypeForMethod(methodKey);
-		if(returnCMtypeName.equalsIgnoreCase(CMType.GenericMethod)){
-			return CMType.GenericMethod;
+		if(returnCMtypeName.equalsIgnoreCase(RWType.GenericMethod)){
+			return RWType.GenericMethod;
 		}
-		CMType returnCMtype = CMModelUtil.getCMTypeFromTypeName(currentProject, returnCMtypeName);
+		RWType returnCMtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, returnCMtypeName);
 		if(returnCMtype!=null){
 			returnCMTypeAtt = returnCMtype.getEnabledAttributeSet();
 			if(checkingUnits){
@@ -831,8 +831,8 @@ public class TypeCheckingVisitor extends ASTVisitor {
 				
 
 				
-					if(argumentTwoAnnotatedType.equalsIgnoreCase(CMType.UnknownType) && argumentOneAnnotatedType.equalsIgnoreCase(CMType.UnknownType)){
-						this.associateAttSetsWithExp(methodInvocationNode, CMType.UnknownType);
+					if(argumentTwoAnnotatedType.equalsIgnoreCase(RWType.UnknownType) && argumentOneAnnotatedType.equalsIgnoreCase(RWType.UnknownType)){
+						this.associateAttSetsWithExp(methodInvocationNode, RWType.UnknownType);
 						return;
 					}
 					
@@ -841,10 +841,10 @@ public class TypeCheckingVisitor extends ASTVisitor {
 						if(argumentTwoAnnotatedType.equals(argumentOneAnnotatedType)){
 							this.associateAttSetsWithExp(methodInvocationNode,  argumentTwoAnnotatedType);
 							return;
-						}else if(argumentOneAnnotatedType.equals(CMType.UnknownType)){
+						}else if(argumentOneAnnotatedType.equals(RWType.UnknownType)){
 							this.associateAttSetsWithExp(methodInvocationNode,  argumentTwoAnnotatedType);
 							return;
-						}else if(argumentTwoAnnotatedType.equals(CMType.UnknownType)){
+						}else if(argumentTwoAnnotatedType.equals(RWType.UnknownType)){
 							this.associateAttSetsWithExp(methodInvocationNode,  argumentOneAnnotatedType);
 							return;
 						}
@@ -857,7 +857,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 						return;
 					}else {
 						addNewErrorMessage(methodInvocationNode , ErrorUtil.getUndeclaredCalculation(methodInvocationNode.toString()),  DiagnosticMessage.WARNING);
-						this.associateAttSetsWithExp(methodInvocationNode, CMType.error_source);
+						this.associateAttSetsWithExp(methodInvocationNode, RWType.error_source);
 						return;
 					}
 				
@@ -866,26 +866,26 @@ public class TypeCheckingVisitor extends ASTVisitor {
 				Expression argument = (Expression)(methodInvocationNode.arguments().get(0));
 				String argumentAnnotatedType = this.getAnnotatedTypeForExpression(argument);
 
-				if(argumentAnnotatedType.equalsIgnoreCase(CMType.UnknownType)){
-					this.associateAttSetsWithExp(methodInvocationNode, CMType.UnknownType);
+				if(argumentAnnotatedType.equalsIgnoreCase(RWType.UnknownType)){
+					this.associateAttSetsWithExp(methodInvocationNode, RWType.UnknownType);
 					return;
 				}
 				//abs function
-				if(methodName.equalsIgnoreCase(CMTypeRuleCategory.Abosolute_Value)
-				||methodName.equalsIgnoreCase(CMTypeRuleCategory.Round)
-				||methodName.equalsIgnoreCase(CMTypeRuleCategory.Floor)
-				||methodName.equalsIgnoreCase(CMTypeRuleCategory.Ceil)
+				if(methodName.equalsIgnoreCase(RWTypeRuleCategory.Abosolute_Value)
+				||methodName.equalsIgnoreCase(RWTypeRuleCategory.Round)
+				||methodName.equalsIgnoreCase(RWTypeRuleCategory.Floor)
+				||methodName.equalsIgnoreCase(RWTypeRuleCategory.Ceil)
 				){
 					associateAttSetsWithExp(methodInvocationNode, argumentAnnotatedType);
 					return;
 				}
 				String returnType = null;
-				returnType=this.cmTypeOperationManager.getReturnType(this.currentProject, argumentAnnotatedType, methodName,CMType.TypeLess); 
+				returnType=this.cmTypeOperationManager.getReturnType(this.currentProject, argumentAnnotatedType, methodName,RWType.TypeLess); 
 				if((returnType != null)){
 					this.associateAttSetsWithExp(methodInvocationNode, returnType);
 				}else{
 					addNewErrorMessage(methodInvocationNode , ErrorUtil.getUndeclaredCalculation(methodInvocationNode.toString()),  DiagnosticMessage.WARNING);
-					this.associateAttSetsWithExp(methodInvocationNode,  CMType.error_source);	
+					this.associateAttSetsWithExp(methodInvocationNode,  RWType.error_source);	
 				}
 			}
 		}
@@ -900,13 +900,13 @@ public class TypeCheckingVisitor extends ASTVisitor {
 		}
 		String CMTypeAnnotatedTypeOne = this.getAnnotatedTypeForExpression(leftEP);
 		String CMTypeAnnotatedTypeTwo = this.getAnnotatedTypeForExpression(rightEP);
-				if((CMTypeAnnotatedTypeOne.equals(CMType.error_source)) || (CMTypeAnnotatedTypeOne.equals(CMType.error_propogate))
-						||	(CMTypeAnnotatedTypeTwo.equals(CMType.error_source)) || (CMTypeAnnotatedTypeTwo.equals(CMType.error_propogate))){
-					this.associateAttSetsWithExp(infixExpression, CMType.error_propogate);
+				if((CMTypeAnnotatedTypeOne.equals(RWType.error_source)) || (CMTypeAnnotatedTypeOne.equals(RWType.error_propogate))
+						||	(CMTypeAnnotatedTypeTwo.equals(RWType.error_source)) || (CMTypeAnnotatedTypeTwo.equals(RWType.error_propogate))){
+					this.associateAttSetsWithExp(infixExpression, RWType.error_propogate);
 					return;
 				}
-				if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-					this.associateAttSetsWithExp(infixExpression, CMType.UnknownType);
+				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+					this.associateAttSetsWithExp(infixExpression, RWType.UnknownType);
 				}
 		Operator thisop = infixExpression.getOperator();
 		if((thisop.equals(InfixExpression.Operator.LESS))
@@ -917,12 +917,12 @@ public class TypeCheckingVisitor extends ASTVisitor {
 		||(thisop.equals(InfixExpression.Operator.NOT_EQUALS))
 		){
 			if(CMTypeAnnotatedTypeOne.equals(CMTypeAnnotatedTypeTwo)||
-					CMTypeAnnotatedTypeOne.equals(CMType.UnknownType)||
-					CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+					CMTypeAnnotatedTypeOne.equals(RWType.UnknownType)||
+					CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 				return;
 			}else{
 				String returnType = null;
-				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Comparable, CMTypeAnnotatedTypeTwo);
+				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Comparable, CMTypeAnnotatedTypeTwo);
 				if(returnType != null ){
 					return;
 				}else{
@@ -934,9 +934,9 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			check_Remander_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
 		}
 		if(thisop.equals(InfixExpression.Operator.PLUS)){
-			check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, CMTypeRuleCategory.Plus);
+			check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, RWTypeRuleCategory.Plus);
 		}else if(thisop.equals(InfixExpression.Operator.MINUS)){
-			check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, CMTypeRuleCategory.Subtraction);
+			check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, RWTypeRuleCategory.Subtraction);
 		}
 		else if(thisop.equals(InfixExpression.Operator.TIMES)){
 			check_Times_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
@@ -946,25 +946,25 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	}
 	
 	private void check_Remander_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
 			//type rules part
-			if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-				infixExpressionType = CMType.UnknownType;
+			if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+				infixExpressionType = RWType.UnknownType;
 			}		
-			else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+			else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 				addNewErrorMessage(infixExpression , ErrorUtil.getRemanderDimensionError(), DiagnosticMessage.ERROR);
-				infixExpressionType = CMType.UnknownType;
+				infixExpressionType = RWType.UnknownType;
 			}
-			else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+			else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 				infixExpressionType = CMTypeAnnotatedTypeOne;
 			}else{
 				String returnType = null;
-				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
+				returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
 				if(returnType != null ){
 					infixExpressionType = returnType;
 				}else{
 					addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-					infixExpressionType = CMType.UnknownType;
+					infixExpressionType = RWType.UnknownType;
 				}	
 			}
 			this.associateAttSetsWithExp(infixExpression, infixExpressionType);
@@ -981,14 +981,14 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	
 	private void check_Plus_Minus_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression plusInfixExpression, int extendedIndex, String operation_type){
 		
-		String infixExpressionType = CMType.UnknownType;
-				if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-					infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+					infixExpressionType = RWType.UnknownType;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeTwo;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
@@ -997,9 +997,9 @@ public class TypeCheckingVisitor extends ASTVisitor {
 						infixExpressionType = returnType;
 					}else{
 						//if no match found for the calculations
-						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(CMType.UnknownType)){							
+						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(RWType.UnknownType)){							
 							addNewErrorMessage(plusInfixExpression , ErrorUtil.getUndeclaredCalculation(plusInfixExpression.toString()), DiagnosticMessage.WARNING);
-							infixExpressionType = CMType.UnknownType; //change type
+							infixExpressionType = RWType.UnknownType; //change type
 							
 						}
 					}	
@@ -1017,25 +1017,25 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	}
 	
 	private void check_Times_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
 				//type rules part
-				if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-					infixExpressionType = CMType.UnknownType;
+				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+					infixExpressionType = RWType.UnknownType;
 				}		
-				else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeTwo;
 				}
-				else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+				else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					infixExpressionType = CMTypeAnnotatedTypeOne;
 				}else{
 					String returnType = null;
-					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
+					returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
 					if(returnType != null ){
 						infixExpressionType = returnType;
 					}else{
-						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(CMType.UnknownType)){							
+						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(RWType.UnknownType)){							
 							addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-							infixExpressionType = CMType.UnknownType;
+							infixExpressionType = RWType.UnknownType;
 						}
 					}
 				}
@@ -1051,30 +1051,30 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	}
 	
 	private void check_Division_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo,InfixExpression infixExpression, int extendedIndex){	
-		String infixExpressionType = CMType.UnknownType;
+		String infixExpressionType = RWType.UnknownType;
 		//type rules part
-		if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-			infixExpressionType = CMType.UnknownType;
+		if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+			infixExpressionType = RWType.UnknownType;
 		}		
-		else if(CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
-			String inverseType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, CMTypeRuleCategory.Multiplicative_Inverse, "");
+		else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+			String inverseType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, RWTypeRuleCategory.Multiplicative_Inverse, "");
 			if(inverseType != null ){
 				infixExpressionType = inverseType;
 			}else{
 				addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-				infixExpressionType = CMType.UnknownType;
+				infixExpressionType = RWType.UnknownType;
 			}
 		}
-		else if(!CMTypeAnnotatedTypeOne.equals(CMType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(CMType.UnknownType)){
+		else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 			infixExpressionType = CMTypeAnnotatedTypeOne;
 		}else{
 			String returnType = null;
-			returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, CMTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
+			returnType = this.cmTypeOperationManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
 			if(returnType != null ){
 				infixExpressionType = returnType;
 			}else{
 				addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-				infixExpressionType = CMType.UnknownType;
+				infixExpressionType = RWType.UnknownType;
 			}
 		}
 		this.associateAttSetsWithExp(infixExpression, infixExpressionType);
@@ -1095,8 +1095,8 @@ public class TypeCheckingVisitor extends ASTVisitor {
 			this.accessRWT = true;
 			return annotatedTypeTableForExpression.get(exp);
 		}else{
-			annotatedTypeTableForExpression.put(exp, CMType.TypeLess);
-			return CMType.TypeLess;
+			annotatedTypeTableForExpression.put(exp, RWType.TypeLess);
+			return RWType.TypeLess;
 		}
 	}
 	
@@ -1164,7 +1164,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	
 	private void associateAttSetsWithExp(Expression exp, String annotatedType){
 		if(annotatedType != null){
-			CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, annotatedType);
+			RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedType);
 			if(cmtype!=null){
 				String rwttypeAttSet =  cmtype.getEnabledAttributeSet();
 				if(checkingUnits){
@@ -1187,7 +1187,7 @@ public class TypeCheckingVisitor extends ASTVisitor {
 	}
 	
 	private void assignReturnTypeForMethodInv(String newReturnType){
-		if(newReturnType.equals(CMType.TypeLess)){
+		if(newReturnType.equals(RWType.TypeLess)){
 			return;
 		}
 		if(this.returnCMTypesForTargetedMethod.length()>0  && !this.returnCMTypesForTargetedMethod.equals(newReturnType) ){
@@ -1205,9 +1205,9 @@ public class TypeCheckingVisitor extends ASTVisitor {
 		}
 		if(allInvAttToRecordMap.containsKey(bodyDeclKey) && allInvAttToRecordMap.get(bodyDeclKey).containsKey(variable)){
 			HashSet<String> invAttsToRecord = allInvAttToRecordMap.get(bodyDeclKey).get(variable);
-			CMType cmtype = CMModelUtil.getCMTypeFromTypeName(currentProject, typeName);
+			RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, typeName);
 			if(cmtype!=null){
-				for(CMAttribute att : cmtype.getSemanticType().getSemanticTypeAttributes()){
+				for(RWT_Attribute att : cmtype.getSemanticType().getSemanticTypeAttributes()){
 					if(invAttsToRecord.contains(att.getAttributeName())){
 						String key = att.getAttributeName()+"("+variable+")";
 						String val = att.getAttributeValue();

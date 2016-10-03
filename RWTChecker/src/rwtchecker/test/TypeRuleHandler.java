@@ -10,11 +10,11 @@ import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.CMRules.CMTypeRule;
-import rwtchecker.CMRules.CMTypeRuleCategory;
-import rwtchecker.CMRules.CMTypeRulesManager;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.rwt.RWType;
+import rwtchecker.rwtrules.RWTypeRule;
+import rwtchecker.rwtrules.RWTypeRuleCategory;
+import rwtchecker.rwtrules.RWTypeRulesManager;
+import rwtchecker.util.RWTSystemUtil;
 
 public class TypeRuleHandler {
 	public static void main(String args[]){
@@ -30,10 +30,10 @@ public class TypeRuleHandler {
 			e.printStackTrace();
 		}
 		
-		ArrayList<CMType> results = new ArrayList<CMType>();
+		ArrayList<RWType> results = new ArrayList<RWType>();
 		String location = "E:\\Develop\\EvaluationCMs\\KelpieFlightPlanner";
 		if(location !=null){
-			File dir = new File(location.toString()+CMModelUtil.PathSeparator+CMModelUtil.CMTypesFolder);
+			File dir = new File(location.toString()+RWTSystemUtil.PathSeparator+RWTSystemUtil.CMTypesFolder);
 			if((dir.exists())&& (dir.isDirectory())){
 				File[] cmtypeFiles = dir.listFiles(new FilenameFilter() {
 					@Override
@@ -42,12 +42,12 @@ public class TypeRuleHandler {
 					}
 				});
 				for(int i=0;i<cmtypeFiles.length;i++){
-					results.add(CMType.readInCorrespondenceType(cmtypeFiles[i]));
+					results.add(RWType.readInCorrespondenceType(cmtypeFiles[i]));
 				}
 			}	
 		}
 		HashMap<String, String> setToAttSet = new HashMap<String,String>();
-		for(CMType cmtype : results){
+		for(RWType cmtype : results){
 			String attSet = cmtype.getEnabledAttributeSet();
 			if(attSet.length()>0){
 				setToAttSet.put(attSet, cmtype.getTypeName());	
@@ -55,10 +55,10 @@ public class TypeRuleHandler {
 //			allContents.replaceAll(attSet, attSet);
 		}
 		
-		CMTypeRulesManager manager = new CMTypeRulesManager(new File("E:/Develop/EvaluationCMs/KelpieFlightPlanner/CMTypeRuleFile.xml"));
-		ArrayList<CMTypeRule> rules = manager.getDefinedOperations();
-		ArrayList<CMTypeRule> newRules = new ArrayList<CMTypeRule>();
-		for(CMTypeRule cmtypeRule: rules){
+		RWTypeRulesManager manager = new RWTypeRulesManager(new File("E:/Develop/EvaluationCMs/KelpieFlightPlanner/CMTypeRuleFile.xml"));
+		ArrayList<RWTypeRule> rules = manager.getDefinedOperations();
+		ArrayList<RWTypeRule> newRules = new ArrayList<RWTypeRule>();
+		for(RWTypeRule cmtypeRule: rules){
 			String operandOne = cmtypeRule.getCMTypeOneName();
 			String operandTwo = cmtypeRule.getCMTypeTwoName();
 			String resultSet = cmtypeRule.getReturnCMTypeName();
@@ -70,7 +70,7 @@ public class TypeRuleHandler {
 			cmtypeRule.setReturnCMTypeName(newResultSet);
 			newRules.add(cmtypeRule);
 		}
-		CMTypeRulesManager newmanager = new CMTypeRulesManager(new File("E:/newCMTypeRuleFile.xml"));
+		RWTypeRulesManager newmanager = new RWTypeRulesManager(new File("E:/newCMTypeRuleFile.xml"));
 		newmanager.addCMTypeOperations(newRules);
 		newmanager.storeRules();
 		
@@ -84,7 +84,7 @@ public class TypeRuleHandler {
 				return input;
 			}
 		}else{
-			ArrayList<String> ops = CMTypeRuleCategory.getOpNames();
+			ArrayList<String> ops = RWTypeRuleCategory.getOpNames();
 			Pattern p = Pattern.compile("([^\\(|\\)|\\@]+)");
 			Matcher m = p.matcher(input);
 			String result = input;

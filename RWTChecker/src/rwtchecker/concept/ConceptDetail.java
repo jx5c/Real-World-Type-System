@@ -1,4 +1,4 @@
-package rwtchecker.realworldmodel;
+package rwtchecker.concept;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -15,7 +15,7 @@ import java.util.Properties;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 public class ConceptDetail implements Serializable {
 	
@@ -134,16 +134,16 @@ public class ConceptDetail implements Serializable {
 	}
 		
 	public static ConceptDetail[] readInAllConceptDetails(IProject iproject){
-		Object location = CMModelUtil.readPropertyFromConfigFile(iproject.getName());
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(iproject.getName());
 		ArrayList<ConceptDetail> results = new ArrayList<ConceptDetail>();
 		if(location !=null){
-			File dir = new File(location.toString() + CMModelUtil.PathSeparator + CMModelUtil.ConceptDefinitionFolder);
+			File dir = new File(location.toString() + RWTSystemUtil.PathSeparator + RWTSystemUtil.ConceptDefinitionFolder);
 			if((dir.exists())&& (dir.isDirectory())){
 				File[] conceptFiles = dir.listFiles(new FilenameFilter() {
 					@Override
 					public boolean accept(File dir, String name) {
 						 if(new File(dir, name).isFile()){
-				                return name.endsWith(CMModelUtil.RealWorldConcept_FileExtension);
+				                return name.endsWith(RWTSystemUtil.RealWorldConcept_FileExtension);
 				         }
 						 return false;
 					}

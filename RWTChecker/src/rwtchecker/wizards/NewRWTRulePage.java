@@ -29,14 +29,14 @@ import org.eclipse.swt.widgets.Tree;
 import org.eclipse.swt.widgets.TreeItem;
 import org.eclipse.ui.dialogs.ContainerSelectionDialog;
 
-import rwtchecker.CM.CMType;
-import rwtchecker.realworldmodel.ConceptDetail;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWType;
 import rwtchecker.views.provider.ConceptDetailContentProvider;
 import rwtchecker.views.provider.ConceptDetailLabelProvider;
 
 
 
-public class NewCMTypeOperationPage extends WizardPage {
+public class NewRWTRulePage extends WizardPage {
 
 	public static final String PAGE_NAME = "NewCMTypeOperationPage";
 	private Text containerText;
@@ -62,7 +62,7 @@ public class NewCMTypeOperationPage extends WizardPage {
 
 	private String selectedCMType = "";
 	
-	public NewCMTypeOperationPage() {
+	public NewRWTRulePage() {
 		super(PAGE_NAME);
 		setTitle("New Correspondence Type page");
 		setDescription("This wizard creates a new operation based on correspondence types.");
@@ -130,7 +130,7 @@ public class NewCMTypeOperationPage extends WizardPage {
 			public void widgetSelected(SelectionEvent e) {
 				TreeItem selectedItem = cmTypesTree.getSelection()[0];
 				if(selectedItem.getData() !=null){
-					CMType cmtype = (CMType)selectedItem.getData();
+					RWType cmtype = (RWType)selectedItem.getData();
 					ConceptDetail explication = ConceptDetail.readInByLink(cmtype.getSemanticType().getExplicationLink());
 					definitonContentText.setText(explication.getDefinition());
 					viewer.setInput(explication.getAttributes());
@@ -328,7 +328,7 @@ public class NewCMTypeOperationPage extends WizardPage {
 				IResource container = ResourcesPlugin.getWorkspace().getRoot()
 				.findMember(new Path(getContainerName()));
 				this.currentProject =  container.getProject();
-				CMType[] cmtypes = CMType.readInAllCMTypes(this.currentProject);
+				RWType[] cmtypes = RWType.readInAllCMTypes(this.currentProject);
 				cmTypesTree.removeAll();
 				TreeItem rootItem = new TreeItem(cmTypesTree, 0);
 				rootItem.setText("CM types List");

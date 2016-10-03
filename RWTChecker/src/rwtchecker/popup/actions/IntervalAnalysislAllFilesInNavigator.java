@@ -36,12 +36,12 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IObjectActionDelegate;
 import org.eclipse.ui.IWorkbenchPart;
 
-import rwtchecker.CMRules.CMTypeRulesManager;
+import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.CandidateRuleVisitor2;
 import rwtchecker.typechecker.CommentVisitor;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
 import rwtchecker.typechecker.TypeCheckingVisitor;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
 import rwtchecker.util.interval.IntervalAnalysisVisitor;
 
@@ -91,9 +91,9 @@ public class IntervalAnalysislAllFilesInNavigator implements IObjectActionDelega
                 	}
                 }
             }
-            File ruleFolder = CMModelUtil.getRWTypeRulesFiles(iProject);
-			CMTypeRulesManager manager = new CMTypeRulesManager(ruleFolder);
-            CMTypeRulesManager.ruleSet.clear();
+            File ruleFolder = RWTSystemUtil.getRWTypeRulesFiles(iProject);
+			RWTypeRulesManager manager = new RWTypeRulesManager(ruleFolder);
+            RWTypeRulesManager.ruleSet.clear();
     		out.append("file name"+","+"errors"+","+"warnings"+"\n");
         	for(IResource javaSource:javaSourceFiles){
         		ASTParser parser = ASTParser.newParser(AST.JLS3);
@@ -134,7 +134,7 @@ public class IntervalAnalysislAllFilesInNavigator implements IObjectActionDelega
         					+errorCount+","
         					+warningCount+"\n");
         		}
-        		System.out.println("The rules have been used in the checking process: "+CMTypeRulesManager.ruleSet.size());
+        		System.out.println("The rules have been used in the checking process: "+RWTypeRulesManager.ruleSet.size());
         		System.out.println("The total number of rules is: "+manager.getDefinedOperations().size());
         	}
             out.close();

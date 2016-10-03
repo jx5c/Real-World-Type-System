@@ -1,8 +1,8 @@
-package rwtchecker.CMRules;
+package rwtchecker.rwtrules;
 
 import java.util.ArrayList;
 
-public class CMTypeRuleCategory {
+public class RWTypeRuleCategory {
 	
 	private String name = "";
 	private String description = "";
@@ -107,115 +107,115 @@ public class CMTypeRuleCategory {
 		return ops;
 	}
 	
-	public static ArrayList<CMTypeRuleCategory> getDefaultOperationList(){
-		ArrayList<CMTypeRuleCategory> operationTypeList = new ArrayList<CMTypeRuleCategory>();
+	public static ArrayList<RWTypeRuleCategory> getDefaultOperationList(){
+		ArrayList<RWTypeRuleCategory> operationTypeList = new ArrayList<RWTypeRuleCategory>();
 		
-		CMTypeRuleCategory op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Plus);
+		RWTypeRuleCategory op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Plus);
 		op.setDescription("operand one and two are the two operands of the operation");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Subtraction);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Subtraction);
 		op.setDescription("operand one is the minuend and operand two are the subtrahend");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Multiplication);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Multiplication);
 		op.setDescription("both operands are factors");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Division);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Division);
 		op.setDescription("operand one is the dividend, operand two is the divisor");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Power);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Power);
 		op.setDescription("operand one is the base, operand two is exponent");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Natural_Logarithm);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Natural_Logarithm);
 		op.setDescription("operand is the number to be calculated in Natural Logarithm");
 		op.setParameterCourt(1);
 		operationTypeList.add(op);
 		
 		//math types in Java.util.math
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Abosolute_Value);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Abosolute_Value);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the absolute value of a double value.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Arc_Cosine);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Arc_Cosine);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the arc cosine of an angle, in the range of 0.0 through pi.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Arc_Sine);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Arc_Sine);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the arc sine of an angle, in the range of -pi/2 through pi/2.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Arc_Tangent);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Arc_Tangent);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the arc tangent of an angle, in the range of -pi/2 through pi/2.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Arc_Tangent2);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Arc_Tangent2);
 		op.setParameterCourt(2);
 		op.setDescription("Converts rectangular coordinates (x, y) to polar (r, theta).");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Exp);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Exp);
 		op.setParameterCourt(1);
 		op.setDescription("Returns Euler's number e raised to the power of the argument.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Cosine);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Cosine);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the trigonometric cosine of an angle.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Sine);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Sine);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the trigonometric sine of an angle.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Tangent);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Tangent);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the trigonometric tangent of an angle.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Sqrt);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Sqrt);
 		op.setParameterCourt(1);
 		op.setDescription("Returns the correctly rounded positive square root of an angle.");
 		operationTypeList.add(op);
 
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.RadiansToDegree);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.RadiansToDegree);
 		op.setParameterCourt(1);
 		op.setDescription("Converts an angle measured in radians to an approximately equivalent angle measured in degrees.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.DegreeToRadians);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.DegreeToRadians);
 		op.setParameterCourt(1);
 		op.setDescription("Converts an angle measured in degrees to an approximately equivalent angle measured in radians.");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.Multiplicative_Inverse);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.Multiplicative_Inverse);
 		op.setParameterCourt(1);
 		op.setDescription("Converts an angle measured in degrees to an approximately equivalent angle measured in radians.");
 		operationTypeList.add(op);
@@ -226,14 +226,14 @@ public class CMTypeRuleCategory {
 //		op.setDescription("Allow the type in Operand one to be calculated with integer and float point literals");
 //		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.TypeContext);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.TypeContext);
 		op.setParameterCourt(2);
 		op.setDescription("define the relatonship between types");
 		operationTypeList.add(op);
 		
-		op = new CMTypeRuleCategory();
-		op.setName(CMTypeRuleCategory.subType);
+		op = new RWTypeRuleCategory();
+		op.setName(RWTypeRuleCategory.subType);
 		op.setParameterCourt(2);
 		op.setDescription("define the relatonship between types");
 		operationTypeList.add(op);

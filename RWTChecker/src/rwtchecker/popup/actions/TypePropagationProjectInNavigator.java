@@ -36,7 +36,7 @@ import rwtchecker.annotation.RWTAnnotation;
 import rwtchecker.popup.actions.inference.TypePropagationVisitor;
 import rwtchecker.typechecker.ExtractorVisitor;
 import rwtchecker.util.ActivePart;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.util.RWTSystemUtil;
 
 
 public class TypePropagationProjectInNavigator implements IObjectActionDelegate {
@@ -153,7 +153,7 @@ public class TypePropagationProjectInNavigator implements IObjectActionDelegate 
 
 	public static TypePropagationProjectInNavigator getManagerForCurrentProject(){
 		if(ActivePart.getFileOfActiveEditror() != null){
-			File file = CMModelUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
+			File file = RWTSystemUtil.getRWTypeRulesFiles(ActivePart.getFileOfActiveEditror().getProject());
 			return new TypePropagationProjectInNavigator(file);
 		}
 		return null;
@@ -199,7 +199,7 @@ public class TypePropagationProjectInNavigator implements IObjectActionDelegate 
 				return;
 			}else{
 				IJavaProject javaProject = JavaCore.create(iProject);
-				ArrayList<IResource> javaSourceFiles = CMModelUtil.getAllJavaSourceFiles(javaProject);
+				ArrayList<IResource> javaSourceFiles = RWTSystemUtil.getAllJavaSourceFiles(javaProject);
 				for(IResource javaSource:javaSourceFiles){
 	        		ASTParser parser = ASTParser.newParser(AST.JLS3);
 	        		parser.setKind(ASTParser.K_COMPILATION_UNIT);

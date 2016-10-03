@@ -1,8 +1,8 @@
-package rwtchecker.CM;
+package rwtchecker.rwt;
 
 import java.io.Serializable;
 
-public class CorrespondenceApproTypeProperty  implements Serializable {
+public class RWT_ApproximationProperty  implements Serializable {
 	/**
 	 * 
 	 */
@@ -11,10 +11,10 @@ public class CorrespondenceApproTypeProperty  implements Serializable {
 	private String description;
 	private String possibleValue;
 	
-	public CorrespondenceApproTypeProperty(){
+	public RWT_ApproximationProperty(){
 	}
 	
-	public CorrespondenceApproTypeProperty(String name, String description){
+	public RWT_ApproximationProperty(String name, String description){
 		this.property_name = name;
 		this.description = description;
 	}
@@ -44,8 +44,8 @@ public class CorrespondenceApproTypeProperty  implements Serializable {
 	}
 	
 	public boolean equals(Object attribute){
-		if(attribute instanceof CorrespondenceApproTypeProperty ){
-			if(((CorrespondenceApproTypeProperty)attribute).getProperty_name().equals(property_name)){
+		if(attribute instanceof RWT_ApproximationProperty ){
+			if(((RWT_ApproximationProperty)attribute).getProperty_name().equals(property_name)){
 				return true;
 			}
 		}

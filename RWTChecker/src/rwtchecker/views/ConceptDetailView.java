@@ -2,11 +2,6 @@ package rwtchecker.views;
 
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-
-
 
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
@@ -19,8 +14,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.viewers.*;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.custom.SashForm;
-import org.eclipse.swt.graphics.Font;
-import org.eclipse.swt.graphics.FontData;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.jface.action.*;
@@ -29,8 +22,8 @@ import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
 import org.eclipse.swt.SWT;
 
-import rwtchecker.realworldmodel.ConceptDetail;
-import rwtchecker.util.CMModelUtil;
+import rwtchecker.concept.ConceptDetail;
+import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.views.provider.ConceptDetailContentProvider;
 import rwtchecker.views.provider.ConceptDetailLabelProvider;
 import rwtchecker.wizards.ManageConceptWizard;
@@ -38,7 +31,7 @@ import rwtchecker.wizards.NewConceptWizard;
 
 public class ConceptDetailView extends ViewPart {
 
-	public static final String ID = "cmtypechecker.views.ConceptDetailView";
+	public static final String ID = "rwtchecker.views.ConceptDetailView";
 
 	private TableViewer viewer;
 	private Text definitonContentText;
@@ -209,10 +202,10 @@ public class ConceptDetailView extends ViewPart {
 	}
 	
 	public void showConceptDetail(String currentConcept, IFile fileInput){
-		Object location = CMModelUtil.readPropertyFromConfigFile(fileInput.getProject().getName());
+		Object location = RWTSystemUtil.readPropertyFromConfigFile(fileInput.getProject().getName());
 		System.out.println("ProjectProperty.CMReferenceLocation is here: "+location);
 		if(location!=null){
-			String filePath = location.toString() + CMModelUtil.PathSeparator + currentConcept+"."+CMModelUtil.RealWorldConcept_FileExtension;
+			String filePath = location.toString() + RWTSystemUtil.PathSeparator + currentConcept+"."+RWTSystemUtil.RealWorldConcept_FileExtension;
 			if(filePath!=null && new File(filePath).exists()){
 				ConceptDetail newConceptDetail = ConceptDetail.readInConceptDetails(filePath);
 				this.showConceptDetail(newConceptDetail);
