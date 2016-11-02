@@ -360,12 +360,15 @@ public class RWTSystemUtil {
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		IFile activeFile = ActivePart.getFileOfActiveEditror();
-		ICompilationUnit icompilationUnit = JavaCore.createCompilationUnitFrom(activeFile);
-		parser.setSource(icompilationUnit); // set source
-		parser.setResolveBindings(true); // we need bindings later on
-		CompilationUnit compilationResult = (CompilationUnit) parser.createAST(null);
-		compilationResult.recordModifications();
-		return compilationResult;
+		if(activeFile!=null){
+			ICompilationUnit icompilationUnit = JavaCore.createCompilationUnitFrom(activeFile);
+			parser.setSource(icompilationUnit); // set source
+			parser.setResolveBindings(true); // we need bindings later on
+			CompilationUnit compilationResult = (CompilationUnit) parser.createAST(null);
+			compilationResult.recordModifications();
+			return compilationResult;
+		}
+		return null;
 	}
 	
 	public static String complexTypeSeparator = "*";

@@ -564,31 +564,35 @@ public class FileAnnotations {
 		if(node !=null){
 			if(node instanceof SimpleName){							
 				IBinding binding= ((SimpleName)node).resolveBinding();
-				if (binding.getKind() == IBinding.METHOD) {
-					ASTNode methodDeclNode = compilationResult.findDeclaringNode(binding.getKey());
-					if(methodDeclNode instanceof MethodDeclaration){
-						MethodDeclaration methodDecl = (MethodDeclaration)methodDeclNode;
-						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(methodDecl.resolveBinding().getJavaElement().getPath());
-						FileAnnotations fileAnnotation = getFileAnnotation(ifile);
-						if(fileAnnotation != null){
-							rwtypeName = fileAnnotation.getReturnCMTypeForMethod(binding.getKey());
+				if(binding!=null){
+					if (binding.getKind() == IBinding.METHOD) {
+						ASTNode methodDeclNode = compilationResult.findDeclaringNode(binding.getKey());
+						if(methodDeclNode instanceof MethodDeclaration){
+							MethodDeclaration methodDecl = (MethodDeclaration)methodDeclNode;
+							IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(methodDecl.resolveBinding().getJavaElement().getPath());
+							FileAnnotations fileAnnotation = getFileAnnotation(ifile);
+							if(fileAnnotation != null){
+								rwtypeName = fileAnnotation.getReturnCMTypeForMethod(binding.getKey());
+							}
 						}
-					}
-				}else if (binding.getKind() == IBinding.VARIABLE) {
-					IVariableBinding bindingDecl= ((IVariableBinding) ((SimpleName)node).resolveBinding()).getVariableDeclaration();
-					String varName = bindingDecl.getName();
-					IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(bindingDecl.getJavaElement().getPath());
-					FileAnnotations fileAnnotation = getFileAnnotation(ifile);
-					if(bindingDecl.isField()){
-						if(fileAnnotation != null){
-							rwtypeName = fileAnnotation.getCMTypeInBodyDecl(bindingDecl.getDeclaringClass().getKey(), varName);
+					}else if (binding.getKind() == IBinding.VARIABLE) {
+						IVariableBinding bindingDecl= ((IVariableBinding) ((SimpleName)node).resolveBinding()).getVariableDeclaration();
+						String varName = bindingDecl.getName();
+						if(bindingDecl.getJavaElement()!=null){
+							IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(bindingDecl.getJavaElement().getPath());
+							FileAnnotations fileAnnotation = getFileAnnotation(ifile);
+							if(bindingDecl.isField()){
+								if(fileAnnotation != null){
+									rwtypeName = fileAnnotation.getCMTypeInBodyDecl(bindingDecl.getDeclaringClass().getKey(), varName);
+								}
+							}else{
+								if(fileAnnotation != null){
+									rwtypeName = fileAnnotation.getCMTypeInBodyDecl(bindingDecl.getDeclaringMethod().getKey(), varName);
+								}
+							}	
 						}
-					}else{
-						if(fileAnnotation != null){
-							rwtypeName = fileAnnotation.getCMTypeInBodyDecl(bindingDecl.getDeclaringMethod().getKey(), varName);
-						}
-					}
-			 	}			 	
+				 	}
+				}
 			}
 		}
 		RWType rwtype = RWTSystemUtil.getCMTypeFromTypeName(ActivePart.getFileOfActiveEditror().getProject(), rwtypeName);

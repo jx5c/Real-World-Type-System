@@ -315,17 +315,4 @@
             plugin="RWTChecker">
       </statusHandler>
    </extension>
-   <!--extension
-         id="id1"
-         point="org.eclipse.core.runtime.applications">
-      <application
-            cardinality="singleton-global"
-            icon="icons/R.Symbol.jpg"
-            thread="main"
-            visible="true">
-            <run
-               class="rwtchecker.MyApplication">
-         	</run>
-      </application>
-   </extension-->
 </plugin>

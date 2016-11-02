@@ -37,7 +37,6 @@ public class StartupControl implements IStartup{
 	    	   public void run() {
 	    	     IWorkbenchWindow window = workbench.getActiveWorkbenchWindow();
 	    	     if (window != null) {
-	    	       // do something
 	    	    	IWorkbenchPage activePage = window.getActivePage(); 
 	 	            activePage.addPartListener(generateIPartListener2());
 	    	     }
@@ -130,13 +129,13 @@ public class StartupControl implements IStartup{
 					if(node != null){
 						RWType rwtype = FileAnnotations.lookupRWTByVarName(node, compilationResult);
 						if(rwtype!=null){
-							RWTHover.rwtTypeInfo = rwtype.getTypeName();
+							RWTHover.rwtTypeInfo = rwtype;
 							RWTHover.currentSelection = node.toString();
 						}
 					}
 				}
 			}
 		}
-		RWTHover.rwtTypeInfo = "";
+		//RWTHover.rwtTypeInfo = "";
 	}
 }
