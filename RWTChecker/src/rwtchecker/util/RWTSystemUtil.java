@@ -380,18 +380,19 @@ public class RWTSystemUtil {
 	public static TreeObject readInAllCMTypesToTreeObject(IProject iproject){
 		TreeObject invisibleRootTreeObject = new TreeObject("invisible");
 		File treeIndexFile = RWTSystemUtil.getTreeIndexFile(iproject);
-		if(!treeIndexFile.exists()){
-			try {
-				TreeObject cmtypeListTO = new TreeObject(TreeObject.treeObjectTopName);
-				invisibleRootTreeObject.addChild(cmtypeListTO);				
-				treeIndexFile.createNewFile();
-				TreeObject.writeOutTreeObject(invisibleRootTreeObject, treeIndexFile);
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-		}else{
-			invisibleRootTreeObject = TreeObject.readInTreeObject(iproject, treeIndexFile);	
-		}
+		invisibleRootTreeObject = TreeObject.readInTreeObject(iproject, treeIndexFile);
+//		if(!treeIndexFile.exists()){
+//			try {
+//				TreeObject cmtypeListTO = new TreeObject(TreeObject.treeObjectTopName);
+//				invisibleRootTreeObject.addChild(cmtypeListTO);				
+//				treeIndexFile.createNewFile();
+//				TreeObject.writeOutTreeObject(invisibleRootTreeObject, treeIndexFile);
+//			} catch (IOException e) {
+//				e.printStackTrace();
+//			}
+//		}else{
+//			invisibleRootTreeObject = TreeObject.readInTreeObject(iproject, treeIndexFile);	
+//		}
 		
 		
 //		if(location !=null){

@@ -49,7 +49,7 @@ public class TreeObject implements IAdaptable{
 		this.data = data;
 	}
 
-	public static String treeObjectTopName = "CMTYPE_List";
+	public static String treeObjectTopName = "RWT_List";
 	public static String treeIndexFileName = "treeHierarchy";
 	
 	public TreeObject(){
@@ -140,8 +140,24 @@ public class TreeObject implements IAdaptable{
 			} catch (DocumentException e) {
 				e.printStackTrace();
 			}
+	        invisibleRoot.addChild(treeObject);
+		}else{
+			//rebuild the tree object for rwt type list
+			for(File dir : fileLocation.getParentFile().listFiles()){
+				if(dir.isDirectory()){
+					TreeObject child = new TreeObject(dir.getName());
+					treeObject.addChild(child);
+				}
+			}
+			try {
+				fileLocation.createNewFile();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			invisibleRoot.addChild(treeObject);
+			TreeObject.writeOutTreeObject(invisibleRoot, fileLocation);
 		}
-		invisibleRoot.addChild(treeObject);
+		
 		return invisibleRoot; 
 	}
 	
