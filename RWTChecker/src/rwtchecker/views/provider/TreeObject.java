@@ -106,10 +106,7 @@ public class TreeObject implements IAdaptable{
 		}
 		Document document = DocumentHelper.createDocument();
         Element root = document.addElement( XMLTag_topLevel );
-		for(TreeObject child : treeObject.children.get(0).children){
-			Element typeElement = root.addElement( XMLTag_childrenLevel );
-	        typeElement.addText(child.name);	
-		}
+        dfsWriteTreeObject(document, root, treeObject);
 
         XMLWriter writer;
 		try {
@@ -124,6 +121,23 @@ public class TreeObject implements IAdaptable{
 		}
 	}
 	
+	private static void dfsWriteTreeObject(Document document, Element parentElement, TreeObject treeObject){
+		for(TreeObject child : treeObject.children){
+			Element typeElement = parentElement.addElement( XMLTag_childrenLevel );
+	        typeElement.addText(child.name);
+	        dfsWriteTreeObject(document, typeElement, child);
+		}
+	}
+	
+	private static void dfsReadTreeObject(Document document, Element parentElement, TreeObject parentTO){
+		for ( Iterator i = parentElement.elementIterator(XMLTag_childrenLevel); i.hasNext(); ) {
+			Element element = (Element) i.next();
+			TreeObject child = new TreeObject(element.getText());
+			parentTO.addChild(child);
+			dfsReadTreeObject(document, element, child);
+		}
+	}
+	
 	public static TreeObject readInTreeObject(IProject iproject, File fileLocation){
 		TreeObject invisibleRoot = new TreeObject("invisible");
 		TreeObject treeObject = new TreeObject(treeObjectTopName);
@@ -132,17 +146,13 @@ public class TreeObject implements IAdaptable{
 	        try {
 				Document document = reader.read(fileLocation);
 				Element root = document.getRootElement();
-				for ( Iterator i = root.elementIterator(XMLTag_childrenLevel); i.hasNext(); ) {
-					Element element = (Element) i.next();
-					TreeObject child = new TreeObject(element.getText());
-					treeObject.addChild(child);
-				}				
+				dfsReadTreeObject(document, root, treeObject);
 			} catch (DocumentException e) {
 				e.printStackTrace();
 			}
 	        invisibleRoot.addChild(treeObject);
 		}else{
-			//rebuild the tree object for rwt type list
+			//rebuild the tree object if the treeObject is not exited
 			for(File dir : fileLocation.getParentFile().listFiles()){
 				if(dir.isDirectory()){
 					TreeObject child = new TreeObject(dir.getName());
@@ -163,7 +173,7 @@ public class TreeObject implements IAdaptable{
 	
 	public static TreeObject getTopLevelTreeObject(TreeObject treeObject){
 		TreeObject node = treeObject;
-		while(node.getParent()!=null){
+		while(node!= null && !node.getName().equals(treeObjectTopName)){
 			node = node.getParent();
 		}
 		return node;

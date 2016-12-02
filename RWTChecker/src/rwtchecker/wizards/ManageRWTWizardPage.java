@@ -599,8 +599,9 @@ public class ManageRWTWizardPage extends WizardPage {
 				{
 					TreeItem newItem = new TreeItem(item, SWT.NONE);
 					File sourceCMTypeFile = RWTSystemUtil.getCMTypeFile(currentProject, dragedSourceTO);
-					dragedSourceTO.getParent().removeChild(dragedSourceTO);
-					TreeObject.updateTreeObjectToFile(currentProject, dragedSourceTO.getParent());
+					TreeObject tmp = dragedSourceTO.getParent(); 
+					tmp.removeChild(dragedSourceTO);
+					TreeObject.updateTreeObjectToFile(currentProject, tmp);
 					targetTreeObject.addChild(dragedSourceTO);
 					item.setData(targetTreeObject);
 					dragedSourceTO.setParent(targetTreeObject);
