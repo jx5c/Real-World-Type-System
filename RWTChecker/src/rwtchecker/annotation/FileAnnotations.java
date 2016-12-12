@@ -273,7 +273,7 @@ public class FileAnnotations {
 				return;
 			}
 		}
-		CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
+		CompilationUnit compilationResult = RWTSystemUtil.getCurrentJavaCompilationUnit();
 		HashMap <String, ArrayList<RWTAnnotation>> annotations = fileAnnotations.getAnnotations();
 		
 		Iterator<String> keysets = annotations.keySet().iterator();

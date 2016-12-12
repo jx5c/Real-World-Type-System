@@ -7,9 +7,21 @@ import java.io.FileOutputStream;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Properties;
 
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
+import org.eclipse.cdt.core.dom.ast.gnu.cpp.GPPLanguage;
+import org.eclipse.cdt.core.model.ITranslationUnit;
+import org.eclipse.cdt.core.parser.DefaultLogService;
+import org.eclipse.cdt.core.parser.FileContent;
+import org.eclipse.cdt.core.parser.IParserLogService;
+import org.eclipse.cdt.core.parser.IScannerInfo;
+import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
+import org.eclipse.cdt.core.parser.ScannerInfo;
+import org.eclipse.cdt.ui.CUIPlugin;
 import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -34,6 +46,7 @@ import org.eclipse.jface.window.Window;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
@@ -356,17 +369,35 @@ public class RWTSystemUtil {
 		}
 	}
 	
-	public static CompilationUnit getCurrentCompliationUnit(){
+	/**
+	 * retrieve the current Java compilation unit
+	 * @return
+	 */
+	public static CompilationUnit getCurrentJavaCompilationUnit(){
 		ASTParser parser = ASTParser.newParser(AST.JLS3);
 		parser.setKind(ASTParser.K_COMPILATION_UNIT);
 		IFile activeFile = ActivePart.getFileOfActiveEditror();
-		if(activeFile!=null){
-			ICompilationUnit icompilationUnit = JavaCore.createCompilationUnitFrom(activeFile);
-			parser.setSource(icompilationUnit); // set source
-			parser.setResolveBindings(true); // we need bindings later on
-			CompilationUnit compilationResult = (CompilationUnit) parser.createAST(null);
-			compilationResult.recordModifications();
-			return compilationResult;
+		if(activeFile!=null && activeFile.getFullPath().getFileExtension().equals("java")){
+				ICompilationUnit icompilationUnit = JavaCore.createCompilationUnitFrom(activeFile);
+				parser.setSource(icompilationUnit); // set source
+				parser.setResolveBindings(true); // we need bindings later on
+				CompilationUnit compilationResult = (CompilationUnit) parser.createAST(null);
+				compilationResult.recordModifications();
+				return compilationResult;	
+		}
+		return null;
+	}
+	/**
+	 * retrieve the C compilation Unit
+	 * @return
+	 */
+	public static IASTTranslationUnit getCCompilationUnit(IEditorPart IEditorPart){
+		ITranslationUnit translationUnit = CUIPlugin.getDefault().getWorkingCopyManager().getWorkingCopy(IEditorPart.getEditorInput());
+		try {
+			IASTTranslationUnit astUnit = translationUnit.getAST(null,ITranslationUnit.AST_SKIP_ALL_HEADERS);
+			return astUnit;
+		} catch (CoreException e) {
+			e.printStackTrace();
 		}
 		return null;
 	}

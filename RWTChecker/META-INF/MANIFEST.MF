@@ -13,10 +13,14 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.jdt.core,
  org.eclipse.ui.ide,
  org.eclipse.jdt;bundle-version="3.5.2",
- org.eclipse.jdt.ui;bundle-version="3.5.2"
+ org.eclipse.jdt.ui;bundle-version="3.5.2",
+ org.eclipse.cdt.core
 Bundle-ActivationPolicy: lazy
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Import-Package: org.eclipse.jdt.core,
+Import-Package: org.eclipse.cdt.core,
+ org.eclipse.cdt.core.dom.ast,
+ org.eclipse.cdt.ui,
+ org.eclipse.jdt.core,
  org.eclipse.ui.ide
 Bundle-ClassPath: .,
  lib/commons-logging.jar,

@@ -123,7 +123,7 @@ public class StartupControl implements IStartup{
 		if(iSelection != null){
 			if(iSelection instanceof ITextSelection){
 				ITextSelection textSelection = (ITextSelection)iSelection;
-				CompilationUnit compilationResult = RWTSystemUtil.getCurrentCompliationUnit();
+				CompilationUnit compilationResult = RWTSystemUtil.getCurrentJavaCompilationUnit();
 				if(compilationResult!=null){
 					ASTNode node = NodeFinder.perform(compilationResult.getRoot(),textSelection.getOffset(), textSelection.getLength());
 					if(node != null){
