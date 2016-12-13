@@ -243,7 +243,7 @@ public class RWTSystemUtil {
 	public static String annotationPropFile = "annotations.prop";
 	
 	public static File getAnnotationFile(IFile ifile){
-		if(ifile.getFileExtension().equals("java")){
+		if(ifile.getFileExtension().equals("java") || ifile.getFileExtension().equals("c")){
 			Object location = RWTSystemUtil.readPropertyFromConfigFile(ifile.getProject().getName());
 			File annotationFolder = new File(location + RWTSystemUtil.PathSeparator + RWTSystemUtil.annotationFolder);
 			if(!annotationFolder.exists()){

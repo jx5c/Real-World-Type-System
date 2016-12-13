@@ -130,13 +130,19 @@ public class FileAnnotations {
 		RWTAnnotation annotation = new RWTAnnotation();
 		annotation.setAnnotationType(annotationType);
 		if(annotationType.equals(RWTAnnotation.Define)){
+			if( formalElementName == null || rwtType == null || formalElementName.length() == 0 || rwtType.length()==0){
+				return false;
+			}
 			annotation.setAnnotationContents(RWTAnnotation.cmTypeForAnnotation + "(" + formalElementName +")"+"="+rwtType);
 		}else if(annotationType.equals(RWTAnnotation.Return)){
-			if(rwtType!= null && rwtType.length()>0){
-				annotation.setAnnotationContents(rwtType);
-			}else if(formalElementName!= null && formalElementName.length()>0){
-				annotation.setAnnotationContents(RWTAnnotation.cmTypeForAnnotation + "("  + formalElementName +")");	
-			} 
+			if( rwtType == null || rwtType.length()==0){
+				return false;
+			}
+			annotation.setAnnotationContents(rwtType);
+//			what does this part for?
+//			if(formalElementName!= null && formalElementName.length()>0){
+//				annotation.setAnnotationContents(RWTAnnotation.cmTypeForAnnotation + "("  + formalElementName +")");	
+//			} 
 		}else if(annotationType.equals(RWTAnnotation.Invariant)){
 			/* save for future use
 			//@CM inv cmt#units(lat1)=cmt#units(lat2)

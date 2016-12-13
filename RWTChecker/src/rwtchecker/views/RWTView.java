@@ -685,7 +685,6 @@ public class RWTView extends ViewPart {
 				            	addJAVADocElement((BodyDeclaration)parentNode, compilationResult, RWTAnnotation.Define, "this", typeName);	
 				            }
 			    			saveTypeBindingJava((BodyDeclaration)parentNode, RWTAnnotation.Define, "this", typeName, false);
-				            
 						}
 					}
 				}
@@ -714,7 +713,8 @@ public class RWTView extends ViewPart {
 						org.eclipse.cdt.core.dom.ast.IBinding astBinding = astName.resolveBinding();
 						if(astBinding instanceof CFunction || astBinding instanceof CPPFunction){
 							System.out.println(astName.getClass().toString());
-							declBodyKey = astBinding.getName();
+							declBodyKey = makeKeyForDeclBodies(astBinding.getClass().getName(), astBinding.getName());
+//							declBodyKey = astBinding.getName();
 							annotationType = RWTAnnotation.Return;
 							//binding for a function
 						}else if(astBinding instanceof CVariable){
@@ -742,6 +742,8 @@ public class RWTView extends ViewPart {
 							//field of a structure (c & c++)
 //							if(astName.getParent() instanceof CASTFieldReference || astName.getParent() instanceof CPPASTFieldReference) {
 //							}
+							annotationType = RWTAnnotation.Define;
+							varName = astName.toString();
 							declBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
 						}
 						saveTypeBindingC(ifile, varName, declBodyKey, annotationType, rwtype_name);							

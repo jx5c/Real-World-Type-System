@@ -148,7 +148,7 @@
 	      </action>
 	  </objectContribution>
 
-
+	<!--this is the viewer contribution for Java editor-->
       <viewerContribution
             id="RWTChecker.ViewerContribution1"
             targetID="#CompilationUnitEditorContext">
@@ -207,6 +207,26 @@
                id="rwtchecker.DisplayRWTCountActionInJavaEditor"
                label="Number of annotations in this file"
                menubarPath="RWTypeChecker.subMenuInJavaEditor/group2">
+	      </action>
+	   </viewerContribution>
+	   
+	<!--this is the viewer contribution for C source code editor-->
+	   <viewerContribution
+            id="RWTChecker.ViewerContributionCEditor"
+            targetID="#CEditorContext">
+          <menu
+               id="RWTypeChecker.subMenuInCEditor"
+               label="Real World Type Checker" 
+               path="additions"> 
+            <separator
+                  name="checkingGroup">
+            </separator>
+	      </menu> 
+         <action
+              class="rwtchecker.popup.actions.TypeCheckerActionInCEditor"
+              id="rwtchecker.rwtCheckingActionInCEditor"
+              label="real-world type checking"
+              menubarPath="RWTypeChecker.subMenuInCEditor/checkingGroup">
 	      </action>
 	   </viewerContribution>
    </extension>

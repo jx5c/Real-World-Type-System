@@ -13,6 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jdt.core.ICompilationUnit;
@@ -50,6 +51,7 @@ import rwtchecker.perspective.RWTCheckerPerspective;
 import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.CandidateRuleVisitorForJavaDoc;
 import rwtchecker.typechecker.TypeCheckingVisitor;
+import rwtchecker.typechecker.C.CTypeCheckerVisitor;
 import rwtchecker.util.ActivePart;
 import rwtchecker.util.RWTSystemUtil;
 import rwtchecker.util.DiagnosticMessage;
@@ -58,28 +60,27 @@ import rwtchecker.views.RWTView;
 import rwtchecker.views.provider.TreeObject;
 import rwtchecker.views.DiagnoseView;
 
-public class TypeCheckerJavaDocActionInJavaEditor implements IEditorActionDelegate {
+public class TypeCheckerActionInCEditor implements IEditorActionDelegate {
 	
 	protected Color red;
 	
 	protected Shell shell;
 	protected IFile ifile;
 	protected IFileEditorInput thisFileEditorInput;
+	protected IEditorPart editorPart;
 	
-	protected CompilationUnit compilationResult;
-	
-	protected RWTView cmTypeView;
+	protected RWTView rwtTypeView;
 	protected RWTRulesView cmTypeOperationView;
 	protected DiagnoseView diagnoseView = null;
 	
 	protected StyleRange[] defaultRange = null;
 	protected StyledText textControl = null;
 	protected IEditorPart currentJavaEditor;
-	protected TypeCheckingVisitor typeCheckingVisitor;
+	protected CTypeCheckerVisitor cTypeCheckerVisitor;
 	
 	private ArrayList<DiagnosticMessage> CMTypeCheckingResults = new ArrayList<DiagnosticMessage>();
 
-	public TypeCheckerJavaDocActionInJavaEditor() {
+	public TypeCheckerActionInCEditor() {
 		super();
 	}
 	
@@ -94,7 +95,7 @@ public class TypeCheckerJavaDocActionInJavaEditor implements IEditorActionDelega
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		try {
 			PlatformUI.getWorkbench().showPerspective(RWTCheckerPerspective.ID, PlatformUI.getWorkbench().getActiveWorkbenchWindow());
-			cmTypeView = (RWTView)page.findView(RWTView.ID);
+			rwtTypeView = (RWTView)page.findView(RWTView.ID);
 			cmTypeOperationView = (RWTRulesView)page.findView(RWTRulesView.ID);
 			diagnoseView = (DiagnoseView)(page.findView(DiagnoseView.ID));
 		} catch (PartInitException e) {
@@ -103,20 +104,14 @@ public class TypeCheckerJavaDocActionInJavaEditor implements IEditorActionDelega
 			e.printStackTrace();
 		}
 		
-		ASTParser parser = ASTParser.newParser(AST.JLS3);
-		parser.setKind(ASTParser.K_COMPILATION_UNIT);
-//		IFile activeFile = ActivePart.getFileOfActiveEditror();
-		
-		if(ifile != null){
-			ICompilationUnit icompilationUnit = JavaCore.createCompilationUnitFrom(ifile);
-			parser.setSource(icompilationUnit); // set source
-			parser.setResolveBindings(true); // we need bindings later on
-			compilationResult = (CompilationUnit) parser.createAST(null);
-			
+		if(this.editorPart != null){
+			IASTTranslationUnit astUnit = RWTSystemUtil.getCCompilationUnit(this.editorPart);
 			TreeObject treeObject = RWTSystemUtil.readInAllCMTypesToTreeObject(ifile);
-			cmTypeView.getTreeViewer().setInput(treeObject);
-			cmTypeView.setTypeChecked(false);
-			typeChecking(compilationResult);
+			rwtTypeView.getTreeViewer().setInput(treeObject);
+			rwtTypeView.setTypeChecked(false);
+
+			typeChecking(astUnit);
+			
 			if(CMTypeCheckingResults.size() == 0){
 				showMessage("no error has been found");
 			}else{
@@ -126,24 +121,20 @@ public class TypeCheckerJavaDocActionInJavaEditor implements IEditorActionDelega
 
 	}
 	
-	protected void typeChecking(CompilationUnit compilationResult){
+	protected void typeChecking(IASTTranslationUnit astUnit){
 		RWTypeRulesManager manager = RWTypeRulesManager.getManagerForCurrentProject();
 		cmTypeOperationView.setManager(manager);
 		cmTypeOperationView.getTableViewer().setInput(manager);
 		
-		TypeCheckingVisitor typeCheckingVisitor = new TypeCheckingVisitor(manager, compilationResult, false);
-		compilationResult.accept(typeCheckingVisitor);
+		CTypeCheckerVisitor typeCheckingVisitor = new CTypeCheckerVisitor(manager, astUnit, false, this.ifile);
+		astUnit.accept(typeCheckingVisitor);
 		CMTypeCheckingResults = typeCheckingVisitor.getErrorReports();
-		
-		//generate candidate rules
-		CandidateRuleVisitorForJavaDoc candidateRuleVisitor = new CandidateRuleVisitorForJavaDoc(manager, compilationResult);
-		compilationResult.accept(candidateRuleVisitor);
 		
 		TextOperationAction fExpandAll = new TextOperationAction(FoldingMessages.getResourceBundle(), "Projection.ExpandAll.", (ITextEditor) currentJavaEditor, ProjectionViewer.EXPAND_ALL); //$NON-NLS-1$
 		fExpandAll.setActionDefinitionId(IFoldingCommandIds.FOLDING_EXPAND_ALL);
 		fExpandAll.run();
 		
-		cmTypeView.setTypeChecked(true);
+		rwtTypeView.setTypeChecked(true);
 		diagnoseView.setTextControl(textControl);
 		diagnoseView.getErrorTableViewer().setInput(CMTypeCheckingResults);
 	}
@@ -151,11 +142,11 @@ public class TypeCheckerJavaDocActionInJavaEditor implements IEditorActionDelega
 	@Override
 	public void setActiveEditor(IAction arg0, IEditorPart editorPart) {
 		if(editorPart!=null){
-			shell = editorPart.getSite().getShell();
 			IEditorInput editorInput = editorPart.getEditorInput();
 			if (editorInput instanceof IFileEditorInput) {
+				this.editorPart = editorPart;
 				this.thisFileEditorInput = (IFileEditorInput) editorInput;
-				this.ifile = TypeCheckerJavaDocActionInJavaEditor.this.thisFileEditorInput.getFile();
+				this.ifile = this.thisFileEditorInput.getFile();
 			}
 		}
 	}
