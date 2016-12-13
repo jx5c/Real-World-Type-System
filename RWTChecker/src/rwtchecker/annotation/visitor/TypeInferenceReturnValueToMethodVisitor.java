@@ -51,7 +51,7 @@ public class TypeInferenceReturnValueToMethodVisitor extends TypeInferenceVisito
 		String RWType = this.getRWTypeForVarLikeExp(exp);
 		if(RWType.length()>0){
 			System.out.println("Propagation: Method return type propagation here: "+RWType);
-			RWTView.saveJAVADocElementToFile(methodDecl, RWTAnnotation.Return, null, RWType, true);	
+			RWTView.saveTypeBindingJava(methodDecl, RWTAnnotation.Return, null, RWType, true);	
 		}
 	}	
 }

@@ -259,7 +259,7 @@ public class TypeInferenceOnRulesVisitor extends TypeInferenceVisitor {
 		String RWType = getRWTypeForVarLikeExp(exp);
 		if(RWType.length()>0){
 			System.out.println("Propagation: Method return type propagation here: "+RWType);
-			RWTView.saveJAVADocElementToFile(methodDecl, RWTAnnotation.Return, null, RWType, true);	
+			RWTView.saveTypeBindingJava(methodDecl, RWTAnnotation.Return, null, RWType, true);	
 		}
 	}
 	
@@ -329,7 +329,7 @@ public class TypeInferenceOnRulesVisitor extends TypeInferenceVisitor {
 					ASTNode declaringClassNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringClass());
 					if(declaringClassNode!= null && declaringClassNode instanceof TypeDeclaration){
 		    			TypeDeclaration parentTD = (TypeDeclaration)declaringClassNode;						    			
-		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
+		    			RWTView.saveTypeBindingJava(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
 					}
 //					else{
 //						String declarationBodykey = bindingDecl.getDeclaringClass().getKey();
@@ -339,7 +339,7 @@ public class TypeInferenceOnRulesVisitor extends TypeInferenceVisitor {
 				}else{
 					ASTNode declaringMethodNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringMethod());
 					MethodDeclaration methodDeclaration = (MethodDeclaration)declaringMethodNode;
-	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
+	                RWTView.saveTypeBindingJava(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
 				}
 			}
 		 	else {

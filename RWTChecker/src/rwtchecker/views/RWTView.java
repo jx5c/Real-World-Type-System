@@ -45,15 +45,21 @@ import org.eclipse.cdt.core.dom.ast.IASTNodeSelector;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorMacroExpansion;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IType;
+import org.eclipse.cdt.core.settings.model.extension.CFileData;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTFieldReference;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CBasicType;
+import org.eclipse.cdt.internal.core.dom.parser.c.CField;
+import org.eclipse.cdt.internal.core.dom.parser.c.CFunction;
+import org.eclipse.cdt.internal.core.dom.parser.c.CStructure;
 import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFieldReference;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPBasicType;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPFunction;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPVariable;
 import org.eclipse.core.filebuffers.FileBuffers;
 import org.eclipse.core.filebuffers.ITextFileBuffer;
@@ -557,16 +563,13 @@ public class RWTView extends ViewPart {
 		if(editorPart!=null){
 			IFile curFile = ActivePart.getFileOfActiveEditror();
 			String fileExt = curFile.getFileExtension();
+			//if the source file is a java file, follow this path; if it is a c file, go to the second branch
 			if(fileExt.endsWith("java")){
 				bindJavaType(typeName, editorPart);	
 			}else if(fileExt.endsWith("c") || fileExt.endsWith("h")){
 				bindCType(typeName, editorPart, curFile);	
 			}
 		}
-		//if the source file is a java file, follow this path; if it is a c file, go to the second branch 
-		
-		
-		
 	}
 	/**
 	 * This function is for Java source code file:
@@ -596,7 +599,7 @@ public class RWTView extends ViewPart {
 				            if(annotationStatus){
 				            	addJAVADocElement((BodyDeclaration)parentNode, compilationResult, RWTAnnotation.Define, newAddedVariableName, typeName);	
 				            }
-			    			saveJAVADocElementToFile((BodyDeclaration)parentNode, RWTAnnotation.Define, newAddedVariableName, typeName, false);
+			    			saveTypeBindingJava((BodyDeclaration)parentNode, RWTAnnotation.Define, newAddedVariableName, typeName, false);
 						}
 						if(node instanceof SimpleName){							
 							IBinding binding= ((SimpleName)node).resolveBinding();
@@ -607,7 +610,7 @@ public class RWTView extends ViewPart {
 									if(annotationStatus){
 						            	addJAVADocElement(methodDecl, compilationResult, RWTAnnotation.Return, null, typeName);	
 						            }
-					    			saveJAVADocElementToFile(methodDecl, RWTAnnotation.Return, null, typeName, false);
+					    			saveTypeBindingJava(methodDecl, RWTAnnotation.Return, null, typeName, false);
 								}
 						 		typeAttributeViewer.refresh();
 						 	} else if (binding.getKind() == IBinding.VARIABLE) {
@@ -627,7 +630,7 @@ public class RWTView extends ViewPart {
 						    			if(annotationStatus){
 						    				addJAVADocElement(parentTD, compilationResult, RWTAnnotation.Define, formalElementName, typeName);	
 						    			}
-						    			saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, typeName, false);
+						    			saveTypeBindingJava(parentTD, RWTAnnotation.Define, formalElementName, typeName, false);
 									}else{
 										String declarationBodykey = bindingDecl.getDeclaringClass().getKey();
 										IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(bindingDecl.getJavaElement().getPath());
@@ -656,7 +659,7 @@ public class RWTView extends ViewPart {
 					                if(annotationStatus){
 					                	addJAVADocElement(methodDeclaration, compilationResult, RWTAnnotation.Define, formalElementName, typeName);	
 					                }
-					                saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, typeName, false);
+					                saveTypeBindingJava(methodDeclaration, RWTAnnotation.Define, formalElementName, typeName, false);
 								}
 					    		typeAttributeViewer.refresh();
 							}
@@ -681,7 +684,7 @@ public class RWTView extends ViewPart {
 				            if(annotationStatus){
 				            	addJAVADocElement((BodyDeclaration)parentNode, compilationResult, RWTAnnotation.Define, "this", typeName);	
 				            }
-			    			saveJAVADocElementToFile((BodyDeclaration)parentNode, RWTAnnotation.Define, "this", typeName, false);
+			    			saveTypeBindingJava((BodyDeclaration)parentNode, RWTAnnotation.Define, "this", typeName, false);
 				            
 						}
 					}
@@ -692,26 +695,33 @@ public class RWTView extends ViewPart {
 	/**
 	 * This function is for c source code file:
 	 * bind the selected real-world type to the highlighted variable/function
-	 * @param typeName
+	 * @param rwtype_name
 	 * @param IEditorPart
 	 */
-	private void bindCType(String typeName, IEditorPart IEditorPart, IFile ifile){
-		ISelection iselection = IEditorPart.getEditorSite().getSelectionProvider().getSelection();
+	private void bindCType(String rwtype_name, IEditorPart IEditorPart, IFile ifile){
+ 		ISelection iselection = IEditorPart.getEditorSite().getSelectionProvider().getSelection();
 		if(iselection != null){
 			if(iselection instanceof ITextSelection){
 				ITextSelection textSelection = (ITextSelection)iselection;
 				IASTTranslationUnit astUnit = RWTSystemUtil.getCCompilationUnit(IEditorPart);
 				if(astUnit!=null){
 					final IASTNodeSelector nodeSelector = astUnit.getNodeSelector(astUnit.getFilePath());
-//					IASTName astName1 = nodeSelector.findFirstContainedName(textSelection.getOffset(), textSelection.getLength());
-//					IASTName astName2 = nodeSelector.findName(textSelection.getOffset(), textSelection.getLength());
 					IASTName astName = nodeSelector.findEnclosingName(textSelection.getOffset(), textSelection.getLength());
-//					IASTNode astNode = nodeSelector.findNode(textSelection.getOffset(), textSelection.getLength());
 					if(astName !=null){
-						if(astName.getParent() instanceof CASTDeclarator || astName.getParent() instanceof CPPASTDeclarator) { //variable name (c & c++)
-							
-							org.eclipse.cdt.core.dom.ast.IBinding astBinding = astName.resolveBinding();
-							if(astBinding instanceof CVariable){
+						String varName = null;
+						String declBodyKey = null;
+						String annotationType = null;
+						org.eclipse.cdt.core.dom.ast.IBinding astBinding = astName.resolveBinding();
+						if(astBinding instanceof CFunction || astBinding instanceof CPPFunction){
+							System.out.println(astName.getClass().toString());
+							declBodyKey = astBinding.getName();
+							annotationType = RWTAnnotation.Return;
+							//binding for a function
+						}else if(astBinding instanceof CVariable){
+							annotationType = RWTAnnotation.Define;
+							declBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
+							//binding for a variable
+							if(astName.getParent() instanceof CASTDeclarator || astName.getParent() instanceof CPPASTDeclarator) { //variable name (c & c++)
 								CVariable cv = (CVariable)astBinding;
 								IType variableType = cv.getType();
 								if(variableType instanceof CArrayType){
@@ -720,25 +730,21 @@ public class RWTView extends ViewPart {
 									CArrayType arrayV = (CArrayType)variableType;
 									System.out.println(arrayV.getSize());
 								}else if (variableType instanceof CBasicType){
-									//this is for a variable; variable could be inside a structure, or 
-									System.out.println(astBinding.getOwner());
-									System.out.println(astBinding.getOwner().getClass().getName());
-									String makeDeclBodyKey = astBinding.getOwner().getClass().getName() + "@" + astBinding;
-									makeDeclBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.toString());
-									System.out.println(makeDeclBodyKey);
-//									System.out.println(((CVariable) astBinding));
-//									CASTDeclarator parent = (CASTDeclarator) astName.getParent();
-//									System.out.println(parent.getName().getLookupKey());
-//									System.out.println(astBinding.getOwner().getName());
-//									System.out.println(astUnit.getDeclarationsInAST(astBinding.getOwner())[0].getLookupKey());
-									
+									//this is for a variable; variable could be inside a structure, or
+									varName = astName.toString();
+								}else if (variableType instanceof CStructure){
+									//this is for a variable of a structure; TO BE DONE
+									System.out.println("structure");
 								}
 							}
-						}
-						if(astName.getParent() instanceof CASTFieldReference || astName.getParent() instanceof CPPASTFieldReference) { //field of a structure (c & c++)
-							System.out.println("");
-						}
 
+						}else if(astBinding instanceof CField){
+							//field of a structure (c & c++)
+//							if(astName.getParent() instanceof CASTFieldReference || astName.getParent() instanceof CPPASTFieldReference) {
+//							}
+							declBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
+						}
+						saveTypeBindingC(ifile, varName, declBodyKey, annotationType, rwtype_name);							
 					}
 				}
 			}
@@ -749,7 +755,11 @@ public class RWTView extends ViewPart {
 		return bodyOwner + "@" + varName;
 	}
 	
-	public static void saveJAVADocElementToFile(BodyDeclaration parentTD, String annotationType, 
+	public static void saveTypeBindingC(IFile ifile, String varName, String declarationBodykey, String annotationType, String rwtype_name){
+		createBindingInfo(ifile, declarationBodykey, rwtype_name, varName, annotationType);
+	}
+	
+	public static void saveTypeBindingJava(BodyDeclaration parentTD, String annotationType, 
 			String formalElementName, String cmtype_name, boolean propagation){
 		String declarationBodykey = "";
 		IFile ifile = null;
@@ -761,6 +771,19 @@ public class RWTView extends ViewPart {
 			declarationBodykey = ((MethodDeclaration)parentTD).resolveBinding().getKey();	
 			ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(((MethodDeclaration)parentTD).resolveBinding().getJavaElement().getPath());
 		}
+		createBindingInfo(ifile, declarationBodykey, cmtype_name, formalElementName, annotationType);
+	}
+	
+	/**
+	 * create the real-world type binding for the inputs
+	 * @param ifile
+	 * @param declarationBodykey
+	 * @param cmtype_name
+	 * @param formalElementName
+	 * @param annotationType
+	 */
+	private static void createBindingInfo(IFile ifile, String declarationBodykey, 
+			String cmtype_name, String formalElementName, String annotationType){
 		if(ifile!=null){
 			File annotationFile = RWTSystemUtil.getAnnotationFile(ifile);
 			if(annotationFile == null){
@@ -781,6 +804,7 @@ public class RWTView extends ViewPart {
 				fileAnnotations = new FileAnnotations();
 			}
 			if((declarationBodykey!= null) && declarationBodykey.length() > 0){
+				boolean propagation = false;
 				if(propagation){
 					if(cmtype_name.equals(RWType.GenericMethod)){
 						return;

@@ -228,7 +228,7 @@ public class TypeInferenceAssignmentsVisitor extends ASTVisitor {
 					ASTNode declaringClassNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringClass());
 					if(declaringClassNode!= null && declaringClassNode instanceof TypeDeclaration){
 		    			TypeDeclaration parentTD = (TypeDeclaration)declaringClassNode;						    			
-		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
+		    			RWTView.saveTypeBindingJava(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
 					}
 //					else{
 //						String declarationBodykey = bindingDecl.getDeclaringClass().getKey();
@@ -238,7 +238,7 @@ public class TypeInferenceAssignmentsVisitor extends ASTVisitor {
 				}else{
 					ASTNode declaringMethodNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringMethod());
 					MethodDeclaration methodDeclaration = (MethodDeclaration)declaringMethodNode;
-	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
+	                RWTView.saveTypeBindingJava(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
 				}
 			}
 		 	else {

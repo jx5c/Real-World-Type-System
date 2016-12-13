@@ -122,7 +122,7 @@ public class FileAnnotations {
 	}
 	
 	public boolean addDefineAnnotation(String bodyDeclKey, String annotationType,
-			String formalElementName, String cMType){
+			String formalElementName, String rwtType){
 		ArrayList<RWTAnnotation> thisAnnotations = annotations.get(bodyDeclKey);
 		if(thisAnnotations == null){
 			thisAnnotations = new ArrayList<RWTAnnotation>();
@@ -130,11 +130,11 @@ public class FileAnnotations {
 		RWTAnnotation annotation = new RWTAnnotation();
 		annotation.setAnnotationType(annotationType);
 		if(annotationType.equals(RWTAnnotation.Define)){
-			annotation.setAnnotationContents(RWTAnnotation.cmTypeForAnnotation + "(" + formalElementName +")"+"="+cMType);
+			annotation.setAnnotationContents(RWTAnnotation.cmTypeForAnnotation + "(" + formalElementName +")"+"="+rwtType);
 		}else if(annotationType.equals(RWTAnnotation.Return)){
-			if(cMType!= null){
-				annotation.setAnnotationContents(cMType);
-			}else if(formalElementName!= null){
+			if(rwtType!= null && rwtType.length()>0){
+				annotation.setAnnotationContents(rwtType);
+			}else if(formalElementName!= null && formalElementName.length()>0){
 				annotation.setAnnotationContents(RWTAnnotation.cmTypeForAnnotation + "("  + formalElementName +")");	
 			} 
 		}else if(annotationType.equals(RWTAnnotation.Invariant)){

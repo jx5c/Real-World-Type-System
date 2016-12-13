@@ -342,7 +342,7 @@ public class TypePropagationVisitor extends ASTVisitor {
 		String RWType = getRWTypeForSimpleExp(exp);
 		if(RWType.length()>0){
 			System.out.println("Propagation: Method return type propagation here: "+RWType);
-			RWTView.saveJAVADocElementToFile(methodDecl, RWTAnnotation.Return, null, RWType, true);	
+			RWTView.saveTypeBindingJava(methodDecl, RWTAnnotation.Return, null, RWType, true);	
 		}
 	}
 	
@@ -410,12 +410,12 @@ public class TypePropagationVisitor extends ASTVisitor {
 					ASTNode declaringClassNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringClass());
 					if(declaringClassNode!= null && declaringClassNode instanceof TypeDeclaration){
 		    			TypeDeclaration parentTD = (TypeDeclaration)declaringClassNode;
-		    			RWTView.saveJAVADocElementToFile(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
+		    			RWTView.saveTypeBindingJava(parentTD, RWTAnnotation.Define, formalElementName, rwtype, true);
 					}
 				}else{
 					ASTNode declaringMethodNode = compilationUnit.findDeclaringNode(bindingDecl.getDeclaringMethod());
 					MethodDeclaration methodDeclaration = (MethodDeclaration)declaringMethodNode;
-	                RWTView.saveJAVADocElementToFile(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
+	                RWTView.saveTypeBindingJava(methodDeclaration, RWTAnnotation.Define, formalElementName, rwtype, true);
 				}
 			}
 		}
