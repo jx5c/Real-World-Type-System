@@ -15,6 +15,7 @@ import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
 import org.eclipse.cdt.core.dom.ast.IASTAttribute;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
+import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
@@ -24,8 +25,16 @@ import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IScope;
+import org.eclipse.cdt.core.dom.ast.IType;
+import org.eclipse.cdt.core.dom.ast.IBasicType.Kind;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.ASTNode;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTBinaryExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CBasicType;
+import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFunctionDeclarator;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPArrayType;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPBasicType;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPVariable;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -50,7 +59,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 	
 	private ArrayList<DiagnosticMessage> errorReports = new ArrayList<DiagnosticMessage>();
 	
-	private HashMap<Expression, String> annotatedTypeTableForExpression = new HashMap<Expression, String>();
+	private HashMap<IASTExpression, String> rwtypeTableForExp = new HashMap<IASTExpression, String>();
 	
 	private IASTTranslationUnit compilationUnit;
 	
@@ -94,25 +103,45 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}
 		this.checkingUnits = unitsChecking;
 		this.errorReports.clear();
+		
 	}
 
-	public int visit(IASTName name)
-	{
-		System.out.println(name.resolveBinding());
-		IBinding fbinding = name.resolveBinding();
-		if(fbinding instanceof CPPVariable){
-			CPPVariable cppV = (CPPVariable)fbinding;
-			System.out.println(cppV.getType());
-			System.out.println(cppV.getDefinition());
+	@Override
+	public int visit(IASTExpression exp){
+		IType expType = exp.getExpressionType();
+		IASTNode node = exp.getOriginalNode();
+		System.out.println(node);
+		if(node instanceof CASTBinaryExpression){
+			CASTBinaryExpression binaryExp = (CASTBinaryExpression)node;
+			System.out.println(binaryExp.getOperand1());
+			System.out.println(binaryExp.getOperand2());
 		}
-//	if ((name.getParent() instanceof CPPASTFunctionDeclarator)) {
-//		System.out.println("IASTName: " + name.getClass().getSimpleName() + "(" + name.getRawSignature() + ") - > parent: " + name.getParent().getClass().getSimpleName());
-//		System.out.println("-- isVisible: " + ParserExample.isVisible(name));
-//	}
 		return 3;
 	}
 	
-	
+	public int visit(IASTName name){
+		IBinding fbinding = name.resolveBinding();
+		if (fbinding instanceof CVariable){
+			CVariable varName = (CVariable)fbinding;
+			System.out.println(varName.getDefinition());
+			IType aType = varName.getType();
+			if(aType instanceof CBasicType){
+				CPPBasicType basicType = (CPPBasicType)aType;
+				if(basicType.getKind() == Kind.eInt || basicType.getKind() == Kind.eInt128 ){
+//					System.out.println("Integer");
+					IASTExpression exp = (IASTExpression)(varName.getPhysicalNode());
+				}else if(basicType.getKind() == Kind.eFloat ){
+//					System.out.println("float");
+				}else if(basicType.getKind() == Kind.eDouble ){
+//					System.out.println("double");
+				}
+			}
+			if(aType instanceof CPPArrayType){
+				System.out.println("array");
+			}
+		}
+		return 3;
+	}
 
 	public int visit(IASTDeclaration declaration){
 	System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
