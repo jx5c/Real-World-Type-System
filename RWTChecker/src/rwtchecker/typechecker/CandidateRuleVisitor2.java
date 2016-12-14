@@ -1036,7 +1036,7 @@ public class CandidateRuleVisitor2 extends ASTVisitor {
 		errorMessage.setMessageType(errorType);
 		errorMessage.setMessageDetail(errorMessageDetail);
 		errorMessage.setContextInfo("");
-		errorMessage.setErrorNode(node);
+		errorMessage.setJavaErrorNode(node);
 		this.errorReports.add(errorMessage);
 	}
 	

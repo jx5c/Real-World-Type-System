@@ -1168,7 +1168,7 @@ public class NewTypeCheckerVisitor extends ASTVisitor {
 		errorMessage.setMessageType(errorType);
 		errorMessage.setMessageDetail(errorMessageDetail);
 		errorMessage.setContextInfo("");
-		errorMessage.setErrorNode(node);
+		errorMessage.setJavaErrorNode(node);
 		errorReports.add(errorMessage);
 	}
 	

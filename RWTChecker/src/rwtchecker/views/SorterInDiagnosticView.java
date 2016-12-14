@@ -23,13 +23,13 @@ public class SorterInDiagnosticView extends ViewerSorter {
         DiagnosticMessage dm2 = (DiagnosticMessage)e2;
         switch(sortType){
             case ErrorNode:{
-                String l1 = dm1.getErrorNode().toString();
-                String l2 = dm2.getErrorNode().toString();
+                String l1 = dm1.getJavaErrorNode().toString();
+                String l2 = dm2.getJavaErrorNode().toString();
                 return l1.compareTo(l2);
             }
             case -ErrorNode:{
-                String l1 = dm1.getErrorNode().toString();
-                String l2 = dm2.getErrorNode().toString();
+                String l1 = dm1.getJavaErrorNode().toString();
+                String l2 = dm2.getJavaErrorNode().toString();
                 return l2.compareTo(l1);
             }
             case ErrorMessage:{

@@ -394,7 +394,8 @@ public class RWTSystemUtil {
 	public static IASTTranslationUnit getCCompilationUnit(IEditorPart IEditorPart){
 		ITranslationUnit translationUnit = CUIPlugin.getDefault().getWorkingCopyManager().getWorkingCopy(IEditorPart.getEditorInput());
 		try {
-			IASTTranslationUnit astUnit = translationUnit.getAST(null,ITranslationUnit.AST_SKIP_ALL_HEADERS);
+//			IASTTranslationUnit astUnit = translationUnit.getAST(null,ITranslationUnit.AST_SKIP_ALL_HEADERS);
+			IASTTranslationUnit astUnit = translationUnit.getAST();
 			return astUnit;
 		} catch (CoreException e) {
 			e.printStackTrace();

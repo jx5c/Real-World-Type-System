@@ -13,16 +13,22 @@ import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.DOMException;
 import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
 import org.eclipse.cdt.core.dom.ast.IASTAttribute;
+import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
+import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
+import org.eclipse.cdt.core.dom.ast.IASTConditionalExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
+import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
+import org.eclipse.cdt.core.dom.ast.IASTUnaryExpression;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IScope;
 import org.eclipse.cdt.core.dom.ast.IType;
@@ -30,8 +36,13 @@ import org.eclipse.cdt.core.dom.ast.IBasicType.Kind;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.ASTNode;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTBinaryExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
+import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CBasicType;
+import org.eclipse.cdt.internal.core.dom.parser.c.CFunction;
+import org.eclipse.cdt.internal.core.dom.parser.c.CStructure;
 import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFunctionDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPBasicType;
@@ -40,6 +51,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
+import org.eclipse.core.runtime.Path;
 
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.rwt.RWT_Attribute;
@@ -48,6 +60,7 @@ import rwtchecker.rwtrules.RWTypeRuleCategory;
 import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
 import rwtchecker.util.RWTSystemUtil;
+import rwtchecker.views.RWTView;
 import rwtchecker.util.DiagnosticMessage;
 import rwtchecker.util.ErrorUtil;
 
@@ -58,34 +71,26 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 	private RWTypeRulesManager rwtRulesManager;
 	
 	private ArrayList<DiagnosticMessage> errorReports = new ArrayList<DiagnosticMessage>();
-	
-	private HashMap<IASTExpression, String> rwtypeTableForExp = new HashMap<IASTExpression, String>();
-	
 	private IASTTranslationUnit compilationUnit;
 	
 	private boolean accessRWT = false;
-	
 	private FileAnnotations fileAnnotations = new FileAnnotations ();
 	
 	//for annotations
 	private Map<String, Map<String, String>> allVariableMap = new HashMap<String, Map<String, String>>();
 	private Map<String, String> methodReturnMap = new HashMap<String, String>();
 	
-	//for invariants checking
+	//for every ast node, track their real-world types
+	private HashMap<IASTNode, String> rwtypeTableForExp = new HashMap<IASTNode, String>();
+	
+	//for invariants checking; save them for later improvement
 	Map<String, Map<String, HashSet<String>>> allInvAttToRecordMap = new HashMap<String, Map<String, HashSet<String>>>();
 	Map<String, ArrayList<String>> allInvariantsMap = new HashMap<String, ArrayList<String>>();
 	
 	private IFile currentFile;
 	private IProject currentProject;
 	
-	private boolean parsingMethodDelcMode = false;
-	private boolean insideTargetedMethod = false;
-	private String targetedMethodDeclKey = "";
-	
-	private String returnCMTypesForTargetedMethod = RWType.TypeLess;
 	private boolean methodInvError = false;
-	private boolean insideBranch = false;
-	private boolean errorInsideBranch = false;
 
 	private boolean checkingUnits;
 	
@@ -103,11 +108,107 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}
 		this.checkingUnits = unitsChecking;
 		this.errorReports.clear();
+//		super.
 		
 	}
 
 	@Override
-	public int visit(IASTExpression exp){
+	public int visit(IASTName astName){
+		//This function loads all annotated elements into the hashmap
+		IBinding astBinding = astName.resolveBinding();
+		if (astBinding instanceof CVariable){
+			String declBodyKey = RWTView.makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
+			String thisRWTType = null;
+			//binding for a variable
+			CVariable cv = (CVariable)astBinding;
+			IType variableType = cv.getType();
+			if(variableType instanceof CArrayType){
+				//this is for array; pop up a menu so the user can select the index for binding
+				CArrayType arrayV = (CArrayType)variableType;
+				System.out.println(arrayV.getSize());
+			}else if (variableType instanceof CBasicType){
+				//this is for a variable; variable could be inside a structure, or
+				String varName = astName.toString();
+				Map<String, String> variableMap = this.allVariableMap.get(declBodyKey);
+				if(variableMap!=null){
+					thisRWTType = variableMap.get(varName);
+				}
+			}else if (variableType instanceof CStructure){
+				//this is for a variable of a structure; TO BE DONE
+				System.out.println("structure");
+			}
+			this.associateAttSetsWithExp(astName, thisRWTType);
+		}else if(astBinding instanceof CFunction){
+			String functionKey = RWTView.makeKeyForDeclBodies(astBinding.getClass().getName(), astBinding.getName());
+			String returnType = null;
+			String currentUnitPath = this.compilationUnit.getFilePath();
+			if(astBinding!=null){
+//				String methodDeclUnitPath = iMethodBinding.getJavaElement().getPath().toString();
+//				String methodDeclKey = iMethodBinding.getMethodDeclaration().getKey();
+				//if the function being called comes from the same file
+				if(currentUnitPath != null){
+					if(methodReturnMap!=null){
+						returnType = methodReturnMap.get(functionKey);
+					}
+				}else{
+				//if the function being called comes from another file
+//					IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(iMethodBinding.getJavaElement().getPath());
+					IPath ipath = new Path(currentUnitPath);
+					IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(ipath);
+					File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
+					if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
+						FileAnnotations otherSourcefileAnnotationsClone = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
+						if(otherSourcefileAnnotationsClone == null){
+							return 3;
+						}
+						returnType = otherSourcefileAnnotationsClone.getReturnCMTypeForMethod(functionKey);
+					}
+				}						
+	 		}
+			this.associateAttSetsWithExp(astName, returnType);	
+		}
+		return 3;
+	}
+	
+	@Override
+	public int leave(IASTExpression exp){
+		if(exp instanceof IASTCastExpression){
+			//for case expression (float)(1.1)
+			IASTCastExpression castExp = (IASTCastExpression)exp;
+			this.associateAttSetsWithExp(castExp, this.getAnnotatedTypeForExpression(castExp.getOperand()));
+		}else if(exp instanceof IASTUnaryExpression){
+			//for parenthesis    rwt for (x) is the same for x;
+			IASTUnaryExpression unaryExp = (IASTUnaryExpression)exp;
+			if(unaryExp.getOperator() == IASTUnaryExpression.op_bracketedPrimary){
+				String argumentCMType = this.getAnnotatedTypeForExpression(unaryExp.getOperand());
+				this.associateAttSetsWithExp(unaryExp, argumentCMType);	
+			}
+		}else if(exp instanceof IASTIdExpression){
+			//for local variables,    rwt for  idExpression is the same for the IASTName
+			IASTIdExpression idExp = (IASTIdExpression)exp ;
+			this.associateAttSetsWithExp(idExp, this.getAnnotatedTypeForExpression(idExp.getName()));
+		}else if(exp instanceof IASTFieldReference){
+			//for field access; e.g. a.b => a is the expression, b is the field name. 
+			IASTFieldReference fieldReference = (IASTFieldReference)exp;
+			String annotatedFieldAccessType = this.getAnnotatedTypeForExpression(fieldReference.getFieldOwner());
+			String annotatedIdentifierType = this.getAnnotatedTypeForExpression(fieldReference.getFieldName());
+			//using union operation for the two types
+			if(!NewTypeCheckerVisitor.checkConsistency(annotatedFieldAccessType, annotatedIdentifierType)){
+				//inconsistent attributes
+				this.addNewErrorMessage(fieldReference, ErrorUtil.getInconsistentAttributeError(),DiagnosticMessage.ERROR);
+				associateAttSetsWithExp(fieldReference, annotatedIdentifierType);
+			}else{
+				String unitedSetsType = NewTypeCheckerVisitor.uniteTwoSets(annotatedFieldAccessType, annotatedIdentifierType, rwtRulesManager);
+				associateAttSetsWithExp(fieldReference, unitedSetsType);
+			}
+		}else if(exp instanceof IASTConditionalExpression){
+			//for Conditional Expression of the format X ? Y : Z
+		}else if(exp instanceof IASTBinaryExpression){
+			//for  a binary expression.  it has different operators that need to be handled differently
+			IASTBinaryExpression binaryExp = (IASTBinaryExpression)exp;
+			this.checkBinaryExpression(binaryExp);
+		}
+		
 		IType expType = exp.getExpressionType();
 		IASTNode node = exp.getOriginalNode();
 		System.out.println(node);
@@ -116,322 +217,230 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			System.out.println(binaryExp.getOperand1());
 			System.out.println(binaryExp.getOperand2());
 		}
+		
+		
+		
 		return 3;
 	}
 	
-	public int visit(IASTName name){
-		IBinding fbinding = name.resolveBinding();
-		if (fbinding instanceof CVariable){
-			CVariable varName = (CVariable)fbinding;
-			System.out.println(varName.getDefinition());
-			IType aType = varName.getType();
-			if(aType instanceof CBasicType){
-				CPPBasicType basicType = (CPPBasicType)aType;
-				if(basicType.getKind() == Kind.eInt || basicType.getKind() == Kind.eInt128 ){
-//					System.out.println("Integer");
-					IASTExpression exp = (IASTExpression)(varName.getPhysicalNode());
-				}else if(basicType.getKind() == Kind.eFloat ){
-//					System.out.println("float");
-				}else if(basicType.getKind() == Kind.eDouble ){
-//					System.out.println("double");
-				}
-			}
-			if(aType instanceof CPPArrayType){
-				System.out.println("array");
-			}
-		}
-		return 3;
-	}
-
 	public int visit(IASTDeclaration declaration){
-	System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
-
-	if ((declaration instanceof IASTSimpleDeclaration)) {
-		IASTSimpleDeclaration ast = (IASTSimpleDeclaration)declaration;
-		try
-		{
-			System.out.println("--- type: " + ast.getSyntax() + " (childs: " + ast.getChildren().length + ")");
-			IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
-	             System.out.println("------- typedef: " + typedef);
-	             IASTNode[] children = typedef.getChildren();
-	             if ((children != null) && (children.length > 0))
-	               System.out.println("------- typedef-name: " + children[0].getRawSignature());
-       }
-       catch (ExpansionOverlapsBoundaryException e)
-       {
-         e.printStackTrace();
-       }
-
-		IASTDeclarator[] declarators = ast.getDeclarators();
-		for (IASTDeclarator iastDeclarator : declarators) {
-			System.out.println("iastDeclarator > " + iastDeclarator.getName());
-		}
-        IASTAttribute[] attributes = ast.getAttributes();
-        for (IASTAttribute iastAttribute : attributes) {
-            System.out.println("iastAttribute > " + iastAttribute);
-        }
-	 
-     }
-
-	 if ((declaration instanceof IASTFunctionDefinition)) {
-	    IASTFunctionDefinition ast = (IASTFunctionDefinition)declaration;
-	    IScope scope = ast.getScope();
-	    try{
-	             System.out.println("### function() - Parent = " + scope.getParent().getScopeName());
-	             System.out.println("### function() - Syntax = " + ast.getSyntax());
-	    }catch (DOMException e) {
-	             e.printStackTrace();
-	    } catch (ExpansionOverlapsBoundaryException e) {
-	             e.printStackTrace();
+		System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
+	
+		if ((declaration instanceof IASTSimpleDeclaration)) {
+			IASTSimpleDeclaration ast = (IASTSimpleDeclaration)declaration;
+			try{
+				System.out.println("--- type: " + ast.getSyntax() + " (childs: " + ast.getChildren().length + ")");
+				IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
+		             System.out.println("------- typedef: " + typedef);
+		             IASTNode[] children = typedef.getChildren();
+		             if ((children != null) && (children.length > 0))
+		               System.out.println("------- typedef-name: " + children[0].getRawSignature());
+			}catch (ExpansionOverlapsBoundaryException e){
+				e.printStackTrace();
+			}
+	
+			IASTDeclarator[] declarators = ast.getDeclarators();
+			for (IASTDeclarator iastDeclarator : declarators) {
+				System.out.println("iastDeclarator > " + iastDeclarator.getName());
+			}
+	        IASTAttribute[] attributes = ast.getAttributes();
+	        for (IASTAttribute iastAttribute : attributes) {
+	            System.out.println("iastAttribute > " + iastAttribute);
+	        }
 	    }
-	    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator)ast.getDeclarator();
-	    System.out.println("------- typedef: " + typedef.getName());
-	 }
-	 return 3;
+	
+		 if ((declaration instanceof IASTFunctionDefinition)) {
+		    IASTFunctionDefinition ast = (IASTFunctionDefinition)declaration;
+		    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator)ast.getDeclarator();		    
+		 }
+		 
+		 return 3;
 	 }
 	 
-       public int visit(IASTTypeId typeId)
-       {
+     public int visit(IASTTypeId typeId){
          System.out.println("typeId: " + typeId.getRawSignature());
          return 3;
-       }
+     }
  
-       public int visit(IASTStatement statement)
-       {
+     public int visit(IASTStatement statement){
          System.out.println("statement: " + statement.getRawSignature());
          return 3;
-      }
+     }
  
-    public int visit(IASTAttribute attribute){
+     public int visit(IASTAttribute attribute){
          return 3;
-    }	       
+     }	       
 	
-	
-	public void preVisit(ASTNode node) {
-		if(parsingMethodDelcMode){
-			if(this.fileAnnotations.getAnnotations().size() == 0){
+     private void checkBinaryExpression(IASTBinaryExpression binaryExp){
+    	 	IASTExpression leftExp = binaryExp.getOperand1(); 
+    	 	IASTExpression rightExp = binaryExp.getOperand2();
+    	 	String leftCMType = this.getAnnotatedTypeForExpression(leftExp);
+	 		String rightCMType = this.getAnnotatedTypeForExpression(rightExp);
+			int operator = binaryExp.getOperator();
+			switch (operator){
+				case IASTBinaryExpression.op_assign:
+					//for assignemnt; do some error checking
+					checkAssignmentExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
+				break;
+				case IASTBinaryExpression.op_equals:
+					//for ==;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
+				break;
+				case IASTBinaryExpression.op_greaterEqual:
+					//for >=;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
+				break;
+				case IASTBinaryExpression.op_greaterThan:
+					//for >;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
+				break;
+				case IASTBinaryExpression.op_lessEqual:
+					//for <=;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
+				break;
+				case IASTBinaryExpression.op_lessThan:
+					//for <;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
+				break;
+				case IASTBinaryExpression.op_multiply:
+					//for *;
+					checkInfixExpression(binaryExp);
+				break;
+				case IASTBinaryExpression.op_divide:
+					//for /;
+				break;
+				case IASTBinaryExpression.op_plus:
+					//for +;
+				break;
+				case IASTBinaryExpression.op_minus:
+					//for -;
+				break;
+				case IASTBinaryExpression.op_min:
+					//for min;
+				break;
+				case IASTBinaryExpression.op_max:
+					//for max;
+				break;
+				case IASTBinaryExpression.op_divideAssign:
+					//for /=;
+				break;
+				case IASTBinaryExpression.op_minusAssign:
+					//for -=;
+				break;
+				case IASTBinaryExpression.op_plusAssign:
+					//for -=;
+				break;
+				case IASTBinaryExpression.op_multiplyAssign:
+					//for *=;
+				break;
+			}
+     }
+     
+     private void checkAssignmentExp(IASTNode currentNode, IASTExpression leftExp, IASTExpression rightExp, String leftCMType, String rightCMType){
+ 		
+		if(leftCMType.equals(rightCMType)){
+			return;
+		}
+		if(!leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
+			String returnType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, rightCMType);
+			if(returnType != null){
+				return;
+			}
+		}
+	    if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
+				!leftCMType.equalsIgnoreCase(rightCMType) && 
+				!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
+			addNewErrorMessage(currentNode , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
+		}
+	    
+		//simple inference here
+		//if we are in units checking, do inference here 
+		if(this.checkingUnits){
+			if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
+					&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
+				if(leftExp instanceof IASTName){
+					IBinding astBinding = ((IASTName)leftExp).resolveBinding();
+					if(astBinding instanceof CVariable){
+						CVariable variableBinding = (CVariable) astBinding;
+						String declBodyKey = RWTView.makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
+						Map<String, String> variableMap = this.allVariableMap.get(declBodyKey);
+						if(variableMap == null){
+							variableMap = new HashMap<String, String>();
+							this.allVariableMap.put(declBodyKey, variableMap);
+						}
+						variableMap.put(variableBinding.getName(), rightCMType);
+					}
+				}
+			}
+		}
+     }
+     
+     private void checkComparableExp(IASTNode currentNode, IASTExpression leftExp, IASTExpression rightExp, String leftCMType, String rightCMType){
+		if(leftCMType.equals(rightCMType)){
+			return;
+		}
+		if(!leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
+			String returnType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Comparable, rightCMType);
+			if(returnType != null){
 				return;
 			}
 		}
 		
-		if(node instanceof MethodDeclaration){
-			MethodDeclaration methodDelNode = (MethodDeclaration)node;
-			String methodKey = methodDelNode.resolveBinding().getKey();
-			//if method declaration has a return type binding
-			if(!this.methodReturnMap.containsKey(methodKey)
-					||
-					this.methodReturnMap.get(methodKey).equals(RWType.GenericMethod)){
-				if(this.parsingMethodDelcMode){
-					if(methodKey.equals(this.targetedMethodDeclKey)){
-						this.insideTargetedMethod = true;
+	    if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
+				!leftCMType.equalsIgnoreCase(rightCMType) && 
+				!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
+			addNewErrorMessage(currentNode , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
+		}
+	    
+		//simple inference here
+		//if we are in units checking, do inference here 
+		if(this.checkingUnits){
+			if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
+					&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
+				if(leftExp instanceof IASTName){
+					IBinding astBinding = ((IASTName)leftExp).resolveBinding();
+					if(astBinding instanceof CVariable){
+						CVariable variableBinding = (CVariable) astBinding;
+						String declBodyKey = RWTView.makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
+						Map<String, String> variableMap = this.allVariableMap.get(declBodyKey);
+						if(variableMap == null){
+							variableMap = new HashMap<String, String>();
+							this.allVariableMap.put(declBodyKey, variableMap);
+						}
+						variableMap.put(variableBinding.getName(), rightCMType);
 					}
 				}
 			}
-			return;
 		}
-		
-		//read annotations in
-		if(node instanceof SimpleName){
-			IBinding fbinding = ((SimpleName)node).resolveBinding();
-			if(fbinding instanceof IVariableBinding){
-				IVariableBinding variableBinding = (IVariableBinding) fbinding;
-				String thisCMType = null;
-				if(variableBinding.isField()){
-					String currentUnitPath = this.compilationUnit.getJavaElement().getPath().toString();
-					if(variableBinding.getJavaElement()==null){
-						return;
-					}
-					String classDeclPath = variableBinding.getJavaElement().getPath().toString();
-					String classDeclKey = variableBinding.getDeclaringClass().getKey();
-					if(currentUnitPath.equals(classDeclPath)){
-						Map<String, String> variableMap = this.allVariableMap.get(classDeclKey);
-						if(variableMap!=null){
-							thisCMType = variableMap.get(variableBinding.getName());
-						}
-					}else{
-						IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(variableBinding.getJavaElement().getPath());
-						File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
-						if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
-							FileAnnotations otherSourcefileAnnotation = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
-							if(otherSourcefileAnnotation == null){
-								return;
-							}
-							thisCMType = otherSourcefileAnnotation.getCMTypeInBodyDecl(classDeclKey, variableBinding.getName());
-						}
-					}
-					this.setInvariantVal(node.toString(), thisCMType, classDeclKey);
-				}else{
-					if(variableBinding.getDeclaringMethod()!=null){
-						String methodDeclKey = variableBinding.getDeclaringMethod().getKey();
-						if(parsingMethodDelcMode && !insideTargetedMethod){
-							return;
-						}else{
-							Map<String, String> variableMap = this.allVariableMap.get(methodDeclKey);
-							if(variableMap!=null){
-								thisCMType = variableMap.get(variableBinding.getName());
-								if(thisCMType != null){
-									if(!usedAnnotatedVariables.contains(variableBinding.getName())){
-										usedAnnotatedVariables.add(variableBinding.getName());	
-									}
-								}
-							}
-						}
-						this.setInvariantVal(node.toString(), thisCMType, methodDeclKey);
-					}
-				}
-				associateAttSetsWithExp((SimpleName)node, thisCMType);
-			}
-				
-			else if(fbinding instanceof IMethodBinding){
-				IMethodBinding iMethodBinding = (IMethodBinding) fbinding;
-				String returnType = null;
-				if(node.getParent() instanceof MethodInvocation){
-					String currentUnitPath = this.compilationUnit.getJavaElement().getPath().toString();
-					if(iMethodBinding.getJavaElement()!=null){
-						String methodDeclUnitPath = iMethodBinding.getJavaElement().getPath().toString();
-						String methodDeclKey = iMethodBinding.getMethodDeclaration().getKey();
-						if(currentUnitPath.equals(methodDeclUnitPath)){
-							if(methodReturnMap!=null){
-								returnType = methodReturnMap.get(methodDeclKey);
-							}
-						}else{
-							//Method declared in other file; 
-							IFile ifile = ResourcesPlugin.getWorkspace().getRoot().getFile(iMethodBinding.getJavaElement().getPath());
-							File otherSourceFileAnnotationFile = RWTSystemUtil.getAnnotationFile(ifile);
-							if(otherSourceFileAnnotationFile!= null && otherSourceFileAnnotationFile.exists()){
-								FileAnnotations otherSourcefileAnnotationsClone = FileAnnotations.loadFromXMLFile(otherSourceFileAnnotationFile);
-								if(otherSourcefileAnnotationsClone == null){
-									return;
-								}
-								returnType = otherSourcefileAnnotationsClone.getReturnCMTypeForMethod(methodDeclKey);
-							}
-						}						
-					}
-		 		}
-			}
-		}
-		
-		if(node instanceof ThisExpression){
-			usedAnnotatedVariables.add("this");
-			String thisCMType = null;
-			ASTNode parentNode = node.getParent();
-            while(!(parentNode instanceof MethodDeclaration) && !(parentNode instanceof TypeDeclaration)){
-            	parentNode = parentNode.getParent();
-            }
-            if(parentNode instanceof MethodDeclaration){
-            	MethodDeclaration methodDeclaration = (MethodDeclaration)parentNode;
-    			Map<String, String> methodVariableMap = this.allVariableMap.get(methodDeclaration.resolveBinding().getKey());
-    			if(methodVariableMap!=null){
-    				if(methodVariableMap.containsKey("this")){
-    					thisCMType = methodVariableMap.get("this");
-    				}
-    			}
-    			if(thisCMType == null){
-    				ThisExpression thisExp = (ThisExpression)node;
-    				ITypeBinding declaredClassBinding = thisExp.resolveTypeBinding();
-    				Map<String, String> variableMap = this.allVariableMap.get(declaredClassBinding.getKey());
-        			if(variableMap!=null){
-        				if(variableMap.containsKey("this")){
-        					thisCMType = variableMap.get("this");
-        				}
-        			}
-    			}
-            }else if(parentNode instanceof TypeDeclaration){
-        		TypeDeclaration typeDeclaration = (TypeDeclaration)parentNode;
-    			Map<String, String> classVariableMap = this.allVariableMap.get(typeDeclaration.resolveBinding().getKey());
-    			if(classVariableMap!=null){
-    				if(classVariableMap.containsKey("this")){
-    					thisCMType = classVariableMap.get("this");	
-    				}
-    			}
-            }
-			if(thisCMType!=null){
-				this.associateAttSetsWithExp((ThisExpression)node,  thisCMType);
-			}
-		}
-	}
-	
-	@Override
-	public boolean visit(MethodDeclaration methodDeclaration){
-		String methodKey = methodDeclaration.resolveBinding().getKey();
-		if(parsingMethodDelcMode){
-			if(!methodKey.equals(targetedMethodDeclKey)){
-				//not target method body; do not proceed
-				return false;
-			}			
-		}
-		return true;
-	}
-	
-	@Override
-	public boolean visit(IfStatement ifStatement){
-		if(parsingMethodDelcMode){
-			//already in a branch and errors are found
-			if(insideBranch && errorInsideBranch){
-				return false;
-			}else{
-				insideBranch = true;	
-			}
-		}
-		return true;
-	}
-	
+     }
+     
+     private void checkAssignPlus(){
+ 	    //save this function for future improvement
+    	 /*
+   		if(operator.equals(Assignment.Operator.PLUS_ASSIGN)){
+ 			String returnType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Plus, rightCMType);
+ 			if(returnType != null){
+ 				if(returnType.equals(leftCMType)){
+ 					return;
+ 				}else{
+ 					String assignableType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, returnType);
+ 					if(assignableType != null){
+ 						return;
+ 					}else{
+ 						addNewErrorMessage(node , ErrorUtil.unknownCalculation(), DiagnosticMessage.WARNING);
+ 					}
+ 				}
+ 			}else{
+ 				if(leftCMType.length()>0 && rightCMType.length()>0){
+ 					addNewErrorMessage(assignmentNode , ErrorUtil.getUndeclaredCalculation(assignmentNode.toString()), DiagnosticMessage.WARNING);	
+ 				}
+ 			}
+ 		}
+    	  */
+     }
+     
+     
 	public void EndVisitNode(ASTNode node){
-		if(node instanceof MethodDeclaration){
-			MethodDeclaration methodDecl = (MethodDeclaration)node;
-			String methodKey = methodDecl.resolveBinding().getKey();
-			if(methodKey.equals(this.targetedMethodDeclKey)){
-				//out of the method
-				this.insideTargetedMethod = false;
-			}
-			if(methodDecl != null){
-				Map<String, String> variableMap = this.allVariableMap.get(methodKey);
-				if(variableMap!=null){
-					Set<String> variables = variableMap.keySet();
-					for(String variable:variables){
-						if(this.usedAnnotatedVariables.contains(variable)){
-							continue;
-						}else{
-							addNewErrorMessage(methodDecl.getJavadoc() , "The variable "+ variable + " annotated is not used in the method declaration", DiagnosticMessage.ERROR);
-						}
-					}
-				}
-			}
-		}
-		
-		else if(node instanceof QualifiedName){
-			QualifiedName qualifiedName = (QualifiedName)node;
-			String qualifierType =  this.getAnnotatedTypeForExpression(qualifiedName.getQualifier());
-			String nameType =  this.getAnnotatedTypeForExpression(qualifiedName.getName());
-			if(!NewTypeCheckerVisitor.checkConsistency(qualifierType, nameType)){
-				//inconsistent attributes
-				this.addNewErrorMessage(qualifiedName, ErrorUtil.getInconsistentAttributeError(),DiagnosticMessage.ERROR);
-				associateAttSetsWithExp(qualifiedName, nameType);
-			}else{
-				String unitedSetsType = NewTypeCheckerVisitor.uniteTwoSets(qualifierType, nameType, rwtRulesManager);
-				associateAttSetsWithExp(qualifiedName, unitedSetsType);
-			}
-		}
-		
-		else if(node instanceof FieldAccess){
-			FieldAccess fieldAccessNode = (FieldAccess)node;
-			String annotatedFieldAccessType = this.getAnnotatedTypeForExpression(fieldAccessNode.getExpression());
-			String annotatedIdentifierType = this.getAnnotatedTypeForExpression(fieldAccessNode.getName());
-			//using union operation for the two types
-			if(!NewTypeCheckerVisitor.checkConsistency(annotatedFieldAccessType, annotatedIdentifierType)){
-				//inconsistent attributes
-				this.addNewErrorMessage(fieldAccessNode, ErrorUtil.getInconsistentAttributeError(),DiagnosticMessage.ERROR);
-				associateAttSetsWithExp(fieldAccessNode, annotatedIdentifierType);
-			}else{
-				String unitedSetsType = NewTypeCheckerVisitor.uniteTwoSets(annotatedFieldAccessType, annotatedIdentifierType, rwtRulesManager);
-				associateAttSetsWithExp(fieldAccessNode, unitedSetsType);
-			}
-		}
-		
-		else if(node instanceof CastExpression){
-			CastExpression castExp = (CastExpression)node;
-			this.associateAttSetsWithExp(castExp, this.getAnnotatedTypeForExpression(castExp.getExpression()));
-		}
 		
 		else if(node instanceof ArrayAccess){
 			ArrayAccess arrayAccess = (ArrayAccess)node;
@@ -440,10 +449,6 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			this.associateAttSetsWithExp(arrayAccess, resultType);
 		}
 		
-		else if(node instanceof InfixExpression){
-			InfixExpression infixExpressionNode = (InfixExpression)node;
-			checkInfixExpression(infixExpressionNode);
-		}
 		
 		else if(node instanceof MethodInvocation){
 			MethodInvocation methodInvocationNode = (MethodInvocation)node;
@@ -451,11 +456,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 //			this.checkCollectionAccess(methodInvocationNode);
 			this.checkAllInvocation(methodInvocationNode.resolveMethodBinding(),methodInvocationNode.arguments(),node);
 		}
-		else if(node instanceof ParenthesizedExpression){
-			ParenthesizedExpression parenthesizedExpression = (ParenthesizedExpression)node;
-			String argumentCMType = this.getAnnotatedTypeForExpression(parenthesizedExpression.getExpression());
-			this.associateAttSetsWithExp(parenthesizedExpression, argumentCMType);
-		}
+
 		else if(node instanceof ReturnStatement){
 			ReturnStatement returnStatementNode = (ReturnStatement)node;
 			if(parsingMethodDelcMode){
@@ -470,91 +471,6 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 						//no error has been found in this branch: return cmtype should be valid
 						String thisReturnType = this.getAnnotatedTypeForExpression(returnStatementNode.getExpression());
 						assignReturnTypeForMethodInv(thisReturnType);
-					}
-				}
-			}
-		}
-		
-		//constructor calling
-		if(node instanceof ClassInstanceCreation){
-			ClassInstanceCreation cic = (ClassInstanceCreation)node;
-			this.checkAllInvocation(cic.resolveConstructorBinding(),cic.arguments(),node);
-		}
-		
-		if(node instanceof SuperConstructorInvocation){
-			SuperConstructorInvocation sci = (SuperConstructorInvocation)node;
-			this.checkAllInvocation(sci.resolveConstructorBinding(),sci.arguments(),node);
-		}
-		
-		if(node instanceof ConstructorInvocation){
-			ConstructorInvocation cic = (ConstructorInvocation)node;
-			this.checkAllInvocation(cic.resolveConstructorBinding(),cic.arguments(),node);
-		}
-		
-		
-		//error checking here
-		else if(node instanceof Assignment){
-			Assignment assignmentNode = (Assignment)node;
-			Expression leftExp = assignmentNode.getLeftHandSide();
-			Expression rightExp = assignmentNode.getRightHandSide();
-			String leftCMType = this.getAnnotatedTypeForExpression(leftExp);
-			String rightCMType = this.getAnnotatedTypeForExpression(rightExp);
-			Assignment.Operator operator = assignmentNode.getOperator();
-			if(operator.equals(Assignment.Operator.ASSIGN)){
-				if(leftCMType.equals(rightCMType)){
-					return;
-				}
-				if(!leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
-					String returnType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, rightCMType);
-					if(returnType != null){
-						return;
-					}
-				}
-				
-			    if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
-						!leftCMType.equalsIgnoreCase(rightCMType) && 
-						!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
-					addNewErrorMessage(node , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
-				}
-			}else if(operator.equals(Assignment.Operator.PLUS_ASSIGN)){
-				String returnType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Plus, rightCMType);
-				if(returnType != null){
-					if(returnType.equals(leftCMType)){
-						return;
-					}else{
-						String assignableType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, returnType);
-						if(assignableType != null){
-							return;
-						}else{
-							addNewErrorMessage(node , ErrorUtil.unknownCalculation(), DiagnosticMessage.WARNING);
-						}
-					}
-				}else{
-					if(leftCMType.length()>0 && rightCMType.length()>0){
-						addNewErrorMessage(assignmentNode , ErrorUtil.getUndeclaredCalculation(assignmentNode.toString()), DiagnosticMessage.WARNING);	
-					}
-				}
-			}
-			
-			//simple inference here
-			//if we are in units checking, do inference here 
-			if(this.checkingUnits){
-				if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
-						&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
-					if(leftExp instanceof SimpleName){
-						IBinding fbinding = ((SimpleName)leftExp).resolveBinding();
-						if(fbinding instanceof IVariableBinding){
-							IVariableBinding variableBinding = (IVariableBinding) fbinding;
-							if(variableBinding.getDeclaringMethod()!=null){
-								String methodDeclKey = variableBinding.getDeclaringMethod().getKey();
-								Map<String, String> variableMap = this.allVariableMap.get(methodDeclKey);
-								if(variableMap == null){
-									variableMap = new HashMap<String, String>();
-									this.allVariableMap.put(methodDeclKey, variableMap);
-								}
-								variableMap.put(variableBinding.getName(), rightCMType);	
-							}
-						}
 					}
 				}
 			}
@@ -609,55 +525,18 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				}
 			}
 		}
-		
-		else if(node instanceof PrefixExpression){
-			PrefixExpression prefixExp = (PrefixExpression)node;
-			PrefixExpression.Operator operator = prefixExp.getOperator();
-			String argumentCMType = this.getAnnotatedTypeForExpression(prefixExp.getOperand());
-			String prefixExpressionType = argumentCMType;
-			if(prefixExpressionType.equals(RWType.TypeLess)){
-				associateAttSetsWithExp(prefixExp, prefixExpressionType);
-				return;
-			}
-			String operatorType = "";
-			if(operator.equals(PrefixExpression.Operator.MINUS)){
-				operatorType = RWTypeRuleCategory.Unary_minus;
-
-			}else if(operator.equals(PrefixExpression.Operator.PLUS)){
-				operatorType = RWTypeRuleCategory.Unary_plus;
-			}
-			String returnType = this.rwtRulesManager.getReturnType(this.currentProject, prefixExpressionType, operatorType, RWType.TypeLess);				
-			if(returnType != null ){
-				associateAttSetsWithExp(prefixExp, returnType);	
-			}else{
-				associateAttSetsWithExp(prefixExp, prefixExpressionType);
-			}
-		}
-		
-		else if(node instanceof ConditionalExpression){
-			ConditionalExpression conditionalExpression = (ConditionalExpression)node;
-			Expression thenExp = conditionalExpression.getThenExpression();
-			Expression elseExp = conditionalExpression.getElseExpression();
-			String thenAnnotatedType = this.getAnnotatedTypeForExpression(thenExp);
-			String elseAnnotatedType = this.getAnnotatedTypeForExpression(elseExp);
-		}
 	}
-	
-//	private void checkCollectionAccess(MethodInvocation methodInvocationNode) {
-//		IMethodBinding iMethodBinding = methodInvocationNode.resolveMethodBinding();
-//		//check for list access
-//		if(iMethodBinding.getMethodDeclaration().getName().equals("get")) {
-//			if(iMethodBinding.getDeclaringClass().getBinaryName().equals("java.util.ArrayList") ||
-//   			   iMethodBinding.getDeclaringClass().getBinaryName().equals("java.util.List")){
-//				String dimensionInfo = this.getDimensionInfoForExpression(methodInvocationNode.getExpression());
-//				String unitInfo = this.getUnitsInfoForExpression(methodInvocationNode.getExpression());
-//				addTypeInfo(methodInvocationNode, dimensionInfo, unitInfo, this.getAnnotatedTypeForExpression(methodInvocationNode.getExpression()));
-//			}
-//		}
-//	}
 
+	/**
+	 * polymorphic function to deal with functions without annotations ; 
+	 * @param targetedCompilationUnit
+	 * @param methodInvocationNode
+	 * @param methodDeclKey
+	 * @param argument_cmtypes
+	 * @return
+	 */
+	/*
 	private String handleGenericMethod(CompilationUnit targetedCompilationUnit, MethodInvocation methodInvocationNode, String methodDeclKey, String[] argument_cmtypes){
-		//without annotated cm type, polymorphic
 		CTypeCheckerVisitor methodDeclVisitor = new CTypeCheckerVisitor(this.rwtRulesManager, targetedCompilationUnit, this.checkingUnits);
 		methodDeclVisitor.targetedMethodDeclKey = methodDeclKey;
 		methodDeclVisitor.parsingMethodDelcMode = true;
@@ -702,40 +581,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}
 		return methodDeclVisitor.returnCMTypesForTargetedMethod;
 	}
-	
-	private void organizeInvAttValMap(HashSet<String> invariants, HashMap<String, ArrayList<String>> invAttValMap){
-		for(String invariant : invariants){
-			if(invariant.split("=")[1].indexOf("(")==-1){
-				//"unit(lat1)=radians";
-				String leftPart = invariant.split("=")[0];
-				int pos = leftPart.indexOf("(");
-				String varName = FileAnnotations.getRidOfParenthesis(leftPart.substring(pos));
-				String attName = invariant.substring(0, pos);
-				if(!invAttValMap.containsKey(varName)){
-					invAttValMap.put(varName, new ArrayList<String>());
-				}
-				invAttValMap.get(varName).add(attName);
-			}else{
-				//"unit(lat1)=unit(lat2)"
-				String leftPart = invariant.split("=")[0];
-				int pos1 = leftPart.indexOf("(");
-				String var1 = FileAnnotations.getRidOfParenthesis(leftPart.substring(pos1));
-				String att1 = leftPart.substring(0, pos1);
-				if(!invAttValMap.containsKey(var1)){
-					invAttValMap.put(var1, new ArrayList<String>());
-				}
-				invAttValMap.get(var1).add(att1);
-				String rightPart = invariant.split("=")[1];
-				int pos2 = rightPart.indexOf("(");
-				String var2 = FileAnnotations.getRidOfParenthesis(rightPart.substring(pos2));
-				String att2 = rightPart.substring(0, pos2);
-				if(!invAttValMap.containsKey(var2)){
-					invAttValMap.put(var2, new ArrayList<String>());
-				}
-				invAttValMap.get(var2).add(att2);
-			}
-		}
-	}
+	*/
 	
 	private void checkAllInvocation(IMethodBinding iMethodBinding, List arguments, ASTNode node){
 		String currentUnitPath = this.compilationUnit.getJavaElement().getPath().toString();
@@ -772,90 +618,6 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				|| fileAnnotations.getAnnotations().get(bodyDeclKey)==null
 				|| fileAnnotations.getAnnotations().get(bodyDeclKey).size()==0){
 			return;		
-		}
-		
-		MethodDeclaration methodDecl = (MethodDeclaration)declaringNode;
-		final String[] argumentCMTypes = new String[arguments.size()];
-
-		//prepare for checking invariants
-		HashSet<String> invariants = fileAnnotations.getInvariantsOfBodyDecl(bodyDeclKey);
-		HashMap<String, ArrayList<String>> valToRecordMap = new HashMap<String, ArrayList<String>>();
-		organizeInvAttValMap(invariants,valToRecordMap);
-		
-		//for checking invariants
-		HashMap<String, String> invAttValMap = new HashMap<String, String>();
-		
-		for (int i=0;i<arguments.size();i++){
-			Expression exp = (Expression)(arguments.get(i));
-			String argumentCMType = this.getAnnotatedTypeForExpression(exp);
-			argumentCMTypes[i] = argumentCMType;
-			SingleVariableDeclaration parameterDeclaration = (SingleVariableDeclaration)(methodDecl.parameters().get(i));
-			String parameterName = parameterDeclaration.getName().getIdentifier();
-			String parameterTypeName = fileAnnotations.getCMTypeInBodyDecl(bodyDeclKey, parameterName);
-			if(parameterTypeName == null || parameterTypeName.length()==0){
-				continue;
-			}
-			RWType parameterCMtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, parameterTypeName);
-			if(parameterCMtype!=null){
-				String parameterCMtypeAttSet = parameterCMtype.getEnabledAttributeSet();
-				if(checkingUnits){
-					parameterCMtypeAttSet = parameterCMtype.getUnitsAttribute();
-				}
-				if(argumentCMType.length()==0){
-					//do we add error here? when we don't have the type information for the arguments
-					//addNewErrorMessage(node , ErrorUtil.methodArgumentError(), DiagnosticMessage.WARNING);
-					//break;
-					continue;
-				}
-				if(!parameterCMtypeAttSet.equals(argumentCMType)){
-					String tempReturnType = rwtRulesManager.getReturnType(currentProject, parameterCMtypeAttSet, RWTypeRuleCategory.Assignable,  argumentCMType);
-					if(tempReturnType==null){
-						addNewErrorMessage(node , ErrorUtil.methodArgumentError(), DiagnosticMessage.ERROR);
-						break;
-					}
-				}	
-			}
-			//save contenst for checking invariants
-			if(valToRecordMap.containsKey(parameterName)){
-				//get the value of the attributes
-				String attStr = argumentCMTypes[i];
-				//get the value of the needed attribute
-				if(attStr.length()>0){
-					 String[] attVals = attStr.split(";");
-					 ArrayList<String> atts = valToRecordMap.get(parameterName);
-					 for(String attValCombo : attVals){
-						 if(attValCombo.split("=").length==2){
-							 String attName = attValCombo.split("=")[0];
-							 String attVal = attValCombo.split("=")[1];
-							 if(atts.contains(attName)){
-								 invAttValMap.put(attName+"("+parameterName+")", attVal);
-							 }
-						 }
-					 }
-				}
-			}
-		}
-		
-		//check invariants
-		for(String invariant :invariants){
-			if(invariant.split("=")[1].indexOf("(")==-1){
-				//"unit(lat1)=radians";
-				String leftPart = invariant.split("=")[0];
-				String rightPart = invariant.split("=")[1];
-				if(invAttValMap.containsKey(leftPart) && !invAttValMap.get(leftPart).equals(rightPart)){
-					//invariant is being violated
-					addNewErrorMessage(node, ErrorUtil.invariantViolation(invariant),  DiagnosticMessage.ERROR);
-				}
-			}else{
-				//"unit(lat1)=unit(lat2)"
-				String leftPart = invariant.split("=")[0];
-				String rightPart = invariant.split("=")[1];
-				if(invAttValMap.containsKey(leftPart) && invAttValMap.containsKey(rightPart)){
-					if(!invAttValMap.get(leftPart).equals(invAttValMap.get(rightPart))){
-						addNewErrorMessage(node, ErrorUtil.invariantViolation(invariant),  DiagnosticMessage.ERROR);
-					}
-				}
-			}
 		}
 		
 		if(node instanceof MethodInvocation){
@@ -973,9 +735,9 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}
 	}
 	
-	private void checkInfixExpression(InfixExpression infixExpression){
-		Expression leftEP = infixExpression.getLeftOperand();			
-		Expression rightEP = infixExpression.getRightOperand();
+	private void checkInfixExpression(IASTBinaryExpression infixExpression){
+		IASTExpression leftEP = infixExpression.getOperand1();			
+		IASTExpression rightEP = infixExpression.getOperand2();
 		if(leftEP.resolveTypeBinding().getBinaryName().equals("java.lang.String") 
 				|| rightEP.resolveTypeBinding().getBinaryName().equals("java.lang.String")){
 			return;
@@ -990,28 +752,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
 					this.associateAttSetsWithExp(infixExpression, RWType.UnknownType);
 				}
-		Operator thisop = infixExpression.getOperator();
-		if((thisop.equals(InfixExpression.Operator.LESS))
-		||(thisop.equals(InfixExpression.Operator.LESS_EQUALS))
-		||(thisop.equals(InfixExpression.Operator.GREATER))
-		||(thisop.equals(InfixExpression.Operator.GREATER_EQUALS))
-		||(thisop.equals(InfixExpression.Operator.EQUALS))
-		||(thisop.equals(InfixExpression.Operator.NOT_EQUALS))
-		){
-			if(CMTypeAnnotatedTypeOne.equals(CMTypeAnnotatedTypeTwo)||
-					CMTypeAnnotatedTypeOne.equals(RWType.UnknownType)||
-					CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-				return;
-			}else{
-				String returnType = null;
-				returnType = this.rwtRulesManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Comparable, CMTypeAnnotatedTypeTwo);
-				if(returnType != null ){
-					return;
-				}else{
-					addNewErrorMessage(infixExpression , ErrorUtil.typeInconsistency(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo), DiagnosticMessage.ERROR);
-				}
-			}
-		}		
+
 		if(thisop.equals(InfixExpression.Operator.REMAINDER)){
 			check_Remander_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
 		}
@@ -1170,16 +911,49 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}
 	}
 
-	public String getAnnotatedTypeForExpression(Expression exp){
-		if(annotatedTypeTableForExpression.get(exp) != null 
-				&& 
-				annotatedTypeTableForExpression.get(exp).length()>0){
+	public String getAnnotatedTypeForExpression(IASTNode exp){
+		if(rwtypeTableForExp.get(exp) != null && 
+				rwtypeTableForExp.get(exp).length()>0){
 			this.accessRWT = true;
-			return annotatedTypeTableForExpression.get(exp);
+			return rwtypeTableForExp.get(exp);
 		}else{
-			annotatedTypeTableForExpression.put(exp, RWType.TypeLess);
+			rwtypeTableForExp.put(exp, RWType.TypeLess);
 			return RWType.TypeLess;
 		}
+	}
+
+	private void associateAttSetsWithExp(IASTNode astNode, String annotatedType){
+		if(annotatedType != null && annotatedType.length()>0){
+			RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedType);
+			if(cmtype!=null){
+				String rwttypeAttSet =  cmtype.getEnabledAttributeSet();
+				if(checkingUnits){
+					rwttypeAttSet = cmtype.getUnitsAttribute();	
+				}
+				this.rwtypeTableForExp.put(astNode, rwttypeAttSet);
+				if(!CTypeCheckerVisitor.cmtypeHashSet.contains(annotatedType)){
+					CTypeCheckerVisitor.cmtypeHashSet.add(annotatedType);
+				}
+			}else{
+				this.rwtypeTableForExp.put(astNode, annotatedType);	
+			}
+			if(annotatedType.length()>0){
+				this.accessRWT=true;
+			}
+		}
+	}
+	
+	public void setErrorReports(ArrayList<DiagnosticMessage> errorReports) {
+		this.errorReports = errorReports;
+	}
+
+	private void addNewErrorMessage(IASTNode node, String errorMessageDetail, String errorType){
+		DiagnosticMessage errorMessage = new DiagnosticMessage();
+		errorMessage.setMessageType(errorType);
+		errorMessage.setMessageDetail(errorMessageDetail);
+		errorMessage.setContextInfo("");
+		errorMessage.setcErrorNode(node);
+		this.errorReports.add(errorMessage);
 	}
 	
 	public boolean isAccessRWT() {
@@ -1190,132 +964,4 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		return errorReports;
 	}
 	
-	@Override
-	public void postVisit(ASTNode node) {
-		if(parsingMethodDelcMode){
-			if(this.fileAnnotations.getAnnotations().size() == 0){
-				return;
-			}
-		}
-		EndVisitNode(node);
-		
-		//court the variables
-		if(node instanceof SingleVariableDeclaration){
-			variableCourt ++;
-//			System.out.println(node);
-		}
-		
-		if(node instanceof NumberLiteral){
-			variableCourt ++;
-//			System.out.println(node);
-		}
-		
-		if(node instanceof FieldDeclaration){
-			variableCourt ++;
-//			System.out.println(node);
-		}
-		
-		if(node instanceof MethodDeclaration){
-			variableCourt ++;
-//			System.out.println(node);
-		}
-		
-		if(node instanceof VariableDeclarationStatement){
-			VariableDeclarationStatement variableDeclarationStatementNode = (VariableDeclarationStatement)node;
-			variableCourt = variableCourt + variableDeclarationStatementNode.fragments().size();
-//			System.out.println(node);
-		}
-	}
-	
-	public void setErrorReports(ArrayList<DiagnosticMessage> errorReports) {
-		this.errorReports = errorReports;
-	}
-
-	private void addNewErrorMessage(ASTNode node, String errorMessageDetail, String errorType){
-		DiagnosticMessage errorMessage = new DiagnosticMessage();
-		errorMessage.setMessageType(errorType);
-		errorMessage.setMessageDetail(errorMessageDetail);
-		errorMessage.setContextInfo("");
-		errorMessage.setErrorNode(node);
-		this.errorReports.add(errorMessage);
-		if(insideBranch){
-			//in a branch, error found
-			errorInsideBranch = true;
-		}
-	}
-	
-	private void associateAttSetsWithExp(Expression exp, String annotatedType){
-		if(annotatedType != null){
-			RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, annotatedType);
-			if(cmtype!=null){
-				String rwttypeAttSet =  cmtype.getEnabledAttributeSet();
-				if(checkingUnits){
-					rwttypeAttSet = cmtype.getUnitsAttribute();	
-				}
-				this.annotatedTypeTableForExpression.put(exp, rwttypeAttSet);
-				if(!CTypeCheckerVisitor.cmtypeHashSet.contains(annotatedType)){
-					CTypeCheckerVisitor.cmtypeHashSet.add(annotatedType);
-				}
-			}else{
-				this.annotatedTypeTableForExpression.put(exp, annotatedType);	
-			}
-			if(annotatedType.length()>0){
-				this.accessRWT=true;
-			}
-		}
-	}
-	public ArrayList<Expression> getMarkingNodes() {
-		return markingNodes;
-	}
-	
-	private void assignReturnTypeForMethodInv(String newReturnType){
-		if(newReturnType.equals(RWType.TypeLess)){
-			return;
-		}
-		if(this.returnCMTypesForTargetedMethod.length()>0  && !this.returnCMTypesForTargetedMethod.equals(newReturnType) ){
-			this.methodInvError = true;
-			return;
-		}
-		if(this.returnCMTypesForTargetedMethod.length()== 0){
-			this.returnCMTypesForTargetedMethod = newReturnType;
-		}
-	}
-	
-	private void setInvariantVal(String variable, String typeName, String bodyDeclKey){
-		if(typeName == null || typeName.length() == 0){
-			return;
-		}
-		if(allInvAttToRecordMap.containsKey(bodyDeclKey) && allInvAttToRecordMap.get(bodyDeclKey).containsKey(variable)){
-			HashSet<String> invAttsToRecord = allInvAttToRecordMap.get(bodyDeclKey).get(variable);
-			RWType cmtype = RWTSystemUtil.getCMTypeFromTypeName(currentProject, typeName);
-			if(cmtype!=null){
-				for(RWT_Attribute att : cmtype.getSemanticType().getSemanticTypeAttributes()){
-					if(invAttsToRecord.contains(att.getAttributeName())){
-						String key = att.getAttributeName()+"("+variable+")";
-						String val = att.getAttributeValue();
-						if(!allInvAttValMap.containsKey(bodyDeclKey)){
-							allInvAttValMap.put(bodyDeclKey, new HashMap<String, String>());
-						}
-						this.allInvAttValMap.get(bodyDeclKey).put(key, val);
-					}
-				}
-			}else{
-				String[] atts = typeName.split(";");
-				for(String attValCombo : atts){
-					if(attValCombo.split("=").length==2){
-						String attName = attValCombo.split("=")[0];
-						String attVal = attValCombo.split("=")[1];
-						if(invAttsToRecord.contains(attName)){
-							String key = attName+"("+variable+")";
-							String val = attVal;
-							if(!allInvAttValMap.containsKey(bodyDeclKey)){
-								allInvAttValMap.put(bodyDeclKey, new HashMap<String, String>());
-							}
-							this.allInvAttValMap.get(bodyDeclKey).put(key, val);
-						}
-					}
-				}
-			}
-		}
-	}
 }

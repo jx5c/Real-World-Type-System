@@ -10,6 +10,9 @@ import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.part.*;
+import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
+import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.parser.IToken;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.jface.viewers.*;
@@ -63,7 +66,7 @@ public class DiagnoseView extends ViewPart {
 			DiagnosticMessage errorMessage = (DiagnosticMessage)(obj); 
 			switch (index) {
 			case 0:
-				return errorMessage.getErrorNode().toString();
+				return errorMessage.getJavaErrorNode().toString();
 			case 1:
 				return errorMessage.getMessageType();
 			case 2:
@@ -125,7 +128,8 @@ public class DiagnoseView extends ViewPart {
 				Object obj = ((IStructuredSelection)selection).getFirstElement();
 				DiagnosticMessage errorMessage = (DiagnosticMessage)(obj);
 				if(errorMessage != null){
-					ASTNode thisNode = errorMessage.getErrorNode();
+					//if this is a error message for Java error checking
+					ASTNode thisNode = errorMessage.getJavaErrorNode();
 					if (thisNode != null) {
 						if(textControl != null){
 							textControl.setSelectionRange(thisNode.getStartPosition(),thisNode.getLength());
@@ -133,7 +137,24 @@ public class DiagnoseView extends ViewPart {
 							StyleRange redRange = createRange(thisNode.getStartPosition(), thisNode.getLength(), redColor);
 							textControl.setStyleRange(redRange);
 						}
-					}	
+					}//if this is a error message for C error checking
+					else if(errorMessage.getcErrorNode()!=null){
+						IASTNode cASTNode = errorMessage.getcErrorNode();
+						if(textControl != null){
+							IToken token;
+							try {
+								token = cASTNode.getLeadingSyntax();
+								textControl.setSelectionRange(token.getOffset(),token.getLength());
+								textControl.setTopIndex(textControl.getLineAtOffset(token.getOffset()));
+								StyleRange redRange = createRange(token.getOffset(), token.getLength(), redColor);
+								textControl.setStyleRange(redRange);
+							} catch (UnsupportedOperationException e) {
+								e.printStackTrace();
+							} catch (ExpansionOverlapsBoundaryException e) {
+								e.printStackTrace();
+							}
+						}
+					}
 				}
 			}
 		});
@@ -235,62 +256,7 @@ public class DiagnoseView extends ViewPart {
 
 	public void setTextControl(StyledText textControl) {
 		this.textControl = textControl;
-//		this.exampleEditingSupport.setTextControl(textControl);
 	}
-	/*
-	class ExampleEditingSupport extends EditingSupport {
-	    
-		private TableViewer tableViewer;
-		private StyledText textControl;
-		
-		public StyledText getTextControl() {
-			return textControl;
-		}
-
-		public void setTextControl(StyledText textControl) {
-			this.textControl = textControl;
-		}
-
-		public ExampleEditingSupport(TableViewer viewer) {
-	        super(viewer);
-	        this.tableViewer = viewer;
-	    }
-
-	    @Override
-	    protected CellEditor getCellEditor(Object o) {
-	        return new CheckboxCellEditor(null, SWT.CHECK | SWT.READ_ONLY);
-	    }
-
-	    @Override
-	    protected boolean canEdit(Object o) {
-	        return true;
-	    }
-	    @Override
-	    protected Object getValue(Object o) {
-	    	DiagnosticMessage diagnosticMessage = (DiagnosticMessage) o;
-	        return diagnosticMessage.isPermitted();
-	    }
-
-	    @Override
-	    protected void setValue(Object element, Object value) {
-	    	DiagnosticMessage diagnosticMessage = (DiagnosticMessage) element;
-	    	diagnosticMessage.setPermitted((Boolean) value);
-	    	if(textControl != null){
-	    		ASTNode selectedNode = diagnosticMessage.getErrorNode();
-	    		this.textControl.setSelection(0,0);
-	    		if((Boolean)value){	    			
-	    			this.textControl.replaceStyleRanges(selectedNode.getStartPosition(), selectedNode.getLength(), new StyleRange[0]);
-	    		}
-	    		else{
-	    			Color redColor = tableViewer.getTable().getShell().getDisplay().getSystemColor(SWT.COLOR_RED);
-	    			StyleRange redRange = createRange(selectedNode.getStartPosition(), selectedNode.getLength(), redColor);
-	    			this.textControl.setStyleRange(redRange);
-	    		}
-	    	}
-	        tableViewer.refresh();
-	    } 
-	}
-	*/
 	
 	static private StyleRange createRange(int start,int length,Color color) {
 		StyleRange styleRange = new StyleRange();

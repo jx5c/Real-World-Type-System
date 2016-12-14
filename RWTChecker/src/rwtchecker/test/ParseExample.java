@@ -6,6 +6,7 @@ import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.DOMException;
 import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
 import org.eclipse.cdt.core.dom.ast.IASTAttribute;
+import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
@@ -25,6 +26,7 @@ import org.eclipse.cdt.core.dom.ast.IType;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.cpp.ICPPASTVisibilityLabel;
 import org.eclipse.cdt.core.dom.ast.gnu.cpp.GPPLanguage;
+import org.eclipse.cdt.core.model.CoreModel;
 import org.eclipse.cdt.core.parser.DefaultLogService;
 import org.eclipse.cdt.core.parser.FileContent;
 import org.eclipse.cdt.core.parser.IParserLogService;
@@ -32,14 +34,19 @@ import org.eclipse.cdt.core.parser.IScannerInfo;
 import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
 import org.eclipse.cdt.core.parser.ScannerInfo;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTBinaryExpression;
+import org.eclipse.cdt.internal.core.dom.parser.c.CFunction;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTBinaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTDeclarator;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFunctionCallExpression;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTFunctionDeclarator;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTIdExpression;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTInitializerExpression;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTName;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTTranslationUnit;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPBasicType;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPFunction;
+import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPMethod;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPVariable;
 import org.eclipse.cdt.internal.core.model.BinaryElement;
 import org.eclipse.cdt.internal.core.pdom.dom.FindBinding;
@@ -48,18 +55,21 @@ import org.eclipse.core.runtime.CoreException;
 public class ParseExample {
 
 	public static void main(String[] args) throws CoreException{
-		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\Develop\\RCPWorkspace\\cProject\\Hello.c");
+		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\develop\\rcpworkspace\\testC\\Hello.c");
 
 		Map definedSymbols = new HashMap();
 		String[] includePaths = new String[0];
 		IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
 		IParserLogService log = new DefaultLogService();
 		
+//		ITranslationUnit tu = (ITranslationUnit) CoreModel.getDefault().create(myIFile);
+//		IASTTranslationUnit ias = tu.getAST();
+		
 		IncludeFileContentProvider emptyIncludes = IncludeFileContentProvider.getEmptyFilesProvider();
 		
-		int opts = 8;
+		int opts = GPPLanguage.getDefault().OPTION_IS_SOURCE_UNIT;
 		IASTTranslationUnit translationUnit = GPPLanguage.getDefault().getASTTranslationUnit(fileContent, info, emptyIncludes, null, opts, log);
-		
+//		translationUnit.
 		IASTPreprocessorIncludeStatement[] includes = translationUnit.getIncludeDirectives();
 		for (IASTPreprocessorIncludeStatement include : includes) {
 			System.out.println("include - " + include.getName());
@@ -73,9 +83,16 @@ public class ParseExample {
 	
 		ASTVisitor visitor = new ASTVisitor()
 		{
-			private HashMap<IBinding, String> rwtypeTableForExp = new HashMap<IBinding, String>();
+			private HashMap<IASTNode, String> expToRWType = new HashMap<IASTNode, String>();
 			
 			public int leave(IASTExpression exp){
+				
+				if(exp instanceof IASTCastExpression){
+					IASTCastExpression caseExp = (IASTCastExpression)exp;
+					System.out.println(caseExp.getOperator());
+					System.out.println(caseExp.getOperand().getRawSignature());
+				}
+				
 				IType expType = exp.getExpressionType();
 				IASTNode node = exp.getOriginalNode();
 				System.out.println(node);
@@ -89,7 +106,19 @@ public class ParseExample {
 					CPPASTBinaryExpression binaryExp = (CPPASTBinaryExpression)node;
 					System.out.println(binaryExp.getOperand1().getOriginalNode().getRawSignature());
 //					System.out.println(rwtypeTableForExp.get());
-					System.out.println(rwtypeTableForExp.get(binaryExp.getOperand1().getOriginalNode().));
+//					if(binaryExp.getOperand1() instanceof CPPASTIdExpression){
+//						IASTExpression expToRWType = ((CPPASTIdExpression)binaryExp.getOperand1()).getName();
+//						CPPASTIdExpression exptemp = (CPPASTIdExpression)(binaryExp.getOperand1());
+//						System.out.println(expToRWType.get(binaryExp.getOperand1()));	
+//					}
+					System.out.println("operand one is: "+expToRWType.get(binaryExp.getOperand1()));
+					System.out.println("operand two is: "+expToRWType.get(binaryExp.getOperand2()));
+				}
+				
+				if(node instanceof CPPASTFunctionCallExpression){
+					CPPASTFunctionCallExpression functionCall = (CPPASTFunctionCallExpression)(node);
+					
+					System.out.println(expToRWType.get(functionCall.getFunctionNameExpression()));
 				}
 				
 				return 3;
@@ -99,6 +128,11 @@ public class ParseExample {
 			public int visit(IASTName name){
 				System.out.println("original node is: "+name.getOriginalNode());
 				IBinding fbinding = name.resolveBinding();
+				
+				System.out.println(name.getOriginalNode().getFileLocation());
+				if(name.getParent() instanceof CPPASTIdExpression){
+					expToRWType.put(name.getParent(), "rwtype:"+name.toString());
+				}
 				if (fbinding instanceof CPPVariable){
 					IASTNode astNode = name.getOriginalNode();
 					CPPVariable varName = (CPPVariable)fbinding;
@@ -109,7 +143,8 @@ public class ParseExample {
 						if(basicType.getKind() == Kind.eInt || basicType.getKind() == Kind.eInt128 ){
 //							IASTExpression exp = (IASTExpression )(name.getOriginalNode()); 
 //							rwtypeTableForExp.put(name, "RWT_type_"+exp);
-							rwtypeTableForExp.put(name.resolveBinding(), "RWT_type_"+name);
+//							rwtypeTableForExp.put(name.resolveBinding(), "RWT_type_"+name);
+//							expToRWType.put(astNode, "RWT_type_"+name);
 //							System.out.println("Integer");
 						}else if(basicType.getKind() == Kind.eFloat ){
 //							System.out.println("float");
@@ -120,7 +155,9 @@ public class ParseExample {
 					if(aType instanceof CPPArrayType){
 						System.out.println("array");
 					}
-					
+				}else if(fbinding instanceof CFunction || fbinding instanceof CPPFunction){
+					CPPFunction f = (CPPFunction)fbinding;
+					System.out.println(f.getDefinition().getFileLocation());
 				}
 				
 				
@@ -130,31 +167,34 @@ public class ParseExample {
 				}
 				return 3;
 			}
-			public int leave(IASTDeclaration declaration){
-				System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
-				
+			public int visit(IASTDeclaration declaration){
 				if ((declaration instanceof IASTSimpleDeclaration)) {
 					IASTSimpleDeclaration ast = (IASTSimpleDeclaration)declaration;
-					try{
-						System.out.println("--- type: " + ast.getSyntax() + " (childs: " + ast.getChildren().length + ")");
-						IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
-						System.out.println("------- typedef: " + typedef);
-						IASTNode[] children = typedef.getChildren();
-						if ((children != null) && (children.length > 0))
-						System.out.println("------- typedef-name: " + children[0].getRawSignature());
-						}
-						catch (ExpansionOverlapsBoundaryException e){
-							e.printStackTrace();
-				        }
 					IASTDeclarator[] declarators = ast.getDeclarators();
 					for (IASTDeclarator iastDeclarator : declarators) {
-						System.out.println("iastDeclarator > " + iastDeclarator.getName());
-						System.out.println(rwtypeTableForExp.get(iastDeclarator.getName().resolveBinding()));
+						expToRWType.put(iastDeclarator.getName(), "rwtype:test");
+					}
+//				
+//					IASTAttribute[] attributes = ast.getAttributes();
+//					for (IASTAttribute iastAttribute : attributes) {
+//						System.out.println("iastAttribute > " + iastAttribute);
+//					}
+				}
+				return 3;
+			}
+			
+			public int leave(IASTDeclaration declaration){
+				if ((declaration instanceof IASTSimpleDeclaration)) {
+					IASTSimpleDeclaration ast = (IASTSimpleDeclaration)declaration;
+					IASTDeclarator[] declarators = ast.getDeclarators();
+					for (IASTDeclarator iastDeclarator : declarators) {
+//						System.out.println(rwtypeTableForExp.get(iastDeclarator.getName().resolveBinding()));
+						System.out.println(expToRWType.get(iastDeclarator.getName()));
 					}
 				
 					IASTAttribute[] attributes = ast.getAttributes();
 					for (IASTAttribute iastAttribute : attributes) {
-						System.out.println("iastAttribute > " + iastAttribute);
+//						System.out.println("iastAttribute > " + iastAttribute);
 					}
 				}
 				if ((declaration instanceof IASTFunctionDefinition)) {
@@ -195,7 +235,6 @@ public class ParseExample {
 		};
 		visitor.shouldVisitNames = true;
 		visitor.shouldVisitDeclarations = true;
-		
 		visitor.shouldVisitDeclarators = true;
 		visitor.shouldVisitAttributes = true;
 		visitor.shouldVisitStatements = true;

@@ -1042,7 +1042,7 @@ public class MethodInvocationVisitor extends ASTVisitor {
 		errorMessage.setMessageType(errorType);
 		errorMessage.setMessageDetail(errorMessageDetail);
 		errorMessage.setContextInfo("");
-		errorMessage.setErrorNode(node);
+		errorMessage.setJavaErrorNode(node);
 		this.errorReports.add(errorMessage);
 		if(insideBranch){
 			//in a branch, error found

@@ -753,7 +753,7 @@ public class RWTView extends ViewPart {
 		}
 	}
 	
-	private String makeKeyForDeclBodies(String bodyOwner, String varName ){
+	public static String makeKeyForDeclBodies(String bodyOwner, String varName ){
 		return bodyOwner + "@" + varName;
 	}
 	
@@ -1066,7 +1066,7 @@ public class RWTView extends ViewPart {
 		if(compilationResult!=null){
 				expandAllChildElements(currentJavaEditor,compilationResult);
 				for (int i=0; i < CMTypeCheckingResults.size(); ++i) {
-					ASTNode node = CMTypeCheckingResults.get(i).getErrorNode();
+					ASTNode node = CMTypeCheckingResults.get(i).getJavaErrorNode();
 										
 					StyleRange errorRange = createRange(compilationResult.getExtendedStartPosition(node),
 						compilationResult.getExtendedLength(node),redColor);

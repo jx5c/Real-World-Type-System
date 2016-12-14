@@ -720,7 +720,7 @@ public class IntervalAnalysisVisitor extends ASTVisitor {
 		errorMessage.setMessageType(errorType);
 		errorMessage.setMessageDetail(errorMessageDetail);
 		errorMessage.setContextInfo("");
-		errorMessage.setErrorNode(node);
+		errorMessage.setJavaErrorNode(node);
 		this.errorReports.add(errorMessage);
 	}
 	
