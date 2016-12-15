@@ -10,6 +10,7 @@ import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
@@ -33,6 +34,7 @@ import org.eclipse.cdt.core.parser.IParserLogService;
 import org.eclipse.cdt.core.parser.IScannerInfo;
 import org.eclipse.cdt.core.parser.IncludeFileContentProvider;
 import org.eclipse.cdt.core.parser.ScannerInfo;
+import org.eclipse.cdt.internal.core.dom.parser.ProblemBinding;
 import org.eclipse.cdt.internal.core.dom.parser.c.CASTBinaryExpression;
 import org.eclipse.cdt.internal.core.dom.parser.c.CFunction;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTBinaryExpression;
@@ -55,7 +57,7 @@ import org.eclipse.core.runtime.CoreException;
 public class ParseExample {
 
 	public static void main(String[] args) throws CoreException{
-		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\develop\\rcpworkspace\\testC\\Hello.c");
+		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\Develop\\RCPWorkspace\\cProject\\Hello.c");
 
 		Map definedSymbols = new HashMap();
 		String[] includePaths = new String[0];
@@ -126,7 +128,11 @@ public class ParseExample {
 			}
 			
 			public int visit(IASTName name){
+
 				System.out.println("original node is: "+name.getOriginalNode());
+				System.out.println(name.getBinding());
+				System.out.println(name.getFileLocation().getFileName());
+				System.out.println(name.getParent().getParent() instanceof CPPASTFunctionCallExpression);
 				IBinding fbinding = name.resolveBinding();
 				
 				System.out.println(name.getOriginalNode().getFileLocation());
@@ -158,6 +164,15 @@ public class ParseExample {
 				}else if(fbinding instanceof CFunction || fbinding instanceof CPPFunction){
 					CPPFunction f = (CPPFunction)fbinding;
 					System.out.println(f.getDefinition().getFileLocation());
+				}else if(fbinding instanceof ProblemBinding){
+					if(name.getParent() instanceof IASTIdExpression){
+						IASTIdExpression idExp = (IASTIdExpression)(name.getParent());
+						if(idExp.getParent()!= null && idExp.getParent() instanceof IASTFunctionCallExpression){
+							IASTFunctionCallExpression functionCallExp = (IASTFunctionCallExpression)(idExp.getParent());
+							//functionCallExp.getFileLocation()
+							System.out.println(functionCallExp.getFileLocation());
+						}
+					}
 				}
 				
 				
@@ -240,6 +255,10 @@ public class ParseExample {
 		visitor.shouldVisitStatements = true;
 		visitor.shouldVisitTypeIds = true;
 		visitor.shouldVisitExpressions = true;
+		visitor.shouldVisitAmbiguousNodes = true;
+		
+		
+		
 		translationUnit.accept(visitor);
 	}
 	

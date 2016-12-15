@@ -12,6 +12,7 @@ import java.util.Set;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.DOMException;
 import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
+import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTAttribute;
 import org.eclipse.cdt.core.dom.ast.IASTBinaryExpression;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
@@ -20,6 +21,8 @@ import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFieldReference;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
+import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
@@ -207,19 +210,14 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			//for  a binary expression.  it has different operators that need to be handled differently
 			IASTBinaryExpression binaryExp = (IASTBinaryExpression)exp;
 			this.checkBinaryExpression(binaryExp);
+		}else if(exp instanceof IASTFunctionCallExpression){
+			IASTFunctionCallExpression functionCallExp = (IASTFunctionCallExpression)exp;
+			this.associateAttSetsWithExp(exp, this.getAnnotatedTypeForExpression(functionCallExp.getFunctionNameExpression()));
+			this.checkMathMethodInvocation(functionCallExp);
+			this.checkAllInvocation(functionCallExp);
+		}else if(exp instanceof IASTArraySubscriptExpression){
+			//array access
 		}
-		
-		IType expType = exp.getExpressionType();
-		IASTNode node = exp.getOriginalNode();
-		System.out.println(node);
-		if(node instanceof CASTBinaryExpression){
-			CASTBinaryExpression binaryExp = (CASTBinaryExpression)node;
-			System.out.println(binaryExp.getOperand1());
-			System.out.println(binaryExp.getOperand2());
-		}
-		
-		
-		
 		return 3;
 	}
 	
@@ -228,30 +226,20 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 	
 		if ((declaration instanceof IASTSimpleDeclaration)) {
 			IASTSimpleDeclaration ast = (IASTSimpleDeclaration)declaration;
-			try{
-				System.out.println("--- type: " + ast.getSyntax() + " (childs: " + ast.getChildren().length + ")");
-				IASTNode typedef = ast.getChildren().length == 1 ? ast.getChildren()[0] : ast.getChildren()[1];
-		             System.out.println("------- typedef: " + typedef);
-		             IASTNode[] children = typedef.getChildren();
-		             if ((children != null) && (children.length > 0))
-		               System.out.println("------- typedef-name: " + children[0].getRawSignature());
-			}catch (ExpansionOverlapsBoundaryException e){
-				e.printStackTrace();
-			}
-	
 			IASTDeclarator[] declarators = ast.getDeclarators();
 			for (IASTDeclarator iastDeclarator : declarators) {
-				System.out.println("iastDeclarator > " + iastDeclarator.getName());
+					if(iastDeclarator.getInitializer()==null){
+						continue;
+					}
+					String leftCMType = this.getAnnotatedTypeForExpression(iastDeclarator.getName());
+					String rightCMType = this.getAnnotatedTypeForExpression(iastDeclarator.getInitializer());
+					checkAssignmentExp(iastDeclarator, iastDeclarator.getName(), iastDeclarator.getInitializer(), leftCMType, rightCMType);
 			}
-	        IASTAttribute[] attributes = ast.getAttributes();
-	        for (IASTAttribute iastAttribute : attributes) {
-	            System.out.println("iastAttribute > " + iastAttribute);
-	        }
+//	        IASTAttribute[] attributes = ast.getAttributes();
 	    }
-	
 		 if ((declaration instanceof IASTFunctionDefinition)) {
 		    IASTFunctionDefinition ast = (IASTFunctionDefinition)declaration;
-		    ICPPASTFunctionDeclarator typedef = (ICPPASTFunctionDeclarator)ast.getDeclarator();		    
+		    IASTFunctionDeclarator typedef = (IASTFunctionDeclarator)ast.getDeclarator();		    
 		 }
 		 
 		 return 3;
@@ -304,22 +292,31 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				break;
 				case IASTBinaryExpression.op_multiply:
 					//for *;
-					checkInfixExpression(binaryExp);
+					checkInfixExp(binaryExp, RWTypeRuleCategory.Multiplication);
 				break;
 				case IASTBinaryExpression.op_divide:
 					//for /;
+					check_Division_Operation(binaryExp);
 				break;
 				case IASTBinaryExpression.op_plus:
 					//for +;
+					checkInfixExp(binaryExp, RWTypeRuleCategory.Plus);
 				break;
 				case IASTBinaryExpression.op_minus:
 					//for -;
+					checkInfixExp(binaryExp, RWTypeRuleCategory.Subtraction);
+				break;
+				case IASTBinaryExpression.op_modulo:
+					//for -;
+					check_Remander_Operation(binaryExp);
 				break;
 				case IASTBinaryExpression.op_min:
 					//for min;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
 				break;
 				case IASTBinaryExpression.op_max:
 					//for max;
+					checkComparableExp(binaryExp, leftExp, rightExp, leftCMType, rightCMType);
 				break;
 				case IASTBinaryExpression.op_divideAssign:
 					//for /=;
@@ -336,8 +333,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			}
      }
      
-     private void checkAssignmentExp(IASTNode currentNode, IASTExpression leftExp, IASTExpression rightExp, String leftCMType, String rightCMType){
- 		
+     private void checkAssignmentExp(IASTNode currentNode, IASTNode leftExp, IASTNode rightExp, String leftCMType, String rightCMType){
 		if(leftCMType.equals(rightCMType)){
 			return;
 		}
@@ -353,8 +349,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			addNewErrorMessage(currentNode , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
 		}
 	    
-		//simple inference here
-		//if we are in units checking, do inference here 
+		//simple inference here for units checking
 		if(this.checkingUnits){
 			if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
 					&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
@@ -385,15 +380,13 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				return;
 			}
 		}
-		
 	    if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
 				!leftCMType.equalsIgnoreCase(rightCMType) && 
 				!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
 			addNewErrorMessage(currentNode , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
 		}
 	    
-		//simple inference here
-		//if we are in units checking, do inference here 
+		//simple inference for units
 		if(this.checkingUnits){
 			if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
 					&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
@@ -440,93 +433,6 @@ public class CTypeCheckerVisitor extends ASTVisitor {
      }
      
      
-	public void EndVisitNode(ASTNode node){
-		
-		else if(node instanceof ArrayAccess){
-			ArrayAccess arrayAccess = (ArrayAccess)node;
-			String annotatedType =  this.getAnnotatedTypeForExpression(arrayAccess.getArray());
-			String resultType = annotatedType;
-			this.associateAttSetsWithExp(arrayAccess, resultType);
-		}
-		
-		
-		else if(node instanceof MethodInvocation){
-			MethodInvocation methodInvocationNode = (MethodInvocation)node;
-			this.checkMathMethodInvocation(methodInvocationNode);
-//			this.checkCollectionAccess(methodInvocationNode);
-			this.checkAllInvocation(methodInvocationNode.resolveMethodBinding(),methodInvocationNode.arguments(),node);
-		}
-
-		else if(node instanceof ReturnStatement){
-			ReturnStatement returnStatementNode = (ReturnStatement)node;
-			if(parsingMethodDelcMode){
-				String returnCMType = this.getAnnotatedTypeForExpression(returnStatementNode.getExpression());
-				if(!insideBranch){
-					//not inside a branch
-					String thisReturnType = this.getAnnotatedTypeForExpression(returnStatementNode.getExpression());
-					assignReturnTypeForMethodInv(thisReturnType);
-
-				}else{
-					if(!errorInsideBranch){
-						//no error has been found in this branch: return cmtype should be valid
-						String thisReturnType = this.getAnnotatedTypeForExpression(returnStatementNode.getExpression());
-						assignReturnTypeForMethodInv(thisReturnType);
-					}
-				}
-			}
-		}
-		
-		else if(node instanceof VariableDeclarationStatement){
-			VariableDeclarationStatement variableDeclarationStatementNode = (VariableDeclarationStatement)node;
-			for (Iterator iter = variableDeclarationStatementNode.fragments().iterator(); iter.hasNext();) {
-				VariableDeclarationFragment fragment = (VariableDeclarationFragment) iter.next();
-				if(fragment.getInitializer()==null){
-					continue;
-				}
-				String leftCMType = this.getAnnotatedTypeForExpression(fragment.getName());
-				String rightCMType = this.getAnnotatedTypeForExpression(fragment.getInitializer());
-				if(leftCMType.equals(rightCMType)){
-					return;
-				}
-				if(!leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess)){
-					String returnType = this.rwtRulesManager.getReturnType(currentProject, leftCMType, RWTypeRuleCategory.Assignable, rightCMType);
-					if(returnType != null){
-						return;
-					}else{
-						addNewErrorMessage(node , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);
-					}
-				}
-				else if(!leftCMType.equalsIgnoreCase(RWType.UnknownType) &&
-						!leftCMType.equalsIgnoreCase(rightCMType) && 
-						!rightCMType.equalsIgnoreCase(RWType.UnknownType) ){
-					addNewErrorMessage(node , ErrorUtil.typeInconsistency(leftCMType, rightCMType), DiagnosticMessage.ERROR);	
-				}
-				//simple inference here
-				//if we are in units checking, do inference here
-				if(this.checkingUnits){
-					if(leftCMType.equals(RWType.TypeLess) && !rightCMType.equals(RWType.TypeLess) 
-							&& !rightCMType.equals(RWType.error_propogate) && !rightCMType.equals(RWType.error_source)){
-						Expression leftExp = fragment.getName();
-						if(leftExp instanceof SimpleName){
-							IBinding fbinding = ((SimpleName)leftExp).resolveBinding();
-							if(fbinding instanceof IVariableBinding){
-								IVariableBinding variableBinding = (IVariableBinding) fbinding;
-								String methodDeclKey = variableBinding.getDeclaringMethod().getKey();
-								Map<String, String> variableMap = this.allVariableMap.get(methodDeclKey);
-								if(variableMap == null){
-									variableMap = new HashMap<String, String>();
-								}
-								leftCMType = rightCMType;
-								variableMap.put(variableBinding.getName(), leftCMType);
-								this.allVariableMap.put(methodDeclKey, variableMap);
-							}
-						}
-					}	
-				}
-			}
-		}
-	}
-
 	/**
 	 * polymorphic function to deal with functions without annotations ; 
 	 * @param targetedCompilationUnit
@@ -583,7 +489,8 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 	}
 	*/
 	
-	private void checkAllInvocation(IMethodBinding iMethodBinding, List arguments, ASTNode node){
+	private void checkAllInvocation(IASTFunctionCallExpression functionCallExp){
+		/*
 		String currentUnitPath = this.compilationUnit.getJavaElement().getPath().toString();
 		if(iMethodBinding == null || iMethodBinding.getJavaElement()==null){
 			return;
@@ -636,8 +543,9 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				associateAttSetsWithExp(methodInvocationNode, finalReturnType);
 			}
 		}
+		*/
 	}
-			
+	/*		
 	private String checkReturnCMType(String methodKey, MethodDeclaration methodDecl, MethodInvocation methodInvocationNode, String[] argument_cmtypes, FileAnnotations fileAnnotations){
 		String returnCMTypeAtt = RWType.UnknownType;
 		if(fileAnnotations==null){
@@ -656,9 +564,11 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}
 		return returnCMTypeAtt;
 	}
+	*/
 	
 	//hard coding the math default invocation
-	private void checkMathMethodInvocation(MethodInvocation methodInvocationNode){
+	private void checkMathMethodInvocation(IASTFunctionCallExpression functionCallExp){
+		/*
 		IMethodBinding iMethodBinding = methodInvocationNode.resolveMethodBinding();
 		if(iMethodBinding==null || iMethodBinding.getDeclaringClass()==null){
 			return;
@@ -673,13 +583,10 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				String argumentOneAnnotatedType = this.getAnnotatedTypeForExpression(argumentOne);
 				String argumentTwoAnnotatedType = this.getAnnotatedTypeForExpression(argumentTwo);
 				
-
-				
 					if(argumentTwoAnnotatedType.equalsIgnoreCase(RWType.UnknownType) && argumentOneAnnotatedType.equalsIgnoreCase(RWType.UnknownType)){
 						this.associateAttSetsWithExp(methodInvocationNode, RWType.UnknownType);
 						return;
 					}
-					
 					
 					if(iMethodBinding.getName().equals("max")||iMethodBinding.getName().equals("min")){
 						if(argumentTwoAnnotatedType.equals(argumentOneAnnotatedType)){
@@ -733,182 +640,103 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 				}
 			}
 		}
+		*/
 	}
 	
-	private void checkInfixExpression(IASTBinaryExpression infixExpression){
+	/**
+	 * check plus/minus/multiply infix expression
+	 * @param infixExpression
+	 * @param operator_type
+	 */
+	private void checkInfixExp(IASTBinaryExpression infixExpression, String operator_type){
 		IASTExpression leftEP = infixExpression.getOperand1();			
 		IASTExpression rightEP = infixExpression.getOperand2();
-		if(leftEP.resolveTypeBinding().getBinaryName().equals("java.lang.String") 
-				|| rightEP.resolveTypeBinding().getBinaryName().equals("java.lang.String")){
-			return;
-		}
-		String CMTypeAnnotatedTypeOne = this.getAnnotatedTypeForExpression(leftEP);
-		String CMTypeAnnotatedTypeTwo = this.getAnnotatedTypeForExpression(rightEP);
-				if((CMTypeAnnotatedTypeOne.equals(RWType.error_source)) || (CMTypeAnnotatedTypeOne.equals(RWType.error_propogate))
-						||	(CMTypeAnnotatedTypeTwo.equals(RWType.error_source)) || (CMTypeAnnotatedTypeTwo.equals(RWType.error_propogate))){
-					this.associateAttSetsWithExp(infixExpression, RWType.error_propogate);
-					return;
-				}
-				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					this.associateAttSetsWithExp(infixExpression, RWType.UnknownType);
-				}
-
-		if(thisop.equals(InfixExpression.Operator.REMAINDER)){
-			check_Remander_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
-		}
-		if(thisop.equals(InfixExpression.Operator.PLUS)){
-			check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, RWTypeRuleCategory.Plus);
-		}else if(thisop.equals(InfixExpression.Operator.MINUS)){
-			check_Plus_Minus_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0, RWTypeRuleCategory.Subtraction);
-		}
-		else if(thisop.equals(InfixExpression.Operator.TIMES)){
-			check_Times_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
-		}else if(thisop.equals(InfixExpression.Operator.DIVIDE)){
-			check_Division_Operation(CMTypeAnnotatedTypeOne, CMTypeAnnotatedTypeTwo, infixExpression, 0);
-		}
-	}
-	
-	private void check_Remander_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
+		String left_rwtype = this.getAnnotatedTypeForExpression(leftEP);
+		String right_rwtype = this.getAnnotatedTypeForExpression(rightEP);
 		String infixExpressionType = RWType.UnknownType;
-			//type rules part
-			if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-				infixExpressionType = RWType.UnknownType;
-			}		
-			else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-				addNewErrorMessage(infixExpression , ErrorUtil.getRemanderDimensionError(), DiagnosticMessage.ERROR);
-				infixExpressionType = RWType.UnknownType;
-			}
-			else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-				infixExpressionType = CMTypeAnnotatedTypeOne;
-			}else{
-				String returnType = null;
-				returnType = this.rwtRulesManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.REMAINDER, CMTypeAnnotatedTypeTwo);
-				if(returnType != null ){
-					infixExpressionType = returnType;
-				}else{
-					addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-					infixExpressionType = RWType.UnknownType;
-				}	
-			}
-			this.associateAttSetsWithExp(infixExpression, infixExpressionType);
-
-		if(infixExpression.hasExtendedOperands()){
-			if(infixExpression.extendedOperands().size()>extendedIndex){
-				Expression extendedOperand = (Expression)(infixExpression.extendedOperands().get(extendedIndex));
-				String CMTypeForNewOperand = this.getAnnotatedTypeForExpression(extendedOperand);
-				extendedIndex++;
-				check_Remander_Operation(infixExpressionType, CMTypeForNewOperand, infixExpression, extendedIndex);
-			}
-		}
-	}
-	
-	private void check_Plus_Minus_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression plusInfixExpression, int extendedIndex, String operation_type){
-		
-		String infixExpressionType = RWType.UnknownType;
-				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					infixExpressionType = RWType.UnknownType;
-				}		
-				else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					infixExpressionType = CMTypeAnnotatedTypeTwo;
-				}
-				else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					infixExpressionType = CMTypeAnnotatedTypeOne;
-				}else{
-					String returnType = null;
-					returnType = this.rwtRulesManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, operation_type, CMTypeAnnotatedTypeTwo);
-					if(returnType != null ){
-						infixExpressionType = returnType;
-					}else{
-						//if no match found for the calculations
-						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(RWType.UnknownType)){							
-							addNewErrorMessage(plusInfixExpression , ErrorUtil.getUndeclaredCalculation(plusInfixExpression.toString()), DiagnosticMessage.WARNING);
-							infixExpressionType = RWType.UnknownType; //change type
-							
-						}
-					}	
-				}
-				this.associateAttSetsWithExp(plusInfixExpression, infixExpressionType);
-		
-		if(plusInfixExpression.hasExtendedOperands()){
-			if(plusInfixExpression.extendedOperands().size()>extendedIndex){
-				Expression extendedOperand = (Expression)(plusInfixExpression.extendedOperands().get(extendedIndex));
-				String CMTypeForNewOperand = this.getAnnotatedTypeForExpression(extendedOperand);
-				extendedIndex++;
-				check_Plus_Minus_Operation(infixExpressionType, CMTypeForNewOperand, plusInfixExpression, extendedIndex, operation_type);
-			}
-		}
-	}
-	
-	private void check_Times_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo, InfixExpression infixExpression, int extendedIndex){
-		String infixExpressionType = RWType.UnknownType;
-				//type rules part
-				if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					infixExpressionType = RWType.UnknownType;
-				}		
-				else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					infixExpressionType = CMTypeAnnotatedTypeTwo;
-				}
-				else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-					infixExpressionType = CMTypeAnnotatedTypeOne;
-				}else{
-					String returnType = null;
-					returnType = this.rwtRulesManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Multiplication, CMTypeAnnotatedTypeTwo);
-					if(returnType != null ){
-						infixExpressionType = returnType;
-					}else{
-						if(!CMTypeAnnotatedTypeOne.equalsIgnoreCase(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equalsIgnoreCase(RWType.UnknownType)){							
-							addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-							infixExpressionType = RWType.UnknownType;
-						}
-					}
-				}
-				this.associateAttSetsWithExp(infixExpression, infixExpressionType);
-		if(infixExpression.hasExtendedOperands()){
-			if(infixExpression.extendedOperands().size()>extendedIndex){
-				Expression extendedOperand = (Expression)(infixExpression.extendedOperands().get(extendedIndex));
-				String CMTypeForNewOperand = this.getAnnotatedTypeForExpression(extendedOperand);
-				extendedIndex++;
-				check_Times_Operation(infixExpressionType, CMTypeForNewOperand, infixExpression, extendedIndex);
-			}
-		}
-	}
-	
-	private void check_Division_Operation(String CMTypeAnnotatedTypeOne, String CMTypeAnnotatedTypeTwo,InfixExpression infixExpression, int extendedIndex){	
-		String infixExpressionType = RWType.UnknownType;
-		//type rules part
-		if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
+		if(left_rwtype.equals(RWType.UnknownType) && right_rwtype.equals(RWType.UnknownType)){
 			infixExpressionType = RWType.UnknownType;
-		}		
-		else if(CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && !CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-			String inverseType = this.rwtRulesManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeTwo, RWTypeRuleCategory.Multiplicative_Inverse, "");
-			if(inverseType != null ){
-				infixExpressionType = inverseType;
-			}else{
-				addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
-				infixExpressionType = RWType.UnknownType;
-			}
-		}
-		else if(!CMTypeAnnotatedTypeOne.equals(RWType.UnknownType) && CMTypeAnnotatedTypeTwo.equals(RWType.UnknownType)){
-			infixExpressionType = CMTypeAnnotatedTypeOne;
+		}else if(left_rwtype.equals(RWType.UnknownType) && !right_rwtype.equals(RWType.UnknownType)){
+			infixExpressionType = right_rwtype;
+		}else if(!left_rwtype.equals(RWType.UnknownType) && right_rwtype.equals(RWType.UnknownType)){
+			infixExpressionType = left_rwtype;
 		}else{
 			String returnType = null;
-			returnType = this.rwtRulesManager.getReturnType(this.currentProject, CMTypeAnnotatedTypeOne, RWTypeRuleCategory.Division, CMTypeAnnotatedTypeTwo);
+			returnType = this.rwtRulesManager.getReturnType(this.currentProject, left_rwtype, operator_type, right_rwtype);
 			if(returnType != null ){
 				infixExpressionType = returnType;
 			}else{
-				addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
+				//if no match found for the calculations
+				if(!left_rwtype.equalsIgnoreCase(RWType.UnknownType) && !right_rwtype.equalsIgnoreCase(RWType.UnknownType)){							
+					addNewErrorMessage(infixExpression , ErrorUtil.getUndeclaredCalculation(infixExpression.toString()), DiagnosticMessage.WARNING);
+					infixExpressionType = RWType.UnknownType; //change type
+				}
+			}	
+		}
+		this.associateAttSetsWithExp(infixExpression, infixExpressionType);
+	}
+	
+	
+	private void check_Remander_Operation(IASTBinaryExpression binaryExp){
+		IASTExpression leftEP = binaryExp.getOperand1();			
+		IASTExpression rightEP = binaryExp.getOperand2();
+		String rwtype_left = this.getAnnotatedTypeForExpression(leftEP);
+		String rwtype_right = this.getAnnotatedTypeForExpression(rightEP);
+		String infixExpressionType = RWType.UnknownType;
+		if(rwtype_left.equals(RWType.UnknownType) && rwtype_right.equals(RWType.UnknownType)){
+			infixExpressionType = RWType.UnknownType;
+		}		
+		else if(rwtype_left.equals(RWType.UnknownType) && !rwtype_right.equals(RWType.UnknownType)){
+			addNewErrorMessage(binaryExp , ErrorUtil.getRemanderDimensionError(), DiagnosticMessage.ERROR);
+			infixExpressionType = RWType.UnknownType;
+		}
+		else if(!rwtype_left.equals(RWType.UnknownType) && rwtype_right.equals(RWType.UnknownType)){
+			infixExpressionType = rwtype_left;
+		}else{
+			String returnType = null;
+			returnType = this.rwtRulesManager.getReturnType(this.currentProject, rwtype_left, RWTypeRuleCategory.REMAINDER, rwtype_right);
+			if(returnType != null ){
+				infixExpressionType = returnType;
+			}else{
+				addNewErrorMessage(binaryExp , ErrorUtil.getUndeclaredCalculation(binaryExp.toString()), DiagnosticMessage.WARNING);
+				infixExpressionType = RWType.UnknownType;
+			}	
+		}
+		this.associateAttSetsWithExp(binaryExp, infixExpressionType);
+	}
+	
+	private void check_Division_Operation(IASTBinaryExpression binaryExp){
+		IASTExpression leftEP = binaryExp.getOperand1();			
+		IASTExpression rightEP = binaryExp.getOperand2();
+		String rwtype_left = this.getAnnotatedTypeForExpression(leftEP);
+		String rwtype_right = this.getAnnotatedTypeForExpression(rightEP);
+		String infixExpressionType = RWType.UnknownType;
+		//type rules part
+		if(rwtype_left.equals(RWType.UnknownType) && rwtype_right.equals(RWType.UnknownType)){
+			infixExpressionType = RWType.UnknownType;
+		}		
+		else if(rwtype_left.equals(RWType.UnknownType) && !rwtype_right.equals(RWType.UnknownType)){
+			String inverseType = this.rwtRulesManager.getReturnType(this.currentProject, rwtype_right, RWTypeRuleCategory.Multiplicative_Inverse, "");
+			if(inverseType != null ){
+				infixExpressionType = inverseType;
+			}else{
+				addNewErrorMessage(binaryExp , ErrorUtil.getUndeclaredCalculation(binaryExp.toString()), DiagnosticMessage.WARNING);
 				infixExpressionType = RWType.UnknownType;
 			}
 		}
-		this.associateAttSetsWithExp(infixExpression, infixExpressionType);
-		if(infixExpression.hasExtendedOperands()){
-			if(infixExpression.extendedOperands().size()>extendedIndex){
-				Expression extendedOperand = (Expression)(infixExpression.extendedOperands().get(extendedIndex));
-				String CMTypeForNewOperand = this.getAnnotatedTypeForExpression(extendedOperand);
-				extendedIndex++;
-				check_Division_Operation(infixExpressionType, CMTypeForNewOperand, infixExpression, extendedIndex);
+		else if(!rwtype_left.equals(RWType.UnknownType) && rwtype_right.equals(RWType.UnknownType)){
+			infixExpressionType = rwtype_left;
+		}else{
+			String returnType = null;
+			returnType = this.rwtRulesManager.getReturnType(this.currentProject, rwtype_left, RWTypeRuleCategory.Division, rwtype_right);
+			if(returnType != null ){
+				infixExpressionType = returnType;
+			}else{
+				addNewErrorMessage(binaryExp, ErrorUtil.getUndeclaredCalculation(binaryExp.toString()), DiagnosticMessage.WARNING);
+				infixExpressionType = RWType.UnknownType;
 			}
 		}
+		this.associateAttSetsWithExp(binaryExp, infixExpressionType);
 	}
 
 	public String getAnnotatedTypeForExpression(IASTNode exp){
