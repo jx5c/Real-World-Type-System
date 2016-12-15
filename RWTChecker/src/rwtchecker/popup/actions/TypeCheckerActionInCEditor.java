@@ -142,6 +142,7 @@ public class TypeCheckerActionInCEditor implements IEditorActionDelegate {
 	@Override
 	public void setActiveEditor(IAction arg0, IEditorPart editorPart) {
 		if(editorPart!=null){
+			shell = editorPart.getSite().getShell();
 			IEditorInput editorInput = editorPart.getEditorInput();
 			if (editorInput instanceof IFileEditorInput) {
 				this.editorPart = editorPart;

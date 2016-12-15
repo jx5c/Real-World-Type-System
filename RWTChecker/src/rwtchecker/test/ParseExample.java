@@ -5,6 +5,7 @@ import java.util.Map;
 import org.eclipse.cdt.core.dom.ast.ASTVisitor;
 import org.eclipse.cdt.core.dom.ast.DOMException;
 import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
+import org.eclipse.cdt.core.dom.ast.IASTArraySubscriptExpression;
 import org.eclipse.cdt.core.dom.ast.IASTAttribute;
 import org.eclipse.cdt.core.dom.ast.IASTCastExpression;
 import org.eclipse.cdt.core.dom.ast.IASTDeclaration;
@@ -20,6 +21,7 @@ import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
 import org.eclipse.cdt.core.dom.ast.IASTStatement;
 import org.eclipse.cdt.core.dom.ast.IASTTranslationUnit;
 import org.eclipse.cdt.core.dom.ast.IASTTypeId;
+import org.eclipse.cdt.core.dom.ast.IArrayType;
 import org.eclipse.cdt.core.dom.ast.IBasicType.Kind;
 import org.eclipse.cdt.core.dom.ast.IBinding;
 import org.eclipse.cdt.core.dom.ast.IScope;
@@ -57,8 +59,9 @@ import org.eclipse.core.runtime.CoreException;
 public class ParseExample {
 
 	public static void main(String[] args) throws CoreException{
-		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\Develop\\RCPWorkspace\\cProject\\Hello.c");
-
+//		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\Develop\\RCPWorkspace\\cProject\\Hello.c");
+		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\develop\\rcpworkspace\\testC\\Hello.c");
+		
 		Map definedSymbols = new HashMap();
 		String[] includePaths = new String[0];
 		IScannerInfo info = new ScannerInfo(definedSymbols, includePaths);
@@ -122,6 +125,12 @@ public class ParseExample {
 					
 					System.out.println(expToRWType.get(functionCall.getFunctionNameExpression()));
 				}
+				if(node instanceof IASTArraySubscriptExpression){
+					System.out.println(node);
+					IASTArraySubscriptExpression arrayExp = (IASTArraySubscriptExpression)node;
+					System.out.println(arrayExp.getArrayExpression());
+					System.out.println(arrayExp.getArrayExpression().getExpressionType() instanceof IArrayType);
+				}
 				
 				return 3;
 				
@@ -129,9 +138,9 @@ public class ParseExample {
 			
 			public int visit(IASTName name){
 
-				System.out.println("original node is: "+name.getOriginalNode());
-				System.out.println(name.getBinding());
-				System.out.println(name.getFileLocation().getFileName());
+//				System.out.println("original node is: "+name.getOriginalNode());
+//				System.out.println(name.getBinding());
+//				System.out.println(name.getFileLocation().getFileName());
 				System.out.println(name.getParent().getParent() instanceof CPPASTFunctionCallExpression);
 				IBinding fbinding = name.resolveBinding();
 				
@@ -160,6 +169,15 @@ public class ParseExample {
 					}
 					if(aType instanceof CPPArrayType){
 						System.out.println("array");
+						IType arrayType = (IArrayType)aType;;
+						while(arrayType instanceof IArrayType){
+							System.out.println(((IArrayType)arrayType).getSize());
+							arrayType = ((IArrayType)arrayType).getType();
+						}
+						
+//						System.out.println(arrayType.getSize().getSignature());
+//						System.out.println(arrayType.getSize().numericalValue());
+//						System.out.println(arrayType.getType() instanceof IArrayType);
 					}
 				}else if(fbinding instanceof CFunction || fbinding instanceof CPPFunction){
 					CPPFunction f = (CPPFunction)fbinding;
@@ -174,7 +192,6 @@ public class ParseExample {
 						}
 					}
 				}
-				
 				
 				if ((name.getParent() instanceof CPPASTFunctionDeclarator)) {
 					System.out.println("IASTName: " + name.getClass().getSimpleName() + "(" + name.getRawSignature() + ") - > parent: " + name.getParent().getClass().getSimpleName());

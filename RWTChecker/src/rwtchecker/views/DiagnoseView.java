@@ -12,6 +12,7 @@ import org.eclipse.swt.widgets.TableColumn;
 import org.eclipse.ui.part.*;
 import org.eclipse.cdt.core.dom.ast.ExpansionOverlapsBoundaryException;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
+import org.eclipse.cdt.core.dom.ast.IASTNodeLocation;
 import org.eclipse.cdt.core.parser.IToken;
 import org.eclipse.jdt.core.dom.ASTNode;
 import org.eclipse.jface.resource.ImageDescriptor;
@@ -66,7 +67,12 @@ public class DiagnoseView extends ViewPart {
 			DiagnosticMessage errorMessage = (DiagnosticMessage)(obj); 
 			switch (index) {
 			case 0:
-				return errorMessage.getJavaErrorNode().toString();
+				if(errorMessage.getJavaErrorNode()!=null){
+					return errorMessage.getJavaErrorNode().toString();	
+				}else{
+					return errorMessage.getcErrorNode().toString();
+				}
+				
 			case 1:
 				return errorMessage.getMessageType();
 			case 2:
@@ -141,16 +147,15 @@ public class DiagnoseView extends ViewPart {
 					else if(errorMessage.getcErrorNode()!=null){
 						IASTNode cASTNode = errorMessage.getcErrorNode();
 						if(textControl != null){
-							IToken token;
 							try {
-								token = cASTNode.getLeadingSyntax();
-								textControl.setSelectionRange(token.getOffset(),token.getLength());
-								textControl.setTopIndex(textControl.getLineAtOffset(token.getOffset()));
-								StyleRange redRange = createRange(token.getOffset(), token.getLength(), redColor);
-								textControl.setStyleRange(redRange);
+								IASTNodeLocation loc = cASTNode.getNodeLocations()[0];
+								if(loc!=null){
+									textControl.setSelectionRange(loc.getNodeOffset(),loc.getNodeLength());
+									textControl.setTopIndex(textControl.getLineAtOffset(loc.getNodeOffset()));
+									StyleRange redRange = createRange(loc.getNodeOffset(),loc.getNodeLength(), redColor);
+									textControl.setStyleRange(redRange);	
+								}
 							} catch (UnsupportedOperationException e) {
-								e.printStackTrace();
-							} catch (ExpansionOverlapsBoundaryException e) {
 								e.printStackTrace();
 							}
 						}

@@ -55,8 +55,10 @@ import org.eclipse.core.resources.IProject;
 import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.IPath;
 import org.eclipse.core.runtime.Path;
+import org.eclipse.jface.window.Window;
 
 import rwtchecker.annotation.FileAnnotations;
+import rwtchecker.dialogs.NoRWTFoundErrorDialog;
 import rwtchecker.rwt.RWT_Attribute;
 import rwtchecker.rwt.RWType;
 import rwtchecker.rwtrules.RWTypeRuleCategory;
@@ -93,6 +95,7 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 	private IFile currentFile;
 	private IProject currentProject;
 	
+	//where the visitor is called for checking method invocation
 	private boolean methodInvError = false;
 
 	private boolean checkingUnits;
@@ -126,9 +129,10 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			CVariable cv = (CVariable)astBinding;
 			IType variableType = cv.getType();
 			if(variableType instanceof CArrayType){
-				//this is for array; pop up a menu so the user can select the index for binding
 				CArrayType arrayV = (CArrayType)variableType;
 				System.out.println(arrayV.getSize());
+				//this is for array; pop up a menu so the user can select the dimension and index for binding
+
 			}else if (variableType instanceof CBasicType){
 				//this is for a variable; variable could be inside a structure, or
 				String varName = astName.toString();
@@ -221,9 +225,8 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		return 3;
 	}
 	
-	public int visit(IASTDeclaration declaration){
-		System.out.println("declaration: " + declaration + " ->  " + declaration.getRawSignature());
-	
+	@Override
+	public int leave(IASTDeclaration declaration){
 		if ((declaration instanceof IASTSimpleDeclaration)) {
 			IASTSimpleDeclaration ast = (IASTSimpleDeclaration)declaration;
 			IASTDeclarator[] declarators = ast.getDeclarators();
@@ -241,23 +244,18 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		    IASTFunctionDefinition ast = (IASTFunctionDefinition)declaration;
 		    IASTFunctionDeclarator typedef = (IASTFunctionDeclarator)ast.getDeclarator();		    
 		 }
-		 
-		 return 3;
-	 }
-	 
+		return 3;
+	}
+	
      public int visit(IASTTypeId typeId){
          System.out.println("typeId: " + typeId.getRawSignature());
          return 3;
      }
  
      public int visit(IASTStatement statement){
-         System.out.println("statement: " + statement.getRawSignature());
+//         System.out.println("statement: " + statement.getRawSignature());
          return 3;
-     }
- 
-     public int visit(IASTAttribute attribute){
-         return 3;
-     }	       
+     }      
 	
      private void checkBinaryExpression(IASTBinaryExpression binaryExp){
     	 	IASTExpression leftExp = binaryExp.getOperand1(); 

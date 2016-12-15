@@ -14,6 +14,7 @@ import rwtchecker.annotation.AnnotationVisitor;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
 import rwtchecker.concept.ConceptDetail;
+import rwtchecker.dialogs.NoRWTFoundErrorDialog;
 import rwtchecker.rwt.RWType;
 import rwtchecker.rwtrules.RWTypeRulesManager;
 import rwtchecker.typechecker.NewTypeCheckerVisitor;
@@ -117,6 +118,7 @@ import org.eclipse.jface.action.*;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.*;
 import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.SWT;
 import org.eclipse.text.edits.MalformedTreeException;
 import org.eclipse.text.edits.TextEdit;
@@ -189,7 +191,7 @@ public class RWTView extends ViewPart {
 		existingTypesTreeViewer.setAutoExpandLevel(4);
 		
 		sashFormBottom = new SashForm(sashFormMain, SWT.HORIZONTAL | SWT.NULL);
-		//correspondence type display here;
+		//real-world type display here;
 		typeAttributeViewer = new TableViewer(sashFormBottom, SWT.MULTI | SWT.WRAP | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
         createAttributeTableColumns(typeAttributeViewer);
@@ -726,9 +728,14 @@ public class RWTView extends ViewPart {
 								IType variableType = cv.getType();
 								if(variableType instanceof CArrayType){
 									//this is for array; pop up a menu so the user can select the index for binding
-									System.out.println("array type");
 									CArrayType arrayV = (CArrayType)variableType;
 									System.out.println(arrayV.getSize());
+									Shell currentShell = currentJavaEditor.getEditorSite().getShell();
+									NoRWTFoundErrorDialog errordialog = new NoRWTFoundErrorDialog(currentShell,key);
+									errordialog.open();
+									if(errordialog.getReturnCode()==Window.OK){
+								        break;
+									}
 								}else if (variableType instanceof CBasicType){
 									//this is for a variable; variable could be inside a structure, or
 									varName = astName.toString();
