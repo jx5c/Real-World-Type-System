@@ -14,6 +14,7 @@ import rwtchecker.annotation.AnnotationVisitor;
 import rwtchecker.annotation.FileAnnotations;
 import rwtchecker.annotation.RWTAnnotation;
 import rwtchecker.concept.ConceptDetail;
+import rwtchecker.dialogs.ArrayTypeBindingDialog;
 import rwtchecker.dialogs.NoRWTFoundErrorDialog;
 import rwtchecker.rwt.RWType;
 import rwtchecker.rwtrules.RWTypeRulesManager;
@@ -731,10 +732,10 @@ public class RWTView extends ViewPart {
 									CArrayType arrayV = (CArrayType)variableType;
 									System.out.println(arrayV.getSize());
 									Shell currentShell = currentJavaEditor.getEditorSite().getShell();
-									NoRWTFoundErrorDialog errordialog = new NoRWTFoundErrorDialog(currentShell,key);
-									errordialog.open();
-									if(errordialog.getReturnCode()==Window.OK){
-								        break;
+									ArrayTypeBindingDialog arrayBindingDialog = new ArrayTypeBindingDialog(currentShell, astName.getRawSignature());
+									arrayBindingDialog.open();
+									if(arrayBindingDialog.getReturnCode()==Window.OK){
+								        //add the binding here;
 									}
 								}else if (variableType instanceof CBasicType){
 									//this is for a variable; variable could be inside a structure, or
