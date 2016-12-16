@@ -25,6 +25,7 @@ import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDeclarator;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTSimpleDeclaration;
@@ -221,6 +222,15 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 			this.checkAllInvocation(functionCallExp);
 		}else if(exp instanceof IASTArraySubscriptExpression){
 			//array access
+			IASTArraySubscriptExpression arraySubscripExp = (IASTArraySubscriptExpression)exp;
+			//index
+			IASTExpression subscriptExp = arraySubscripExp.getSubscriptExpression();
+			if(subscriptExp instanceof IASTIdExpression){
+				//this is a variable
+			}else if(subscriptExp instanceof IASTLiteralExpression){
+				// this is a number
+			}
+			arraySubscripExp.getArrayExpression();
 		}
 		return 3;
 	}

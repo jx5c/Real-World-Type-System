@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Set;
 
 import rwtchecker.annotation.AnnotationVisitor;
 import rwtchecker.annotation.FileAnnotations;
@@ -727,6 +728,7 @@ public class RWTView extends ViewPart {
 							if(astName.getParent() instanceof CASTDeclarator || astName.getParent() instanceof CPPASTDeclarator) { //variable name (c & c++)
 								CVariable cv = (CVariable)astBinding;
 								IType variableType = cv.getType();
+								varName = astName.toString();
 								if(variableType instanceof CArrayType){
 									//this is for array; pop up a menu so the user can select the index for binding
 									CArrayType arrayV = (CArrayType)variableType;
@@ -735,11 +737,20 @@ public class RWTView extends ViewPart {
 									ArrayTypeBindingDialog arrayBindingDialog = new ArrayTypeBindingDialog(currentShell, astName.getRawSignature());
 									arrayBindingDialog.open();
 									if(arrayBindingDialog.getReturnCode()==Window.OK){
-								        //add the binding here;
+								        //add the binding for arrays
+										Set<String> bindings = arrayBindingDialog.getCurrentBindings();
+										rwtype_name = "";
+										for(String binding : bindings){
+											if(rwtype_name.length() == 0){
+												rwtype_name = binding;
+											}else{
+												rwtype_name += "@" + binding;
+											}
+										}
 									}
 								}else if (variableType instanceof CBasicType){
 									//this is for a variable; variable could be inside a structure, or
-									varName = astName.toString();
+									
 								}else if (variableType instanceof CStructure){
 									//this is for a variable of a structure; TO BE DONE
 									System.out.println("structure");
@@ -753,8 +764,9 @@ public class RWTView extends ViewPart {
 							annotationType = RWTAnnotation.Define;
 							varName = astName.toString();
 							declBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
+							
 						}
-						saveTypeBindingC(ifile, varName, declBodyKey, annotationType, rwtype_name);							
+						saveTypeBindingC(ifile, varName, declBodyKey, annotationType, rwtype_name);						
 					}
 				}
 			}

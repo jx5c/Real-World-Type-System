@@ -4,7 +4,7 @@ package rwtchecker.annotation;
 public class RWTAnnotation{
 	
 	public static String Define = "def";
-
+	
 	public static String Constant = "constant";
 
 	public static String tagNameForAnnotation = "@CM";

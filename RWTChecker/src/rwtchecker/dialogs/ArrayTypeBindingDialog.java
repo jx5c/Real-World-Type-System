@@ -1,6 +1,8 @@
 package rwtchecker.dialogs;
 
 import java.io.File;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IProject;
@@ -20,9 +22,12 @@ import org.eclipse.jface.viewers.TreeViewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CCombo;
 import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.graphics.Font;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
@@ -30,14 +35,21 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.DirectoryDialog;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.List;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Menu;
+import org.eclipse.swt.widgets.MenuItem;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 
 import rwtchecker.concept.ConceptDetail;
+import rwtchecker.rwt.RWT_Attribute;
 import rwtchecker.rwt.RWType;
 import rwtchecker.util.ActivePart;
 import rwtchecker.util.RWTSystemUtil;
@@ -57,9 +69,18 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 	private Action clickActionOnTreeViewer;
 	private IProject currentProject;
 	
+	
+	private Table currentBindingTable;
+	private Combo dimensionCombo;
+	private Text bindingIdxText;
+	private Text rwtypeSelectedText;
+	
 	private CMViewTreeContentProvider treeContentProvider = new CMViewTreeContentProvider();
 	
+	private Set<String> currentBindings = new HashSet<String>();
+	
 	Font titleFont;
+	Font tableItemFont;
 	
 	public ArrayTypeBindingDialog(Shell parentShell, String variableName) {
 		super(parentShell);
@@ -76,71 +97,115 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 	@Override
 	protected Control createDialogArea(final Composite parent) {
 		titleFont = new Font(parent.getDisplay(),"Arial", 10 , SWT.BOLD );
-//		shlScrambledata.setSize(450, 405);
-//	    shlScrambledata.setText("ScrambleData");
-		// first row used for displaying the variable information
+		
+		tableItemFont = new Font(parent.getDisplay(),"Arial", 9 , SWT.ITALIC );
 		
 		int leftWidth = 350;
 	    Group leftGroup = new Group(parent, SWT.NULL);
 	    leftGroup.setLocation(30, 10);
-	    leftGroup.setSize(leftWidth, 49);
+	    leftGroup.setSize(leftWidth*2+100, 700);
 	    
 	    //show the variable
-	    Label varLabel = new Label(leftGroup, SWT.BORDER);
-	    varLabel.setBounds(20, 20, 60, 20);
-	    varLabel.setText("1. Variable: ");
+	    Label varLabel = new Label(leftGroup, SWT.NULL);
+	    varLabel.setBounds(20, 20, leftWidth, 20);
+	    Font varNameFont = new Font(parent.getDisplay(),"Arial", 10 , SWT.BOLD );
+	    varLabel.setText("Name of the array is: "+this.varName);
+	    varLabel.setFont(varNameFont);
 	    
-	    Label varNameLabel = new Label(leftGroup, SWT.BORDER);
-	    varNameLabel.setBounds(90, 20, 210, 20);
-	    varNameLabel.setText(this.varName);
-
 		//for adding bindings
 		Label chooseDimensionLabel = new Label(leftGroup, SWT.NULL);
 		chooseDimensionLabel.setBounds(20, 50, leftWidth, 20);
-		chooseDimensionLabel.setText("2. Choose the dimension of this array: ");
+		chooseDimensionLabel.setText("1. Choose the dimension of this array: ");
 		
-	    final String[] ITEMS = { "Dimension One", "Dimension Two", "Dimension Three" };
-	    Combo combo = new Combo(leftGroup, SWT.DROP_DOWN);
-	    combo.setBounds(20, 75, 200, 20);
-	    combo.setItems(ITEMS);
+	    final String[] ITEMS = { "First Dimension", "Second Dimension", "Third Dimension" };
+	    dimensionCombo = new Combo(leftGroup, SWT.DROP_DOWN);
+	    dimensionCombo.setBounds(20, 75, 200, 20);
+	    dimensionCombo.setItems(ITEMS);
 	    
         //for adding bindings
 	  	Label chooseIndexLabel = new Label(leftGroup, SWT.NULL);
-	  	chooseIndexLabel.setText("3. Specify the index for a binding");
-	  	chooseIndexLabel.setBounds(20, 100, leftWidth, 20);
+	  	chooseIndexLabel.setText("2. Specify the index for a binding; starting with 0");
+	  	chooseIndexLabel.setBounds(20, 110, leftWidth, 20);
 	  	
-	  	Text bindingIdxText = new Text(leftGroup, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
-	  	bindingIdxText.setBounds(20, 125, 200, 20);
+	  	bindingIdxText = new Text(leftGroup, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
+	  	bindingIdxText.setBounds(20, 135, 200, 25);
 	  	
 	  	//current selected rwt
 	  	Label rwtypeSelected = new Label(leftGroup, SWT.NULL);
-	  	rwtypeSelected.setText("4. Select the real-world type from the tree for this binding");
-	  	rwtypeSelected.setBounds(20, 150, leftWidth, 20);
+	  	rwtypeSelected.setText("3. Select the real-world type from the tree");
+	  	rwtypeSelected.setBounds(20, 165, leftWidth, 20);
 	  	
-	  	Text rwtypeSelectedText = new Text(leftGroup, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
-	  	rwtypeSelectedText.setBounds(20, 175, leftWidth, 20);
+	  	rwtypeSelectedText = new Text(leftGroup, SWT.SINGLE | SWT.BORDER | SWT.WRAP);
+	  	rwtypeSelectedText.setBounds(20, 190, leftWidth, 25);
+	  	
+	  	
+	  	//confirm button
+	  	Button confirmBT = new Button(leftGroup, SWT.PUSH );
+	  	confirmBT.setText("Create Binding");
+	  	confirmBT.setBounds(180, 220, 120, 25);
+	  	confirmBT.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				createBindingListItem();
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				createBindingListItem();
+			}
+		});
+	  	//reset button
+	  	Button resetBT = new Button(leftGroup, SWT.PUSH );
+	  	resetBT.setText("reset");
+	  	resetBT.setBounds(310, 220, 60, 25);
+	  	Font btFont = new Font(parent.getDisplay(),"Arial", 10 , SWT.ITALIC );
+	  	confirmBT.setFont(btFont);
+	  	resetBT.setFont(btFont);
+	  	resetBT.addSelectionListener(new SelectionListener() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				resetEntries();
+			}
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				resetEntries();
+			}
+		});
+	  	
 	  	
 		//display the current binding
 	  	Label existingBindingLabel = new Label(leftGroup, SWT.NULL);
-	  	existingBindingLabel.setText("5. Current bindings for this array are listed below: ");
-	  	existingBindingLabel.setBounds(20, 200, leftWidth, 20);
+	  	existingBindingLabel.setText("Existing bindings for this array are listed below: ");
+	  	existingBindingLabel.setBounds(20, 250, leftWidth, 20);
 	  	
-		Text currentBindings = new Text(leftGroup, SWT.MULTI | SWT.BORDER | SWT.WRAP | SWT.V_SCROLL);
-		currentBindings.setBounds(20, 225, leftWidth, 150);
+	  	currentBindingTable = new Table(leftGroup, SWT.BORDER | SWT.MULTI | SWT.FULL_SELECTION);
+	    currentBindingTable.setBounds(20, 280, leftWidth, 150);
+	    currentBindingTable.setHeaderVisible(true);
+	    currentBindingTable.setLinesVisible(true);
+
+	    TableColumn tc1 = new TableColumn(currentBindingTable, SWT.LEFT);
+	    TableColumn tc2 = new TableColumn(currentBindingTable, SWT.CENTER);
+	    TableColumn tc3 = new TableColumn(currentBindingTable, SWT.CENTER);
+	    tc1.setText("Dimension");
+	    tc2.setText("Index");
+	    tc3.setText("Real-world type");
+	    tc1.setWidth(90);
+	    tc2.setWidth(70);
+	    tc3.setWidth(180);		
 		
 	    Group rightGroup = new Group(leftGroup, SWT.NULL);
 	    rightGroup.setLocation(400, 10);
-	    rightGroup.setSize(leftWidth, 350);	
+	    rightGroup.setSize(420, 420);	
 	    //right panel
 	    SashForm sashFormRight = new SashForm(rightGroup, SWT.VERTICAL | SWT.NULL);
-	    sashFormRight.setBounds(0, 0, 400, 500);
+	    sashFormRight.setBounds(0, 0, 400, 420);
 		//for real-world type display
 		SashForm sashFormRightTop = new SashForm(sashFormRight, SWT.HORIZONTAL | SWT.NULL);
 		//for display of details of real-world types
 		SashForm sashFormRightBottom = new SashForm(sashFormRight, SWT.HORIZONTAL | SWT.NULL);
 		
 		existingTypesTreeViewer = new TreeViewer(sashFormRightTop, SWT.MULTI | SWT.H_SCROLL | SWT.V_SCROLL | SWT.BORDER);
-		existingTypesTreeViewer.getTree().setBounds(10, 10, 350, 350);
+		existingTypesTreeViewer.getTree().setBounds(10, 10, 300, 350);
 		existingTypesTreeViewer.setContentProvider(treeContentProvider);
 		existingTypesTreeViewer.setLabelProvider(new CMViewTreeViewLabelProvider());
 		//show the contents of current rwtypes
@@ -149,25 +214,49 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 			this.currentProject = currentFile.getProject();
 			TreeObject cmtypeTreeRootObject = RWTSystemUtil.readInAllCMTypesToTreeObject(currentFile);
 			if(cmtypeTreeRootObject!= null){
-				existingTypesTreeViewer.setInput(cmtypeTreeRootObject);		
+				existingTypesTreeViewer.setInput(cmtypeTreeRootObject);
 			}
 		}
-		existingTypesTreeViewer.setAutoExpandLevel(4);
+		existingTypesTreeViewer.expandToLevel(4);
 		
 		//real-world type display here;
 		typeAttributeViewer = new TableViewer(sashFormRightBottom, SWT.MULTI | SWT.WRAP | SWT.H_SCROLL
 				| SWT.V_SCROLL | SWT.FULL_SELECTION | SWT.BORDER);
         createAttributeTableColumns(typeAttributeViewer);
+        hookActionsToTypeAttributeTable();
 		typeAttributeViewer.setContentProvider(new CMAttributeTableContentProvider());
 		typeAttributeViewer.setLabelProvider(new CMAttributeTablelLabelProvider());
 		typeAttributeViewer.setInput(null);
-		
 		
         // Set the size of the split pane
 		sashFormRight.setWeights(new int [] {40, 60});
 		hookClickAction();
 		parent.layout();
 	    return parent;
+	}
+	
+	private void resetEntries(){
+		dimensionCombo.setText("");
+		bindingIdxText.setText("");
+		rwtypeSelectedText.setText("");
+	}
+	
+	private void createBindingListItem(){
+		String dimension = dimensionCombo.getText();
+		String bindingIdx = bindingIdxText.getText();
+		String rwtype = rwtypeSelectedText.getText();
+		if(dimension.length()==0 || bindingIdx.length()==0 || rwtype.length() == 0){
+			return;
+		}
+		dimension = dimension.replace("Dimension", "").trim();
+		String bindingInStr = makeItemStr(dimension, bindingIdx, rwtype);
+		if(!currentBindings.contains(bindingInStr)){
+			currentBindings.add(bindingInStr);
+			TableItem newItem = new TableItem(currentBindingTable,SWT.NONE);
+			newItem.setText(new String[] {dimension, bindingIdx, rwtype});
+			newItem.setFont(tableItemFont);	
+		}
+		resetEntries();
 	}
 	
 	private void hookClickAction() {
@@ -180,6 +269,7 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 					RWType selectedType = RWTSystemUtil.getCMTypeFromTreeObject(currentProject, thisSelectedTreeObject);
 					if(selectedType!=null){
 						typeAttributeViewer.setInput(selectedType.getSemanticType());
+						rwtypeSelectedText.setText(selectedType.getTypeName());
 					}
 				}
 			}
@@ -222,6 +312,28 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 		table.setHeaderVisible(true);
 		table.setLinesVisible(true);
 	}
+	
+	private void hookActionsToTypeAttributeTable() {	    
+	    Menu menu = new Menu (currentBindingTable.getShell(), SWT.POP_UP);
+	    currentBindingTable.setMenu (menu);
+		MenuItem removeAttItem = new MenuItem (menu, SWT.PUSH);
+		removeAttItem.setText ("Delete Selection");
+		removeAttItem.addListener (SWT.Selection, new Listener() {
+			@Override
+			public void handleEvent(Event event) {
+				for(int i : currentBindingTable.getSelectionIndices()){
+					TableItem selectedItem = currentBindingTable.getItem(i);
+					String itemToDelete = makeItemStr(selectedItem.getText(0), selectedItem.getText(1),selectedItem.getText(2));
+					currentBindings.remove(itemToDelete);
+				}
+				currentBindingTable.remove(currentBindingTable.getSelectionIndices());
+			}
+		});
+	}
+
+	private String makeItemStr(String dimension, String index, String rwtype){
+		return dimension + "#" + index + "#" + rwtype;
+	}
 
 	@Override
 	protected boolean isResizable() {
@@ -230,17 +342,11 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 	
 	@Override
 	protected void okPressed() {
-		if(true){	
-	    	this.setReturnCode(OK);
-	    	super.okPressed();
-		}else{
-			this.setReturnCode(CANCEL);	
-			super.cancelPressed();
-		}
-		
+	    this.setReturnCode(OK);
+	    super.okPressed();		
 	}
 
-	public String getRwtLocation() {
-		return rwtLocation;
+	public Set<String> getCurrentBindings() {
+		return currentBindings;
 	}
 }

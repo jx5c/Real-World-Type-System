@@ -161,6 +161,8 @@ public class FileAnnotations {
 				annotation.setAnnotationContents(annotationContents);
 			}
 			*/
+		}else if(annotationType.equals(RWTAnnotation.Invariant)){
+			
 		}
 		//if 
 		for(RWTAnnotation anno : thisAnnotations){
@@ -185,8 +187,10 @@ public class FileAnnotations {
 		if(thisAnnotations.contains(annotation)){
 			thisAnnotations.remove(annotation);
 		}
-		thisAnnotations.add(annotation);
-		annotations.put(bodyDeclKey, thisAnnotations);
+		if(annotation.getAnnotationContents().length()>0){
+			thisAnnotations.add(annotation);
+			annotations.put(bodyDeclKey, thisAnnotations);
+		}
 		return true;
 	}
 	
