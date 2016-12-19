@@ -1,4 +1,5 @@
 package rwtchecker.test;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -14,6 +15,8 @@ import org.eclipse.cdt.core.dom.ast.IASTExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionCallExpression;
 import org.eclipse.cdt.core.dom.ast.IASTFunctionDefinition;
 import org.eclipse.cdt.core.dom.ast.IASTIdExpression;
+import org.eclipse.cdt.core.dom.ast.IASTLabelStatement;
+import org.eclipse.cdt.core.dom.ast.IASTLiteralExpression;
 import org.eclipse.cdt.core.dom.ast.IASTName;
 import org.eclipse.cdt.core.dom.ast.IASTNode;
 import org.eclipse.cdt.core.dom.ast.IASTPreprocessorIncludeStatement;
@@ -59,8 +62,8 @@ import org.eclipse.core.runtime.CoreException;
 public class ParseExample {
 
 	public static void main(String[] args) throws CoreException{
-//		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\Develop\\RCPWorkspace\\cProject\\Hello.c");
-		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\develop\\rcpworkspace\\testC\\Hello.c");
+		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\Develop\\RCPWorkspace\\cProject\\Hello.c");
+//		FileContent fileContent = FileContent.createForExternalFileLocation("C:\\develop\\rcpworkspace\\testC\\Hello.c");
 		
 		Map definedSymbols = new HashMap();
 		String[] includePaths = new String[0];
@@ -126,14 +129,49 @@ public class ParseExample {
 					System.out.println(expToRWType.get(functionCall.getFunctionNameExpression()));
 				}
 				if(node instanceof IASTArraySubscriptExpression){
-					System.out.println(node);
-					IASTArraySubscriptExpression arrayExp = (IASTArraySubscriptExpression)node;
-					System.out.println(arrayExp.getArrayExpression());
-					System.out.println(arrayExp.getArrayExpression().getExpressionType() instanceof IArrayType);
+					IASTExpression travesalNode = exp;
+					ArrayList<String> indexStr = new ArrayList<String>();
+					while(travesalNode instanceof IASTArraySubscriptExpression){
+						IASTArraySubscriptExpression arrayExp = (IASTArraySubscriptExpression)travesalNode;
+						IASTExpression subscriptExp = arrayExp.getSubscriptExpression();
+						if(subscriptExp instanceof IASTIdExpression){
+							IASTIdExpression subIdExp = (IASTIdExpression)subscriptExp;
+							indexStr.add(0, subIdExp.getName().toString());
+						}else if(subscriptExp instanceof IASTLiteralExpression){
+							IASTLiteralExpression subLiteralExp = (IASTLiteralExpression)subscriptExp;
+							indexStr.add(0, subLiteralExp.getRawSignature());
+						}
+						travesalNode = arrayExp.getArrayExpression();
+					}
+					if(travesalNode instanceof IASTIdExpression){
+						String annotation = "1#0#jian";
+						String[] annotations = new String[]{annotation};
+						//array variable
+						IASTIdExpression arrayVar = (IASTIdExpression)travesalNode;
+						//indexStr.add(0, arrayVar.getRawSignature());
+						//if(map.containsKey(arrayVar.getRawSignature())){
+						//	String[] arrayBindings = map.get(arrayVar.getRawSignature()).split("@");
+
+						//}
+							for(String arrayBinding : annotations){
+								int dimension = Integer.parseInt(arrayBinding.split("#")[0]);
+								String index = arrayBinding.split("#")[1];
+								String rwtype = arrayBinding.split("#")[2];
+								if(dimension < indexStr.size() && indexStr.get(dimension).equals(index)){
+									System.out.println(rwtype);
+								}
+							}
+						
+					}
+					return ASTVisitor.PROCESS_SKIP;
 				}
-				
 				return 3;
 				
+			}
+			@Override
+			public int visit(IASTExpression node){
+
+				return 3;
 			}
 			
 			public int visit(IASTName name){
