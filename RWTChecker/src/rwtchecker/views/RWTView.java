@@ -743,6 +743,9 @@ public class RWTView extends ViewPart {
 									//this is for array; pop up a menu so the user can select the index for binding
 //									CArrayType arrayV = (CArrayType)variableType;
 //									System.out.println(arrayV.getSize());
+									if(currentJavaEditor==null){
+										currentJavaEditor = ActivePart.getActiveEditor();	
+									}
 									Shell currentShell = currentJavaEditor.getEditorSite().getShell();
 									ArrayTypeBindingDialog arrayBindingDialog = new ArrayTypeBindingDialog(currentShell, astName.getRawSignature());
 									arrayBindingDialog.open();

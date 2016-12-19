@@ -150,7 +150,7 @@ public class TreeObject implements IAdaptable{
 			} catch (DocumentException e) {
 				e.printStackTrace();
 			}
-	        invisibleRoot.addChild(treeObject);
+	        invisibleRoot = treeObject;
 		}else{
 			//rebuild the tree object if the treeObject is not exited
 			for(File dir : fileLocation.getParentFile().listFiles()){
