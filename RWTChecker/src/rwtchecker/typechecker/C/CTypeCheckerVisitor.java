@@ -44,6 +44,8 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CASTDeclarator;
 import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CBasicType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CFunction;
+import org.eclipse.cdt.internal.core.dom.parser.c.CParameter;
+import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CStructure;
 import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTDeclarator;
@@ -123,15 +125,19 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 	public int visit(IASTName astName){
 		//This function loads all annotated elements into the hashmap
 		IBinding astBinding = astName.resolveBinding();
-		if (astBinding instanceof CVariable){
+		if (astBinding instanceof CVariable || astBinding instanceof CParameter){
 			String declBodyKey = RWTView.makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
 			String thisRWTType = null;
 			//binding for a variable
-			CVariable cv = (CVariable)astBinding;
-			IType variableType = cv.getType();
-			if(variableType instanceof CArrayType){
-				CArrayType arrayV = (CArrayType)variableType;
-			}else if (variableType instanceof CBasicType){
+			IType variableType = null;
+			if(astBinding instanceof CVariable){
+				CVariable cv = (CVariable)astBinding;
+				variableType = cv.getType();
+			}else if(astBinding instanceof CParameter){
+				CParameter cp = (CParameter)astBinding;
+				variableType = cp.getType();
+			}
+			if (variableType instanceof CBasicType || variableType instanceof CArrayType || variableType instanceof CPointerType){
 				//this is for a variable; variable could be inside a structure, or
 				String varName = astName.toString();
 				Map<String, String> variableMap = this.allVariableMap.get(declBodyKey);
@@ -220,31 +226,34 @@ public class CTypeCheckerVisitor extends ASTVisitor {
 		}else if(exp instanceof IASTArraySubscriptExpression){
 			IASTExpression travesalNode = exp;
 			ArrayList<String> indexStr = new ArrayList<String>();
-			while(travesalNode instanceof IASTArraySubscriptExpression){
-				IASTArraySubscriptExpression arrayExp = (IASTArraySubscriptExpression)travesalNode;
-				IASTExpression subscriptExp = arrayExp.getSubscriptExpression();
-				if(subscriptExp instanceof IASTIdExpression){
-					IASTIdExpression subIdExp = (IASTIdExpression)subscriptExp;
-					indexStr.add(0, subIdExp.getName().toString());
-				}else if(subscriptExp instanceof IASTLiteralExpression){
-					IASTLiteralExpression subLiteralExp = (IASTLiteralExpression)subscriptExp;
-					indexStr.add(0, subLiteralExp.getRawSignature());
-				}
-				travesalNode = arrayExp.getArrayExpression();
-			}
-			String annotatedRWTypeForArray = this.getAnnotatedTypeForExpression(travesalNode); 
-			if(annotatedRWTypeForArray!=null && annotatedRWTypeForArray.length() > 0){
-				String[] arrayBindings = annotatedRWTypeForArray.split("@");
-				for(String arrayBinding : arrayBindings){
-					int dimension = Integer.parseInt(arrayBinding.split("#")[0]);
-					String index = arrayBinding.split("#")[1];
-					String rwtype = arrayBinding.split("#")[2];
-					if(dimension < indexStr.size() && indexStr.get(dimension).equals(index)){
-						this.associateAttSetsWithExp(exp, rwtype);
-						return ASTVisitor.PROCESS_SKIP;
+			if(travesalNode.getParent()==null || (!(travesalNode.getParent() instanceof IASTArraySubscriptExpression))){
+				while(travesalNode instanceof IASTArraySubscriptExpression){
+					IASTArraySubscriptExpression arrayExp = (IASTArraySubscriptExpression)travesalNode;
+					IASTExpression subscriptExp = arrayExp.getSubscriptExpression();
+					if(subscriptExp instanceof IASTIdExpression){
+						IASTIdExpression subIdExp = (IASTIdExpression)subscriptExp;
+						indexStr.add(0, subIdExp.getName().toString());
+					}else if(subscriptExp instanceof IASTLiteralExpression){
+						IASTLiteralExpression subLiteralExp = (IASTLiteralExpression)subscriptExp;
+						indexStr.add(0, subLiteralExp.getRawSignature());
 					}
+					travesalNode = arrayExp.getArrayExpression();
 				}
+				String annotatedRWTypeForArray = this.getAnnotatedTypeForExpression(travesalNode); 
+				if(annotatedRWTypeForArray!=null && annotatedRWTypeForArray.length() > 0){
+					String[] arrayBindings = annotatedRWTypeForArray.split("@");
+					for(String arrayBinding : arrayBindings){
+						int dimension = Integer.parseInt(arrayBinding.split("#")[0])-1;
+						String index = arrayBinding.split("#")[1];
+						String rwtype = arrayBinding.split("#")[2];
+						if(dimension < indexStr.size() && indexStr.get(dimension).equals(index)){
+							this.associateAttSetsWithExp(exp, rwtype);
+							return ASTVisitor.PROCESS_SKIP;
+						}
+					}
+				}	
 			}
+			
 		}
 		return 3;
 	}

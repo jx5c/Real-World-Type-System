@@ -56,6 +56,8 @@ import org.eclipse.cdt.internal.core.dom.parser.c.CArrayType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CBasicType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CField;
 import org.eclipse.cdt.internal.core.dom.parser.c.CFunction;
+import org.eclipse.cdt.internal.core.dom.parser.c.CParameter;
+import org.eclipse.cdt.internal.core.dom.parser.c.CPointerType;
 import org.eclipse.cdt.internal.core.dom.parser.c.CStructure;
 import org.eclipse.cdt.internal.core.dom.parser.c.CVariable;
 import org.eclipse.cdt.internal.core.dom.parser.cpp.CPPASTDeclarator;
@@ -721,18 +723,26 @@ public class RWTView extends ViewPart {
 //							declBodyKey = astBinding.getName();
 							annotationType = RWTAnnotation.Return;
 							//binding for a function
-						}else if(astBinding instanceof CVariable){
+						}else if(astBinding instanceof CVariable || astBinding instanceof CParameter){
 							annotationType = RWTAnnotation.Define;
 							declBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
 							//binding for a variable
 							if(astName.getParent() instanceof CASTDeclarator || astName.getParent() instanceof CPPASTDeclarator) { //variable name (c & c++)
-								CVariable cv = (CVariable)astBinding;
-								IType variableType = cv.getType();
+								IType variableType = null;
+								if(astBinding instanceof CVariable){
+									CVariable cv = (CVariable)astBinding;
+									variableType = cv.getType();
+								}else if(astBinding instanceof CParameter){
+									CParameter cp = (CParameter)astBinding;
+									variableType = cp.getType();
+								}
+								
+								
 								varName = astName.toString();
-								if(variableType instanceof CArrayType){
+								if(variableType instanceof CArrayType || variableType instanceof CPointerType){
 									//this is for array; pop up a menu so the user can select the index for binding
-									CArrayType arrayV = (CArrayType)variableType;
-									System.out.println(arrayV.getSize());
+//									CArrayType arrayV = (CArrayType)variableType;
+//									System.out.println(arrayV.getSize());
 									Shell currentShell = currentJavaEditor.getEditorSite().getShell();
 									ArrayTypeBindingDialog arrayBindingDialog = new ArrayTypeBindingDialog(currentShell, astName.getRawSignature());
 									arrayBindingDialog.open();
@@ -747,6 +757,8 @@ public class RWTView extends ViewPart {
 												rwtype_name += "@" + binding;
 											}
 										}
+									}else{
+										rwtype_name = "";
 									}
 								}else if (variableType instanceof CBasicType){
 									//this is for a variable; variable could be inside a structure, or
@@ -766,7 +778,9 @@ public class RWTView extends ViewPart {
 							declBodyKey = makeKeyForDeclBodies(astBinding.getOwner().getClass().getName(), astBinding.getOwner().getName());
 							
 						}
-						saveTypeBindingC(ifile, varName, declBodyKey, annotationType, rwtype_name);						
+						if(rwtype_name!=null && rwtype_name.length()>0){
+							saveTypeBindingC(ifile, varName, declBodyKey, annotationType, rwtype_name);	
+						}
 					}
 				}
 			}

@@ -117,7 +117,7 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 		chooseDimensionLabel.setBounds(20, 50, leftWidth, 20);
 		chooseDimensionLabel.setText("1. Choose the dimension of this array: ");
 		
-	    final String[] ITEMS = { "First Dimension", "Second Dimension", "Third Dimension" };
+	    final String[] ITEMS = { "1st Dimension", "2nd Dimension", "3rd Dimension" };
 	    dimensionCombo = new Combo(leftGroup, SWT.DROP_DOWN);
 	    dimensionCombo.setBounds(20, 75, 200, 20);
 	    dimensionCombo.setItems(ITEMS);
@@ -248,7 +248,7 @@ public class ArrayTypeBindingDialog extends TitleAreaDialog {
 		if(dimension.length()==0 || bindingIdx.length()==0 || rwtype.length() == 0){
 			return;
 		}
-		dimension = dimension.replace("Dimension", "").trim();
+		dimension = dimension.substring(0,1);
 		String bindingInStr = makeItemStr(dimension, bindingIdx, rwtype);
 		if(!currentBindings.contains(bindingInStr)){
 			currentBindings.add(bindingInStr);
